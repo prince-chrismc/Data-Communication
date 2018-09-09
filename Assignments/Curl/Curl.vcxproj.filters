@@ -15,15 +15,30 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="pch.h">
+    <ClInclude Include="..\..\Simple-Socket\examples\HttpRequest\CmdLineParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Simple-Socket\examples\HttpRequest\Constants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Simple-Socket\examples\HttpRequest\HttpRequest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Simple-Socket\examples\HttpRequest\HttpResponse.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="pch.cpp">
+    <ClCompile Include="Curl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Curl.cpp">
+    <ClCompile Include="..\..\Simple-Socket\examples\HttpRequest\CmdLineParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Simple-Socket\examples\HttpRequest\HttpRequest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Simple-Socket\examples\HttpRequest\HttpResponse.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
