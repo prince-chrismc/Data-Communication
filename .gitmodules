@@ -1,0 +1,6 @@
+[submodule "Assignments/Simple-Sockets"]
+	path = Assignments/Simple-Sockets
+	url = git@github.com:prince-chrismc/Simple-Socket.git
+[submodule "Assignments/Cli-Parser"]
+	path = Assignments/Cli-Parser
+	url = git@github.com:prince-chrismc/Cli-Parser.git
