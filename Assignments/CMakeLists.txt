@@ -21,11 +21,16 @@ add_subdirectory(Simple-Sockets)
 add_subdirectory(Cli-Parser)
 
 include_directories("Simple-Sockets/examples/http/")
+include_directories("Simple-Sockets/src/")
+include_directories("Cli-Parser/src/")
+
+
+FILE(GLOB HTTP "Simple-Sockets/examples/http/*")
 
 if(UNIX)
-    ADD_EXECUTABLE(Curl.run Curl/Curl.cpp)
+    ADD_EXECUTABLE(Curl.run Curl/Curl.cpp ${HTTP})
     TARGET_LINK_LIBRARIES(Curl.run simple-socket cli-parser pthread)
 elseif(WIN32)
-    ADD_EXECUTABLE(Curl Curl/Curl.cpp)
+    ADD_EXECUTABLE(Curl Curl/Curl.cpp ${HTTP})
     TARGET_LINK_LIBRARIES(Curl simple-socket cli-parser)
 endif()
