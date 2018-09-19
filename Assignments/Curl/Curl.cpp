@@ -24,54 +24,62 @@ SOFTWARE.
 
 */
 
-#include "CliParser.h"
-#include "HttpResponse.h"
-#include "HttpRequest.h"
-
-#include "ActiveSocket.h"
+#include "CurlAppController.h"
 #include <iostream>
+#include <exception>
 
 int main( int argc, char** argv )
 {
-   CActiveSocket oClient;
-   CommandLineParser oCliParser( argc, argv );
+   CurlAppController oApp( argc, argv );
 
-   HttpResponseParserAdvance oResponseParserParser;
-
-   bool retval = oClient.Initialize();
-
-   if( retval )
+   try
    {
-      retval = oClient.Open( "www.google.ca", 80 );
+      oApp.Initialize();
+
+      oApp.Run();
+   }
+   catch( const std::exception& e )
+   {
+         std::cout << std::endl << "  --> ERROR: " << e.what() << std::endl;
    }
 
-   if( retval )
-   {
-      HttpRequest oReq( HttpRequestGet, "/", HttpVersion10, "www.google.ca" );
-      oReq.SetContentType( HttpContentHtml );
-      std::string sRawRequest = oReq.GetWireFormat();
-      retval = oClient.Send( (uint8*)sRawRequest.c_str(), sRawRequest.size() );
-   }
+//    CActiveSocket oClient;
+//    HttpResponseParserAdvance oResponseParserParser;
 
-   if( retval )
-   {
-      int32 bytes_rcvd = -1;
-      do
-      {
-         bytes_rcvd = oClient.Receive( 1024 );
+//    bool retval = oClient.Initialize();
 
-         if( bytes_rcvd <= 0 ) break; // Transmission completed
+//    if( retval )
+//    {
+//       retval = oClient.Open( "www.google.ca", 80 );
+//    }
 
-      } while( !oResponseParserParser.AppendResponseData(
-         std::string( (const char*)oClient.GetData(), bytes_rcvd ) ) );
-   }
+//    if( retval )
+//    {
+//       HttpRequest oReq( HttpRequestGet, "/", HttpVersion10, "www.google.ca" );
+//       oReq.SetContentType( HttpContentHtml );
+//       std::string sRawRequest = oReq.GetWireFormat();
+//       retval = oClient.Send( (uint8*)sRawRequest.c_str(), sRawRequest.size() );
+//    }
 
-   HttpResponse oRes = oResponseParserParser.GetHttpResponse();
+//    if( retval )
+//    {
+//       int32 bytes_rcvd = -1;
+//       do
+//       {
+//          bytes_rcvd = oClient.Receive( 1024 );
 
-   oClient.Close();
+//          if( bytes_rcvd <= 0 ) break; // Transmission completed
 
-   std::cout << oRes.GetBody();
-   std::cout.flush();
+//       } while( !oResponseParserParser.AppendResponseData(
+//          std::string( (const char*)oClient.GetData(), bytes_rcvd ) ) );
+//    }
+
+//    HttpResponse oRes = oResponseParserParser.GetHttpResponse();
+
+//    oClient.Close();
+
+//    std::cout << oRes.GetBody();
+//    std::cout.flush();
 
    return 0;
 }
