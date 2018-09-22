@@ -2,14 +2,12 @@ cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 project(Data-Comm-Assignments)
 
 # You can tweak some common (for all subprojects) stuff here. For example:
-
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 set(CMAKE_DISABLE_SOURCE_CHANGES  ON)
 
 if ("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
   message(SEND_ERROR "In-source builds are not allowed.")
 endif ()
-
 
 # OS and compiler checks.
 if(UNIX)
@@ -25,7 +23,7 @@ if(UNIX)
       set(CMAKE_BUILD_TYPE Release)
       message("Defaulting to 'Release' configuration.")
     endif()
-    
+
     if(CYGWIN)
         # Special Cygwin stuff here
     elseif(APPLE)
@@ -46,8 +44,11 @@ elseif(WIN32)
     endif()
 endif()
 
-
 # When done tweaking common stuff, configure the components (subprojects).
+set(SIMPLE_SOCKET_DEP_ONLY true CACHE BOOL "" FORCE)
+set(SIMPLE_SOCKET_EXAMPLES false CACHE BOOL "" FORCE)
+set(CLI_PARSER_DEP_ONLY true CACHE BOOL "" FORCE)
+
 # NOTE: The order matters! The most independent ones should go first.
 add_subdirectory(Simple-Sockets)
 add_subdirectory(Cli-Parser)
