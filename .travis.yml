@@ -19,6 +19,11 @@ matrix:
       compiler: clang
       env:
       - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
+      
+    - os: linux
+      compiler: clang
+      env:
+        - MATRIX_EVAL=""
 
     - os: linux
       addons:
