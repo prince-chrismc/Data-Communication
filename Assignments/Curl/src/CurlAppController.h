@@ -50,8 +50,8 @@ private:
 
    static void printGeneralUsage();
    static void printGetUsage();
-   static void printPutUsage();
+   static void printPostUsage();
 
    void parseGetOptions( CommandLineParser::ArgIterator itor );
-   void parsePutOptions( CommandLineParser::ArgIterator itor );
+   void parsePostOptions( CommandLineParser::ArgIterator itor );
 };

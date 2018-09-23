@@ -37,10 +37,12 @@ CurlAppController::CurlAppController( int argc, char ** argv )
 void CurlAppController::Initialize()
 {
    auto itor = m_oCliParser.cbegin();
+   if ( itor == m_oCliParser.cend() ) { printGeneralUsage(); throw std::invalid_argument( "Missing 'get' or 'post' paramater" ); }
 
-   if( *itor == "get" ) m_eCommand = HttpRequestGet;
+   if( *itor == "help" ) printGeneralUsage();
+   else if( *itor == "get" ) m_eCommand = HttpRequestGet;
    else if( *itor == "post" ) m_eCommand = HttpRequestPost;
-   else printGeneralUsage();
+   else { printGeneralUsage(); throw std::invalid_argument( "Missing 'get' or 'post' paramater" ); }
 
    switch( m_eCommand )
    {
@@ -52,7 +54,7 @@ void CurlAppController::Initialize()
       // Continue parsing POST args
       break;
    default:
-      if( *itor != "help" ) throw std::invalid_argument( "Missing GET or POST" );
+      break;
    }
 }
 
@@ -74,7 +76,7 @@ void CurlAppController::printGetUsage()
    std::cout << "-h key:value   Associates headers to the HTTP Request with the format 'key:value'. Can specify many in a row.\r\n" << std::endl;
 }
 
-void CurlAppController::printPutUsage()
+void CurlAppController::printPostUsage()
 {
    std::cout << "Post Usage\r\nhttpc help post\r\nPost executes a HTTP POST request for a given URL with inline data or from file.\r\nUsage:\r\n";
    std::cout << "   httpc post [ -v ] [ -h key:value ] [ -d inline-data | -f file ] URL\r\n";
@@ -87,11 +89,15 @@ void CurlAppController::printPutUsage()
 
 void CurlAppController::parseGetOptions( CommandLineParser::ArgIterator itor )
 {
+   if( itor == m_oCliParser.cend() ) { printGetUsage(); throw std::invalid_argument( "Missing 'URL' paramater" ); }
+
    if( *itor == "-v" )
    {
       m_bVerbose = true;
       itor++;
    }
+
+   if( itor == m_oCliParser.cend() ) { printGetUsage(); throw std::invalid_argument( "Missing 'URL' paramater" ); }
 
    while( *itor == "-h" )
    {
@@ -102,6 +108,8 @@ void CurlAppController::parseGetOptions( CommandLineParser::ArgIterator itor )
       m_oExtraHeaders.emplace_back( sHeardOptAndValue.substr( 0, iSeperatorIndex ), sHeardOptAndValue.substr( iSeperatorIndex + 1 ) );
       itor++;
    }
+
+   if( itor == m_oCliParser.cend() ) { printGetUsage(); throw std::invalid_argument( "Missing 'URL' paramater" ); }
 
    if( ( *itor ).find( "http://" ) == 0 )
    {
