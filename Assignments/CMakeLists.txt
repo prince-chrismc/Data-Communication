@@ -15,7 +15,6 @@ endif ()
 if(UNIX)
     # linux / normal unix
     add_definitions(-D_LINUX)
-    set(CMAKE_CXX_STANDARD 17)
 
     if(CMAKE_BUILD_TYPE MATCHES Debug)
       message("Building 'Debug' configuration.")
@@ -31,6 +30,8 @@ if(UNIX)
       if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 6.0)
         set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
       endif()
+    else()
+      set(CMAKE_CXX_STANDARD 17)
     endif()
 
     if(CYGWIN)
