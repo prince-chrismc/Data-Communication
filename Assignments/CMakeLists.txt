@@ -53,8 +53,10 @@ set(CLI_PARSER_DEP_ONLY true CACHE BOOL "" FORCE)
 add_subdirectory(Simple-Sockets)
 add_subdirectory(Cli-Parser)
 
+include_directories("Simple-Sockets/examples/http/")
 include_directories("Simple-Sockets/src/")
 include_directories("Cli-Parser/src/")
+include_directories("Curl/src/")
 
 FILE(GLOB HTTP "Simple-Sockets/examples/http/*")
 FILE(GLOB CURL "Curl/src/*")
