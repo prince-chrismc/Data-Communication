@@ -40,8 +40,10 @@ int main( int argc, char** argv )
    }
    catch( const std::exception& e )
    {
-         std::cout << std::endl << "  --> ERROR: " << e.what() << std::endl;
+      std::cout << std::endl << "  --> ERROR: " << e.what() << std::endl;
    }
+
+   return 1;
 
 //    CActiveSocket oClient;
 //    HttpResponseParserAdvance oResponseParserParser;
@@ -80,14 +82,11 @@ int main( int argc, char** argv )
 
 //    std::cout << oRes.GetBody();
 //    std::cout.flush();
-
-   return 0;
 }
 
 
 /*
-Detailed Usage
-General
+General Usage
 httpc help
 httpc is a curl-like application but supports HTTP protocol only.
 Usage:

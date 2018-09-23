@@ -35,35 +35,23 @@ SOFTWARE.
 class CurlAppController
 {
 public:
-   CurlAppController( int argc, char** argv ) : m_oCliParser( argc, argv ) {}
+   CurlAppController( int argc, char** argv );
 
-   void Initialize()
-   {
-       auto itor = m_oCliParser.begin();
+   void Initialize();
 
-       if( itor->compare( "GET" ) == 0 ) m_eCommand = HttpRequestGet;
-       if( itor->compare( "POST" ) == 0 ) m_eCommand = HttpRequestPost;
-       else printGeneralUsage();
-
-       switch( m_eCommand )
-       {
-           case HttpRequestGet:
-              // Continue parsing GET args
-              break;
-           case HttpRequestPost:
-              // Continue parsing POST args
-           default: throw std::invalid_argument("Missing GET or POST");
-       }
-   }
-
-   void Run()
-   {
-
-   }
+   void Run();
 
 private:
    CommandLineParser m_oCliParser;
    HttpRequestMethod m_eCommand;
+   bool              m_bVerbose;
+   std::vector<std::pair<std::string, std::string>> m_oExtraHeaders;
+   std::string       m_sUrl;
 
-   void printGeneralUsage(){}
+   static void printGeneralUsage();
+   static void printGetUsage();
+   static void printPutUsage();
+
+   void parseGetOptions( CommandLineParser::ArgIterator itor );
+   void parsePutOptions( CommandLineParser::ArgIterator itor );
 };
