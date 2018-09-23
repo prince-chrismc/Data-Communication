@@ -19,17 +19,6 @@ matrix:
       compiler: clang
       env:
       - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
-      
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - llvm-toolchain-trusty-5.0
-          packages:
-            - clang-5.0
-      compiler: clang
-      env:
-        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
 
     - os: linux
       addons:
@@ -56,15 +45,15 @@ matrix:
     - os: osx
       osx_image: xcode10
       env:
-        - MATRIX_EVAL="echo CC && echo CXX && CC=clang && CXX=clang++"
+        - MATRIX_EVAL=""
 
     - os: osx
       osx_image: xcode9.4
       env:
-        - MATRIX_EVAL="brew install gcc7 && CC=gcc-7 && CXX=g++-7"
+        - MATRIX_EVAL=""
 
     - os: osx
-      osx_image: xcode9.4
+      osx_image: xcode8.3
       env:
         - MATRIX_EVAL="brew install gcc && CC=gcc-8 && CXX=g++-8"
 
