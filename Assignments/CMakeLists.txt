@@ -26,6 +26,13 @@ if(UNIX)
       message("Defaulting to 'Release' configuration.")
     endif()
 
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+      # using regular Clang or AppleClang
+      if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 6.0)
+        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
+      endif()
+    endif()
+
     if(CYGWIN)
         # Special Cygwin stuff here
     elseif(APPLE)
