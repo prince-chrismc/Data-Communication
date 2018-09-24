@@ -66,7 +66,7 @@ FILE(GLOB CURL "Curl/src/*")
 
 if(UNIX)
     ADD_EXECUTABLE(Curl.run Curl/Curl.cpp ${CURL} ${HTTP})
-    TARGET_LINK_LIBRARIES(Curl.run simple-socket Cli-Parser pthread)
+    TARGET_LINK_LIBRARIES(Curl.run simple-socket Cli-Parser)
 elseif(WIN32)
     ADD_EXECUTABLE(Curl Curl/Curl.cpp ${CURL} ${HTTP})
     TARGET_LINK_LIBRARIES(Curl simple-socket Cli-Parser)
