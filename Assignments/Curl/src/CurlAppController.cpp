@@ -62,9 +62,72 @@ void CurlAppController::Initialize()
 
 void CurlAppController::Run()
 {
-   // TO DO : Everything
+   switch( m_eCommand )
+   {
+   case HttpRequestGet:
+   case HttpRequestPost:
+      break;
+   default:
+      std::exception( "If you see this please don't look for the developer to report a bug =)" );
+      break;
+   }
+
+   if( m_bVerbose ) std::cout << "Starting..." << std::endl;
+   CActiveSocket oClient;
+
+   if( m_bVerbose ) std::cout << "Initializing..." << std::endl;
+
+   bool retval = oClient.Initialize();
+
+
+   if( retval )
+   {
+      if( m_bVerbose ) std::cout << "Connectioning..." << std::endl;
+      retval = oClient.Open( m_sUrl.c_str(), 80 ); // TO DO : Update to HREF PARSING
+   }
+
+   if( retval )
+   {
+      if( m_bVerbose ) std::cout << "Building Request..." << std::endl;
+      HttpRequest oReq( m_eCommand, "/" /* HREF */, HttpVersion10, m_sUrl.c_str() /* HREF */ );
+      // TO DO : Appened Header Options !
+      oReq.AppendMessageBody( m_sBody );
+      oReq.SetContentType( HttpContentHtml );
+      std::string sRawRequest = oReq.GetWireFormat();
+
+      if( m_bVerbose ) std::cout << "Sending..." << std::endl;
+      retval = oClient.Send( (uint8*)sRawRequest.c_str(), sRawRequest.size() );
+   }
+
+   HttpResponseParserAdvance oResponseParserParser;
+   if( retval )
+   {
+      if( m_bVerbose ) std::cout << "Receiving..." << std::endl;
+      int32 bytes_rcvd = -1;
+      do
+      {
+         bytes_rcvd = oClient.Receive( 1024 );
+
+         if( bytes_rcvd <= 0 ) break; // Transmission completed
+
+      } while( !oResponseParserParser.AppendResponseData(
+         std::string( (const char*)oClient.GetData(), bytes_rcvd ) ) );
+      if( m_bVerbose ) std::cout << "Transmission Completed..." << std::endl;
+   }
+
+   HttpResponse oRes = oResponseParserParser.GetHttpResponse();
+
+   if( m_bVerbose ) std::cout << "Closing..." << std::endl;
+   oClient.Close();
+   if( m_bVerbose ) std::cout << std::endl << std::endl << std::endl << "Here's the response!" << std::endl << std::endl;
+
+   std::cout << oRes.GetBody();
+   std::cout.flush();
 }
 
+//
+// Printing
+//
 void CurlAppController::printGeneralUsage()
 {
    std::cout << "General Usage\r\n   httpc help\r\nhttpc is a curl - like application but supports HTTP protocol only.\r\nUsage:\r\n   httpc command [ arguments ]\r\nThe commands are:\r\n";
@@ -100,6 +163,9 @@ void CurlAppController::printUsageGivenArgs()
    }
 }
 
+//
+// Prasing
+//
 void CurlAppController::parseGetOptions( CommandLineParser::ArgIterator itor )
 {
    parseVerboseOption( itor );
@@ -126,7 +192,7 @@ void CurlAppController::parsePostOptions( CommandLineParser::ArgIterator itor )
       moreArgsToRead( ++itor, MISSING_URL );
 
       std::ifstream fileReader( *itor );
-      if( ! fileReader ) { printPostUsage(); throw std::invalid_argument( "Unable to use file specified with -f switch" ); }
+      if( !fileReader ) { printPostUsage(); throw std::invalid_argument( "Unable to use file specified with -f switch" ); }
       fileReader >> m_sBody;
 
       itor++;

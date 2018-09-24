@@ -31,6 +31,7 @@ SOFTWARE.
 #include "HttpRequest.h"
 
 #include <stdexcept>
+#include <string_view>
 
 class CurlAppController
 {
