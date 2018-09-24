@@ -79,17 +79,16 @@ void CurlAppController::Run()
 
    bool retval = oClient.Initialize();
 
-
    if( retval )
    {
       if( m_bVerbose ) std::cout << "Connectioning..." << std::endl;
-      retval = oClient.Open( m_sUrl.c_str(), 80 ); // TO DO : Update to HREF PARSING
+      retval = oClient.Open( m_oHref.m_sHostName.c_str(), 80 ); // TO DO : Update to HREF PARSING
    }
 
    if( retval )
    {
       if( m_bVerbose ) std::cout << "Building Request..." << std::endl;
-      HttpRequest oReq( m_eCommand, "/" /* HREF */, HttpVersion10, m_sUrl.c_str() /* HREF */ );
+      HttpRequest oReq( m_eCommand, m_oHref.m_sUri, HttpVersion10, m_oHref.m_sHostName );
       // TO DO : Appened Header Options !
       oReq.AppendMessageBody( m_sBody );
       oReq.SetContentType( HttpContentHtml );
@@ -109,6 +108,8 @@ void CurlAppController::Run()
          bytes_rcvd = oClient.Receive( 1024 );
 
          if( bytes_rcvd <= 0 ) break; // Transmission completed
+         
+         if( m_bVerbose ) std::cout << "Appending Content..." << std::endl;
 
       } while( !oResponseParserParser.AppendResponseData(
          std::string( (const char*)oClient.GetData(), bytes_rcvd ) ) );
@@ -236,7 +237,7 @@ void CurlAppController::parseUrlOption( CommandLineParser::ArgIterator & itor )
    if( ( *itor ).find( "http://" ) == 0 )
    {
       // TO DO : update with HREF parser
-      m_sUrl = *itor;
+      m_oHref = HrefParser().Parse( *itor ).GetHref();
    }
    else
    {

@@ -29,6 +29,7 @@ SOFTWARE.
 
 #include "HttpResponse.h"
 #include "HttpRequest.h"
+#include "Href.h"
 
 #include <stdexcept>
 #include <string_view>
@@ -47,7 +48,7 @@ private:
    HttpRequestMethod m_eCommand;
    bool              m_bVerbose;
    std::vector<std::pair<std::string, std::string>> m_oExtraHeaders;
-   std::string       m_sUrl;
+   Href              m_oHref;
    std::string       m_sBody;
 
    static void printGeneralUsage();
