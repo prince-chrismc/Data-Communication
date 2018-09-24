@@ -26,6 +26,7 @@ SOFTWARE.
 
 #include "CurlAppController.h"
 #include <iostream>
+#include <fstream>
 
 CurlAppController::CurlAppController( int argc, char ** argv )
    : m_oCliParser( argc, argv )
@@ -37,12 +38,12 @@ CurlAppController::CurlAppController( int argc, char ** argv )
 void CurlAppController::Initialize()
 {
    auto itor = m_oCliParser.cbegin();
-   if ( itor == m_oCliParser.cend() ) { printGeneralUsage(); throw std::invalid_argument( "Missing 'get' or 'post' paramater" ); }
+   moreArgsToRead( itor, MISSING_GET_OR_POST );
 
-   if( *itor == "help" ) printGeneralUsage();
+   if( *itor == "help" ) printUsageGivenArgs();
    else if( *itor == "get" ) m_eCommand = HttpRequestGet;
    else if( *itor == "post" ) m_eCommand = HttpRequestPost;
-   else { printGeneralUsage(); throw std::invalid_argument( "Missing 'get' or 'post' paramater" ); }
+   else { printUsageGivenArgs(); throw std::invalid_argument( MISSING_GET_OR_POST.data() ); }
 
    switch( m_eCommand )
    {
@@ -52,6 +53,7 @@ void CurlAppController::Initialize()
       break;
    case HttpRequestPost:
       // Continue parsing POST args
+      parsePostOptions( ++itor );
       break;
    default:
       break;
@@ -60,6 +62,7 @@ void CurlAppController::Initialize()
 
 void CurlAppController::Run()
 {
+   // TO DO : Everything
 }
 
 void CurlAppController::printGeneralUsage()
@@ -87,29 +90,82 @@ void CurlAppController::printPostUsage()
    std::cout << "Either [ -d ] or [ -f ] can be used but not both." << std::endl;
 }
 
+void CurlAppController::printUsageGivenArgs()
+{
+   switch( m_eCommand )
+   {
+   case HttpRequestGet: printGetUsage(); break;
+   case HttpRequestPost: printPostUsage(); break;
+   default: printGeneralUsage(); break;
+   }
+}
+
 void CurlAppController::parseGetOptions( CommandLineParser::ArgIterator itor )
 {
-   if( itor == m_oCliParser.cend() ) { printGetUsage(); throw std::invalid_argument( "Missing 'URL' paramater" ); }
+   parseVerboseOption( itor );
+   parseHeaderOption( itor );
+   parseUrlOption( itor );
+}
+
+void CurlAppController::parsePostOptions( CommandLineParser::ArgIterator itor )
+{
+   parseVerboseOption( itor );
+   parseHeaderOption( itor );
+
+   moreArgsToRead( itor, MISSING_URL );
+
+   if( *itor == "-d" )
+   {
+      moreArgsToRead( ++itor, MISSING_URL );
+
+      m_sBody = *itor;
+      itor++;
+   }
+   else if( *itor == "-f" )
+   {
+      moreArgsToRead( ++itor, MISSING_URL );
+
+      std::ifstream fileReader( *itor );
+      if( ! fileReader ) { printPostUsage(); throw std::invalid_argument( "Unable to use file specified with -f switch" ); }
+      fileReader >> m_sBody;
+
+      itor++;
+   }
+
+   parseUrlOption( itor );
+}
+
+void CurlAppController::parseVerboseOption( CommandLineParser::ArgIterator& itor )
+{
+   moreArgsToRead( itor, MISSING_URL );
 
    if( *itor == "-v" )
    {
       m_bVerbose = true;
       itor++;
    }
+}
 
-   if( itor == m_oCliParser.cend() ) { printGetUsage(); throw std::invalid_argument( "Missing 'URL' paramater" ); }
+void CurlAppController::parseHeaderOption( CommandLineParser::ArgIterator& itor )
+{
+   moreArgsToRead( itor, MISSING_URL );
 
    while( *itor == "-h" )
    {
       std::string sHeardOptAndValue( *( ++itor ) );
       const size_t iSeperatorIndex = sHeardOptAndValue.find( ':' );
-      if( iSeperatorIndex == std::string::npos ) throw std::invalid_argument( "Poorly formatted key:value for -h switch" );
+      if( iSeperatorIndex == std::string::npos ) { printUsageGivenArgs(); throw std::invalid_argument( "Poorly formatted key:value for -h switch" ); }
 
       m_oExtraHeaders.emplace_back( sHeardOptAndValue.substr( 0, iSeperatorIndex ), sHeardOptAndValue.substr( iSeperatorIndex + 1 ) );
       itor++;
-   }
 
-   if( itor == m_oCliParser.cend() ) { printGetUsage(); throw std::invalid_argument( "Missing 'URL' paramater" ); }
+      moreArgsToRead( itor, MISSING_URL );
+   }
+}
+
+void CurlAppController::parseUrlOption( CommandLineParser::ArgIterator & itor )
+{
+   moreArgsToRead( itor, MISSING_URL );
 
    if( ( *itor ).find( "http://" ) == 0 )
    {
@@ -118,7 +174,16 @@ void CurlAppController::parseGetOptions( CommandLineParser::ArgIterator itor )
    }
    else
    {
-      printGetUsage();
-      throw std::invalid_argument( "Missing URL" );
+      printUsageGivenArgs();
+      throw std::invalid_argument( MISSING_URL.data() );
+   }
+}
+
+void CurlAppController::moreArgsToRead( CommandLineParser::ArgIterator itor, std::string_view errMsg )
+{
+   if( itor == m_oCliParser.cend() )
+   {
+      printUsageGivenArgs();
+      throw std::invalid_argument( errMsg.data() );
    }
 }

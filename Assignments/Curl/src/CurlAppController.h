@@ -47,11 +47,21 @@ private:
    bool              m_bVerbose;
    std::vector<std::pair<std::string, std::string>> m_oExtraHeaders;
    std::string       m_sUrl;
+   std::string       m_sBody;
 
    static void printGeneralUsage();
    static void printGetUsage();
    static void printPostUsage();
+   void printUsageGivenArgs();
 
    void parseGetOptions( CommandLineParser::ArgIterator itor );
    void parsePostOptions( CommandLineParser::ArgIterator itor );
+
+   void parseVerboseOption( CommandLineParser::ArgIterator& itor );
+   void parseHeaderOption( CommandLineParser::ArgIterator& itor );
+   void parseUrlOption( CommandLineParser::ArgIterator& itor );
+
+   static constexpr std::string_view MISSING_GET_OR_POST = "Missing 'get' or 'post' paramater";
+   static constexpr std::string_view MISSING_URL = "Missing 'URL' paramater";
+   void moreArgsToRead( CommandLineParser::ArgIterator itor, std::string_view errMsg );
 };
