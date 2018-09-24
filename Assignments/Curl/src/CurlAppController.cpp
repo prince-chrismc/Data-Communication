@@ -68,7 +68,7 @@ void CurlAppController::Run()
    case HttpRequestPost:
       break;
    default:
-      std::exception( "If you see this please don't look for the developer to report a bug =)" );
+      std::exception( /*If you see this please don't look for the developer to report a bug =)*/ );
       break;
    }
 
