@@ -32,7 +32,6 @@ SOFTWARE.
 #include "Href.h"
 
 #include <stdexcept>
-#include <string_view>
 
 class CurlAppController
 {
