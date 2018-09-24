@@ -6,6 +6,7 @@ matrix:
     # works on Precise and Trusty
 
     - os: linux
+      sudo: true
       addons:
         apt:
           sources:
