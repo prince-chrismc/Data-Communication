@@ -40,9 +40,9 @@ HrefParser& HrefParser::Parse( const std::string& fullUrl )
    size_t ulProtocol = fullUrl.find( PROTOCOL_ENDING );
    if( ulProtocol == std::string::npos ) throw ParseError( "URL missing protocol seperator" );
 
-   oHref.m_sProtocol = fullUrl.substr( ulProtocol );
+   oHref.m_sProtocol = fullUrl.substr( 0, ulProtocol );
 
-   ulProtocol += strlen( PROTOCOL_ENDING ) - 1;
+   ulProtocol += strlen( PROTOCOL_ENDING );
 
    size_t ulColumn = fullUrl.find( ':', ulProtocol );
    size_t ulSlash = fullUrl.find( '/', ulProtocol );
