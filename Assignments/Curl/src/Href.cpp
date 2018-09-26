@@ -28,6 +28,7 @@ SOFTWARE.
 #include <algorithm>
 
 constexpr auto PROTOCOL_ENDING = "://";
+int constexpr length( const char* str ) { return *str ? 1 + length( str + 1 ) : 0; }
 
 HrefParser& HrefParser::Parse( const std::string& fullUrl )
 {
@@ -42,7 +43,7 @@ HrefParser& HrefParser::Parse( const std::string& fullUrl )
 
    oHref.m_sProtocol = fullUrl.substr( 0, ulProtocol );
 
-   ulProtocol += strlen( PROTOCOL_ENDING );
+   ulProtocol += length( PROTOCOL_ENDING );
 
    size_t ulColumn = fullUrl.find( ':', ulProtocol );
    size_t ulSlash = fullUrl.find( '/', ulProtocol );
