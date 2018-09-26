@@ -89,11 +89,14 @@ void CurlAppController::Run()
    {
       if( m_bVerbose ) std::cout << "Building Request..." << std::endl;
       HttpRequest oReq( m_eCommand, m_oHref.m_sUri, HttpVersion10, m_oHref.m_sHostName );
-      // TO DO : Appened Header Options !
+      for( auto& oFeildNameAndValue : m_oExtraHeaders )
+      {
+         oReq.AddMessageHeader( oFeildNameAndValue.first, oFeildNameAndValue.second );
+      }
       oReq.AppendMessageBody( m_sBody );
       std::string sRawRequest = oReq.GetWireFormat();
 
-      if( m_bVerbose ) std::cout << "Sending..." << std::endl << "Raw request:" << std::endl << sRawRequest << std::endl;
+      if( m_bVerbose ) std::cout  << "Raw request:" << std::endl << std::endl << sRawRequest << std::endl << std::endl << "Sending...";
       retval = oClient.Send( (uint8*)sRawRequest.c_str(), sRawRequest.size() );
    }
 
@@ -119,9 +122,9 @@ void CurlAppController::Run()
 
    if( m_bVerbose ) std::cout << "Closing..." << std::endl;
    oClient.Close();
-   if( m_bVerbose ) std::cout << std::endl << std::endl << std::endl << "Here's the response!" << std::endl << std::endl;
+   if( m_bVerbose ) std::cout  << std::endl << std::endl << "Here's the response!" << std::endl << std::endl;
 
-   std::cout << oRes.GetResponseLine() /* TO DO : PRINT HEADERS */ <<  oRes.GetBody();
+   std::cout << oRes.GetWireFormat();
    std::cout.flush();
 }
 
