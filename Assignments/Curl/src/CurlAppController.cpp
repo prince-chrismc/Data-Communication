@@ -81,8 +81,8 @@ void CurlAppController::Run()
 
    if( retval )
    {
-      if( m_bVerbose ) std::cout << "Connectioning..." << std::endl;
-      retval = oClient.Open( m_oHref.m_sHostName.c_str(), 80 ); // TO DO : Update to HREF PARSING
+      if( m_bVerbose ) std::cout << "Connectioning to " << m_oHref.m_sHostName << " on port " << 80 << "..." << std::endl;
+      retval = oClient.Open( m_oHref.m_sHostName.c_str(), 80 );
    }
 
    if( retval )
@@ -91,10 +91,9 @@ void CurlAppController::Run()
       HttpRequest oReq( m_eCommand, m_oHref.m_sUri, HttpVersion10, m_oHref.m_sHostName );
       // TO DO : Appened Header Options !
       oReq.AppendMessageBody( m_sBody );
-      oReq.SetContentType( HttpContentHtml );
       std::string sRawRequest = oReq.GetWireFormat();
 
-      if( m_bVerbose ) std::cout << "Sending..." << std::endl;
+      if( m_bVerbose ) std::cout << "Sending..." << std::endl << "Raw request:" << std::endl << sRawRequest << std::endl;
       retval = oClient.Send( (uint8*)sRawRequest.c_str(), sRawRequest.size() );
    }
 
@@ -107,9 +106,9 @@ void CurlAppController::Run()
       {
          bytes_rcvd = oClient.Receive( 1024 );
 
-         if( bytes_rcvd <= 0 ) break; // Transmission completed
-         
-         if( m_bVerbose ) std::cout << "Appending Content..." << std::endl;
+         if( bytes_rcvd <= 0 ) break;
+
+         if( m_bVerbose ) std::cout << "Appending " << bytes_rcvd << " bytes of data..." << std::endl;
 
       } while( !oResponseParserParser.AppendResponseData(
          std::string( (const char*)oClient.GetData(), bytes_rcvd ) ) );
@@ -122,7 +121,7 @@ void CurlAppController::Run()
    oClient.Close();
    if( m_bVerbose ) std::cout << std::endl << std::endl << std::endl << "Here's the response!" << std::endl << std::endl;
 
-   std::cout << oRes.GetBody();
+   std::cout << oRes.GetResponseLine() /* TO DO : PRINT HEADERS */ <<  oRes.GetBody();
    std::cout.flush();
 }
 
@@ -154,7 +153,7 @@ void CurlAppController::printPostUsage()
    std::cout << "Either [ -d ] or [ -f ] can be used but not both." << std::endl;
 }
 
-void CurlAppController::printUsageGivenArgs()
+void CurlAppController::printUsageGivenArgs() const
 {
    switch( m_eCommand )
    {
@@ -234,15 +233,14 @@ void CurlAppController::parseUrlOption( CommandLineParser::ArgIterator & itor )
 {
    moreArgsToRead( itor, MISSING_URL );
 
-   if( ( *itor ).find( "http://" ) == 0 )
+   try
    {
-      // TO DO : update with HREF parser
       m_oHref = HrefParser().Parse( *itor ).GetHref();
    }
-   else
+   catch( const HrefParser::ParseError& e )
    {
       printUsageGivenArgs();
-      throw std::invalid_argument( MISSING_URL.data() );
+      throw e;
    }
 }
 
