@@ -25,8 +25,9 @@ SOFTWARE.
 */
 
 #include "Href.h"
+#include <algorithm>
 
-#define PROTOCOL_ENDING "://"
+constexpr auto PROTOCOL_ENDING = "://";
 
 HrefParser& HrefParser::Parse( const std::string& fullUrl )
 {
@@ -37,18 +38,18 @@ HrefParser& HrefParser::Parse( const std::string& fullUrl )
    oHref.m_sUri = "/";
 
    size_t ulProtocol = fullUrl.find( PROTOCOL_ENDING );
-   if( ulProtocol == std::string::npos ) throw std::exception( /* URL missing protocol seperator */);
+   if( ulProtocol == std::string::npos ) throw ParseError( "URL missing protocol seperator" );
 
    oHref.m_sProtocol = fullUrl.substr( ulProtocol );
 
-   ulProtocol += sizeof( PROTOCOL_ENDING ) - 1;
+   ulProtocol += strlen( PROTOCOL_ENDING ) - 1;
 
    size_t ulColumn = fullUrl.find( ':', ulProtocol );
    size_t ulSlash = fullUrl.find( '/', ulProtocol );
 
    size_t ulEndOfHostName = std::min( ulColumn, ulSlash );
    oHref.m_sHostName = fullUrl.substr( ulProtocol, ulEndOfHostName - ulProtocol );
-   if( oHref.m_sHostName.empty() ) throw std::exception( /* Unable to determine host name or IP addr */);
+   if( oHref.m_sHostName.empty() ) throw ParseError( "Unable to determine host name or IP addr" );
 
    if( ulColumn != std::string::npos && ulSlash != std::string::npos )
       oHref.m_nPortNumber = std::stoul( fullUrl.substr( ulColumn, ulSlash - ulColumn ) );
