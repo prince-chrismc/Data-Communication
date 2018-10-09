@@ -1,15 +1,17 @@
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 project(Data-Comm-Assignments)
 
-# You can tweak some common (for all subprojects) stuff here. For example:
+# CMake Settings
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 set(CMAKE_DISABLE_SOURCE_CHANGES  ON)
-
-#set(CMAKE_VERBOSE_MAKEFILE ON)
 
 if ("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
   message(SEND_ERROR "In-source builds are not allowed.")
 endif ()
+
+#set(CMAKE_VERBOSE_MAKEFILE ON)
+
+# Setup source files
 
 # OS and compiler checks.
 if(UNIX)
@@ -62,6 +64,7 @@ include_directories("Cli-Parser/src/")
 # HTTP Library
 FILE(GLOB HTTP_CPP "Simple-Sockets/examples/http/*.cpp")
 FILE(GLOB HTTP_H "Simple-Sockets/examples/http/*.h")
+SET_SOURCE_FILES_PROPERTIES( ${HTTP_H} PROPERTIES HEADER_FILE_ONLY TRUE )
 LIST(APPEND HTTP ${HTTP_CPP} ${HTTP_H})
 
 # Curl
@@ -73,17 +76,17 @@ FILE(GLOB File-Server "File-Server/src/*")
 if(UNIX)
     ADD_EXECUTABLE(Curl.run Curl/Curl.cpp ${CURL} ${HTTP})
     target_include_directories(Curl.run PRIVATE Curl/src/ Simple-Sockets/examples/http/)
-    TARGET_LINK_LIBRARIES(Curl.run simple-socket Cli-Parser)
+    TARGET_LINK_LIBRARIES(Curl.run Simple-Socket Cli-Parser)
 
     ADD_EXECUTABLE(File-Server.run File-Server/File-Server.cpp ${FILE} ${HTTP})
     target_include_directories(File-Server.run PRIVATE File-Server/src Simple-Sockets/examples/http/)
-    TARGET_LINK_LIBRARIES(File-Server.run simple-socket Cli-Parser)
+    TARGET_LINK_LIBRARIES(File-Server.run Simple-Socket Cli-Parser)
 elseif(WIN32)
     ADD_EXECUTABLE(Curl Curl/Curl.cpp ${CURL} ${HTTP})
     target_include_directories(Curl PRIVATE Curl/src Simple-Sockets/examples/http/)
-    TARGET_LINK_LIBRARIES(Curl simple-socket Cli-Parser)
+    TARGET_LINK_LIBRARIES(Curl Simple-Socket Cli-Parser)
 
     ADD_EXECUTABLE(File-Server File-Server/File-Server.cpp ${FILE} ${HTTP})
     target_include_directories(File-Server PRIVATE File-Server/src Simple-Sockets/examples/http/)
-    TARGET_LINK_LIBRARIES(File-Server simple-socket Cli-Parser)
+    TARGET_LINK_LIBRARIES(File-Server Simple-Socket Cli-Parser)
 endif()
