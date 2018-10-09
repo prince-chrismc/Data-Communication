@@ -56,18 +56,34 @@ set(CLI_PARSER_DEP_ONLY true CACHE BOOL "" FORCE)
 add_subdirectory(Simple-Sockets)
 add_subdirectory(Cli-Parser)
 
-include_directories("Simple-Sockets/examples/http/")
 include_directories("Simple-Sockets/src/")
 include_directories("Cli-Parser/src/")
-include_directories("Curl/src/")
 
-FILE(GLOB HTTP "Simple-Sockets/examples/http/*")
+# HTTP Library
+FILE(GLOB HTTP_CPP "Simple-Sockets/examples/http/*.cpp")
+FILE(GLOB HTTP_H "Simple-Sockets/examples/http/*.h")
+LIST(APPEND HTTP ${HTTP_CPP} ${HTTP_H})
+
+# Curl
 FILE(GLOB CURL "Curl/src/*")
+
+# File Server
+FILE(GLOB File-Server "File-Server/src/*")
 
 if(UNIX)
     ADD_EXECUTABLE(Curl.run Curl/Curl.cpp ${CURL} ${HTTP})
+    target_include_directories(Curl.run PRIVATE Curl/src/ Simple-Sockets/examples/http/)
     TARGET_LINK_LIBRARIES(Curl.run simple-socket Cli-Parser)
+
+    ADD_EXECUTABLE(File-Server.run File-Server/File-Server.cpp ${FILE} ${HTTP})
+    target_include_directories(File-Server.run PRIVATE File-Server/src Simple-Sockets/examples/http/)
+    TARGET_LINK_LIBRARIES(File-Server.run simple-socket Cli-Parser)
 elseif(WIN32)
     ADD_EXECUTABLE(Curl Curl/Curl.cpp ${CURL} ${HTTP})
+    target_include_directories(Curl PRIVATE Curl/src Simple-Sockets/examples/http/)
     TARGET_LINK_LIBRARIES(Curl simple-socket Cli-Parser)
+
+    ADD_EXECUTABLE(File-Server File-Server/File-Server.cpp ${FILE} ${HTTP})
+    target_include_directories(File-Server PRIVATE File-Server/src Simple-Sockets/examples/http/)
+    TARGET_LINK_LIBRARIES(File-Server simple-socket Cli-Parser)
 endif()
