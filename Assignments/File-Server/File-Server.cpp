@@ -24,8 +24,11 @@ SOFTWARE.
 
 */
 
+#include "HttpServer.h"
 #include <iostream>
 #include <exception>
+
+using namespace std::chrono_literals;
 
 int main( int argc, char** argv )
 {
@@ -34,6 +37,14 @@ int main( int argc, char** argv )
       // oApp.Initialize();
 
       // oApp.Run();
+
+      HttpServer oServer;
+
+      oServer.Launch( "127.0.0.0", 8080 );
+
+      std::this_thread::sleep_for( 1h );
+
+      oServer.Close();
    }
    catch( const std::exception& e )
    {

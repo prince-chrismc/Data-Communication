@@ -11,8 +11,6 @@ endif ()
 
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 
-# Setup source files
-
 # OS and compiler checks.
 if(UNIX)
     # linux / normal unix
