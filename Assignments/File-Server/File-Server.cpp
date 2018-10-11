@@ -40,9 +40,9 @@ int main( int argc, char** argv )
 
       HttpServer oServer;
 
-      oServer.Launch( "127.0.0.0", 8080 );
+      oServer.Launch( "127.0.0.1", 8080 );
 
-      std::this_thread::sleep_for( 1h );
+      std::this_thread::sleep_for( 1s );
 
       oServer.Close();
    }
@@ -50,6 +50,8 @@ int main( int argc, char** argv )
    {
       std::cout << std::endl << "  --> ERROR: " << e.what() << std::endl;
    }
+
+   std::this_thread::sleep_for( 1s );
 
    return 1;
 }

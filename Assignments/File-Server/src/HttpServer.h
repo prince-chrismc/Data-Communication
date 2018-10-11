@@ -31,15 +31,14 @@ SOFTWARE.
 #include <vector>
 #include <future>
 #include <memory>
-#include <string_view>
 #include "HttpResponse.h"
 #include "HttpRequest.h"
 
 class HttpServlet
 {
-   virtual HttpResponse HandleRequest( const HttpRequest& request );
-
-
+public:
+   virtual ~HttpServlet() = default;
+   virtual HttpResponse HandleRequest( const HttpRequest& request ) = 0;
 };
 
 //
@@ -50,7 +49,7 @@ public:
    HttpServer( HttpVersion version = HttpVersion11 );
    ~HttpServer();
 
-   bool Launch( std::string_view addr, int32 nPort );
+   bool Launch( const char* addr, int32 nPort );
 
    bool Close();
 

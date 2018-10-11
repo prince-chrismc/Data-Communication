@@ -30,21 +30,20 @@ using namespace std::chrono_literals;
 
 HttpServer::HttpServer( HttpVersion version /*= HttpVersion11*/ ) : m_eVersion( version )
 {
-
 }
 
 HttpServer::~HttpServer()
 {
-
+   m_oExitEvent.set_exception( std::make_exception_ptr( std::runtime_error( "Failed to close server!" ) ) );
 }
 
-bool HttpServer::Launch( std::string_view addr, int32 nPort )
+bool HttpServer::Launch( const char* addr, int32 nPort )
 {
    bool bRetVal = m_oSocket.Initialize();
 
    if( bRetVal )
    {
-      bRetVal = m_oSocket.Listen( addr.data(), nPort );
+      bRetVal = m_oSocket.Listen( addr, nPort );
    }
 
    if( bRetVal )
@@ -69,7 +68,7 @@ bool HttpServer::Launch( std::string_view addr, int32 nPort )
 
 bool HttpServer::Close()
 {
-   bool bRetVal = m_oSocket.Shutdown(CSimpleSocket::Both);
+   bool bRetVal = m_oSocket.Shutdown( CSimpleSocket::Both );
 
    if( bRetVal )
    {
