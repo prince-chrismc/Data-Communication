@@ -62,11 +62,11 @@ include_directories("Cli-Parser/src/")
 # HTTP Library
 FILE(GLOB HTTP_CPP "Simple-Sockets/examples/http/*.cpp")
 FILE(GLOB HTTP_SVR_CPP "Simple-Sockets/examples/http/HttpServer.cpp")
-LIST(REMOVE_ITEM HTTP_CPP "Simple-Sockets/examples/http/HttpServer.cpp")
+LIST(REMOVE_ITEM HTTP_CPP ${CMAKE_CURRENT_SOURCE_DIR}/Simple-Sockets/examples/http/HttpServer.cpp)
 
 FILE(GLOB HTTP_H "Simple-Sockets/examples/http/*.h")
-FILE(GLOB HTTP_SVR_H "Simple-Sockets/examples/http/HttpServer*.h")
-LIST(REMOVE_ITEM HTTP_H "Simple-Sockets/examples/http/HttpServer.h")
+FILE(GLOB HTTP_SVR_H "Simple-Sockets/examples/http/HttpServer.h")
+LIST(REMOVE_ITEM HTTP_H ${CMAKE_CURRENT_SOURCE_DIR}/Simple-Sockets/examples/http/HttpServer.h)
 
 SET_SOURCE_FILES_PROPERTIES( ${HTTP_H} PROPERTIES HEADER_FILE_ONLY TRUE )
 LIST(APPEND HTTP ${HTTP_CPP} ${HTTP_H})
