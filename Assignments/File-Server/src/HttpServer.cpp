@@ -91,10 +91,8 @@ bool HttpServer::Launch( const char* addr, int32 nPort )
                   std::thread( PersistentConnection, m_vecClients.back().get() ).detach();
                   break;
                default:
-                  throw new std::invalid_argument( "Bad HTTP version!" );
+                  throw std::invalid_argument( "Bad HTTP version!" );
                }
-
-               ; // TODO: Create read thread...
             }
          }
                    } ).detach();
