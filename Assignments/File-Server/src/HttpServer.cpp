@@ -53,7 +53,27 @@ bool HttpServer::Launch( const char* addr, int32 nPort )
 
    if( bRetVal )
    {
-      std::thread( [ this ] {
+      const auto NonPersistentConnection = [ oExitEvent = m_oExitEvent.get_future(), Servlets = m_RestfulServlets ]( CActiveSocket* pClient )
+      {
+         HttpResponseParserAdvance oResponseParserParser;
+         int32 bytes_rcvd = -1;
+         do
+         {
+            bytes_rcvd = pClient->Receive( 1024 );
+
+            if( bytes_rcvd <= 0 ) break;
+
+
+         } while( !oResponseParserParser.AppendResponseData(
+            std::string( reinterpret_cast<const char*>( pClient->GetData() ), bytes_rcvd ) ) );
+
+         HttpResponse oRes = oResponseParserParser.GetHttpResponse();
+      };
+
+      const auto PersistentConnection = [ oExitEvent = m_oExitEvent.get_future(), Servlets = m_RestfulServlets ]( CActiveSocket* pClient ){};
+
+
+      std::thread( [ this, &NonPersistentConnection, &PersistentConnection ] {
          auto oExitEvent = m_oExitEvent.get_future();
          while( oExitEvent.wait_for( 10ms ) == std::future_status::timeout )
          {
@@ -62,7 +82,19 @@ bool HttpServer::Launch( const char* addr, int32 nPort )
             {
                m_vecClients.push_back( std::move( pClient ) );
 
-               m_vecClients.back().get(); // TODO: Create read thread...
+               switch( m_eVersion )
+               {
+               case HttpVersion10:
+                  std::thread( NonPersistentConnection, m_vecClients.back().get() ).detach();
+                  break;
+               case HttpVersion11:
+                  std::thread( PersistentConnection, m_vecClients.back().get() ).detach();
+                  break;
+               default:
+                  throw new std::invalid_argument( "Bad HTTP version!" );
+               }
+
+               ; // TODO: Create read thread...
             }
          }
                    } ).detach();
