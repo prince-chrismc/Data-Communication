@@ -31,6 +31,7 @@ SOFTWARE.
 #include <vector>
 #include <future>
 #include <memory>
+#include <map>
 #include "HttpResponse.h"
 #include "HttpRequest.h"
 
@@ -38,7 +39,7 @@ class HttpServlet
 {
 public:
    virtual ~HttpServlet() = default;
-   virtual HttpResponse HandleRequest( const HttpRequest& request ) = 0;
+   virtual HttpResponse HandleRequest( const HttpRequest& request ) const noexcept = 0;
 };
 
 //
@@ -48,6 +49,8 @@ class HttpServer
 public:
    HttpServer( HttpVersion version = HttpVersion11 );
    ~HttpServer();
+
+   bool RegisterServlet( const char* uri, HttpServlet* servlet );
 
    bool Launch( const char* addr, int32 nPort );
 
@@ -59,4 +62,16 @@ private:
    std::promise<void> m_oExitEvent;
 
    std::vector<std::unique_ptr<CActiveSocket>> m_vecClients;
+
+   struct UriComparator
+   {
+      bool operator()( const std::string& lhs, const std::string& rhs ) const
+      {
+         return ( std::count( lhs.begin(), lhs.end(), '/' ) < std::count( rhs.begin(), rhs.end(), '/' ) ) ? true :
+            ( std::count( lhs.begin(), lhs.end(), '/' ) > std::count( rhs.begin(), rhs.end(), '/' ) ) ? false :
+         ( lhs.length() < rhs.length() ) ? true : ( lhs.length() > rhs.length() ) ? false : lhs.compare( rhs ) < 0;
+      }
+   };
+
+   std::map<std::string, HttpServlet*, UriComparator> m_RestfulServlets;
 };

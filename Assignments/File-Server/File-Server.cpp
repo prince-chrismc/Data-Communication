@@ -40,6 +40,11 @@ int main( int argc, char** argv )
 
       HttpServer oServer;
 
+      oServer.RegisterServlet( "/", nullptr );
+      oServer.RegisterServlet( "/helloWorld", nullptr );
+      oServer.RegisterServlet( "/test", nullptr );
+      oServer.RegisterServlet( "/test/123", nullptr );
+
       oServer.Launch( "127.0.0.1", 8080 );
 
       std::this_thread::sleep_for( 1s );
