@@ -47,7 +47,7 @@ int main( int argc, char** argv )
 
       oServer.Launch( "127.0.0.1", 8080 );
 
-      std::this_thread::sleep_for( 1s );
+      std::this_thread::sleep_for( 1h );
 
       oServer.Close();
    }

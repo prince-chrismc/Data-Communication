@@ -34,7 +34,7 @@ HttpServer::HttpServer( HttpVersion version /*= HttpVersion11*/ ) : m_eVersion( 
 
 HttpServer::~HttpServer()
 {
-   m_oExitEvent.set_exception( std::make_exception_ptr( std::runtime_error( "Failed to close server!" ) ) );
+   //m_oExitEvent.set_exception( std::make_exception_ptr( std::runtime_error( "Failed to close server!" ) ) );
 }
 
 bool HttpServer::RegisterServlet( const char * uri, HttpServlet * servlet )
@@ -53,49 +53,37 @@ bool HttpServer::Launch( const char* addr, int32 nPort )
 
    if( bRetVal )
    {
-      const auto NonPersistentConnection = [ oExitEvent = m_oExitEvent.get_future(), Servlets = m_RestfulServlets ]( CActiveSocket* pClient )
-      {
-         HttpResponseParserAdvance oResponseParserParser;
-         int32 bytes_rcvd = -1;
-         do
-         {
-            bytes_rcvd = pClient->Receive( 1024 );
+      //const auto PersistentConnection = [ oExitEvent = m_oExitEvent.get_future().share(), Servlets = m_RestfulServlets ]( CActiveSocket* pClient )
+      //{
 
-            if( bytes_rcvd <= 0 ) break;
+      //};
 
 
-         } while( !oResponseParserParser.AppendResponseData(
-            std::string( reinterpret_cast<const char*>( pClient->GetData() ), bytes_rcvd ) ) );
+      std::thread( [ this ]
+                   {
+                      auto oExitEvent = m_oExitEvent.get_future().share();
+                      while( oExitEvent.wait_for( 10ms ) == std::future_status::timeout )
+                      {
+                         std::unique_ptr<CActiveSocket> pClient;
+                         if( ( pClient = m_oSocket.Accept() ) != nullptr ) // Wait for an incomming connection
+                         {
+                            m_vecClients.push_back( std::move( pClient ) );
 
-         HttpResponse oRes = oResponseParserParser.GetHttpResponse();
-      };
-
-      const auto PersistentConnection = [ oExitEvent = m_oExitEvent.get_future(), Servlets = m_RestfulServlets ]( CActiveSocket* pClient ){};
-
-
-      std::thread( [ this, &NonPersistentConnection, &PersistentConnection ] {
-         auto oExitEvent = m_oExitEvent.get_future();
-         while( oExitEvent.wait_for( 10ms ) == std::future_status::timeout )
-         {
-            std::unique_ptr<CActiveSocket> pClient;
-            if( ( pClient = m_oSocket.Accept() ) != nullptr ) // Wait for an incomming connection
-            {
-               m_vecClients.push_back( std::move( pClient ) );
-
-               switch( m_eVersion )
-               {
-               case HttpVersion10:
-                  std::thread( NonPersistentConnection, m_vecClients.back().get() ).detach();
-                  break;
-               case HttpVersion11:
-                  std::thread( PersistentConnection, m_vecClients.back().get() ).detach();
-                  break;
-               default:
-                  throw std::invalid_argument( "Bad HTTP version!" );
-               }
-            }
-         }
-                   } ).detach();
+                            switch( m_eVersion )
+                            {
+                            case HttpVersion10:
+                            case HttpVersion11:
+                               std::thread( [ this ]( CActiveSocket* pClient ) { NonPersistentConnection( pClient ); }, m_vecClients.back().get() ).detach();
+                               break;
+                               //std::thread( PersistentConnection, m_vecClients.back().get() ).detach();
+                               break;
+                            default:
+                               throw std::invalid_argument( "Bad HTTP version!" );
+                            }
+                         }
+                      }
+                   }
+      ).detach();
    }
 
    return bRetVal;
@@ -113,4 +101,38 @@ bool HttpServer::Close()
    m_oExitEvent.set_value();
 
    return bRetVal;
+}
+
+HttpServlet* HttpServer::BestMatchingServlet( const std::string & uri ) const
+{
+   for( auto itor = m_RestfulServlets.crbegin(); itor != m_RestfulServlets.crend(); itor++ )
+   {
+      if( itor->first.size() <= uri.size() && itor->first.compare( 0, uri.length(), uri ) == 0 ) return itor->second;
+   }
+
+   return nullptr;
+}
+
+void HttpServer::NonPersistentConnection( CActiveSocket * pClient ) const noexcept
+{
+   {
+      HttpRequestParserAdvance oParser;
+      int32 bytes_rcvd = -1;
+      do
+      {
+         bytes_rcvd = pClient->Receive( 1024 );
+
+         if( bytes_rcvd <= 0 ) break;
+
+      } while( !oParser.AppendRequestData(
+         std::string( reinterpret_cast<const char*>( pClient->GetData() ), bytes_rcvd ) ) );
+
+      HttpRequest oRequest = oParser.GetHttpRequest();
+
+      BestMatchingServlet( oRequest.GetUri() );
+
+      //HttpResponse oResponse = 
+
+
+   }
 }

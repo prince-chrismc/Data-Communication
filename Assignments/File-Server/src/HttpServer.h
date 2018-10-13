@@ -57,7 +57,7 @@ public:
    bool Close();
 
 private:
-   HttpVersion m_eVersion;
+   const HttpVersion m_eVersion;
    CPassiveSocket m_oSocket;
    std::promise<void> m_oExitEvent;
 
@@ -65,6 +65,10 @@ private:
 
    struct UriComparator
    {
+      //
+      // Conditions for sorting URIs
+      // - Number of slashes
+      // - Left of relative path
       bool operator()( const std::string& lhs, const std::string& rhs ) const
       {
          return ( std::count( lhs.begin(), lhs.end(), '/' ) < std::count( rhs.begin(), rhs.end(), '/' ) ) ? true :
@@ -74,4 +78,8 @@ private:
    };
 
    std::map<std::string, HttpServlet*, UriComparator> m_RestfulServlets;
+
+
+   HttpServlet* BestMatchingServlet( const std::string& uri ) const;
+   void NonPersistentConnection( CActiveSocket* pClient ) const noexcept;
 };
