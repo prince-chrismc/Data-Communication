@@ -69,15 +69,18 @@ public:
 
    HttpResponse HandleRequest( const HttpRequest& request ) const noexcept override
    {
-      HttpResponse oResponse( HttpVersion10, HttpStatusOk, "OK");
+      HttpResponse oResponse( HttpVersion10, HttpStatusOk, "OK" );
 
       oResponse.SetContentType( HttpContentText );
 
-      oResponse.AppendMessageBody( "Directory: " + m_Path.string() + "\r\n" );
+      oResponse.AppendMessageBody( "Directory: " + std::filesystem::absolute( m_Path ).string() + "\r\n" );
 
-      for( auto& items: std::filesystem::directory_iterator( m_Path ))
+      for( auto& oEntry : std::filesystem::directory_iterator( m_Path ) )
       {
-         oResponse.AppendMessageBody( "   - " + items.path().string() + "\r\n" );
+         if( oEntry.is_directory() )
+            oResponse.AppendMessageBody( "   - " + oEntry.path().filename().string() + "/\r\n" );
+         else if( oEntry.is_regular_file() )
+            oResponse.AppendMessageBody( "   - " + oEntry.path().filename().string() + "\r\n" );
       }
 
       return oResponse;
