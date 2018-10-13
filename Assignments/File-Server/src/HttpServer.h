@@ -32,7 +32,7 @@ SOFTWARE.
 #include <future>
 #include <memory>
 #include <map>
-#include <algorithm>
+#include <mutex>
 #include "HttpResponse.h"
 #include "HttpRequest.h"
 
@@ -60,9 +60,15 @@ public:
 private:
    const HttpVersion m_eVersion;
    CPassiveSocket m_oSocket;
-   std::promise<void> m_oExitEvent;
 
+   std::unique_ptr<std::promise<void>> m_pExitEvent;
+
+
+   std::mutex m_muConnectionList;
    std::vector<std::unique_ptr<CActiveSocket>> m_vecClients;
+
+   std::condition_variable m_cvCleanSignal;
+
 
    struct UriComparator
    {
