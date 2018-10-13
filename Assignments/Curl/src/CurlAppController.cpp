@@ -27,6 +27,7 @@ SOFTWARE.
 #include "CurlAppController.h"
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 CurlAppController::CurlAppController( int argc, char ** argv )
    : m_oCliParser( argc, argv )
@@ -196,7 +197,10 @@ void CurlAppController::parsePostOptions( CommandLineParser::ArgIterator itor )
 
       std::ifstream fileReader( *itor );
       if( !fileReader ) { printPostUsage(); throw std::invalid_argument( "Unable to use file specified with -f switch" ); }
-      fileReader >> m_sBody;
+
+      std::stringstream fileBuffer;
+      fileBuffer << fileReader.rdbuf();
+      m_sBody = fileBuffer.str();
 
       itor++;
    }
