@@ -65,7 +65,7 @@ private:
 
 
    std::mutex m_muConnectionList;
-   std::vector<std::unique_ptr<CActiveSocket>> m_vecClients;
+   std::vector<std::pair<std::chrono::steady_clock::time_point, std::unique_ptr<CActiveSocket>>> m_vecClients;
 
    std::condition_variable m_cvCleanSignal;
 

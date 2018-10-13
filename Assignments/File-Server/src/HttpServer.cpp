@@ -63,17 +63,25 @@ bool HttpServer::Launch( const char* addr, int32 nPort )
 
       //};
 
-      auto oExitEvent = std::make_shared<std::shared_future<void>>(m_pExitEvent->get_future());
+      auto oExitEvent = std::make_shared<std::shared_future<void>>( m_pExitEvent->get_future() );
 
       std::thread( [ this, oExitEvent ]
                    {
                       while( oExitEvent->wait_for( 10ms ) == std::future_status::timeout )
                       {
                          std::unique_lock<std::mutex> cleanLock( m_muConnectionList );
-                         if( m_cvCleanSignal.wait_for( cleanLock, 20ms, [ this ] { return !m_vecClients.empty() /*&& m_vecClients.front()->IsClosed()*/; } ) )
+                         if( m_cvCleanSignal.wait_for( cleanLock, 20ms, [ this ] { return !m_vecClients.empty(); } ) )
                          {
-                            //m_vecClients.erase( std::remove_if( m_vecClients.begin(), m_vecClients.end(),
-                            //                    []( auto& pClient ) { return pClient->IsClosed(); } ) );
+                            for( auto itor = m_vecClients.begin(); itor != m_vecClients.end(); /* no itor */ )
+                            {
+                               if( ( std::chrono::steady_clock::now() - itor->first ) > 100s )
+                                  // TODO : Close presistent connections !
+                                  itor = m_vecClients.erase( itor );
+                               else
+                                  itor++;
+                            }
+
+                            m_vecClients.shrink_to_fit();
                          }
                       }
                    }
@@ -88,13 +96,13 @@ bool HttpServer::Launch( const char* addr, int32 nPort )
                          if( ( pClient = m_oSocket.Accept() ) != nullptr ) // Wait for an incomming connection
                          {
                             std::lock_guard<std::mutex> oAutoLock( m_muConnectionList );
-                            m_vecClients.push_back( std::move( pClient ) );
+                            m_vecClients.emplace_back( std::chrono::steady_clock::now(), std::move( pClient ) );
 
                             switch( m_eVersion )
                             {
                             case HttpVersion10:
                             case HttpVersion11:
-                               std::thread( [ this ]( CActiveSocket* pClient ) { NonPersistentConnection( pClient ); }, m_vecClients.back().get() ).detach();
+                               std::thread( [ this ]( CActiveSocket* pClient ) { NonPersistentConnection( pClient ); }, m_vecClients.back().second.get() ).detach();
                                break;
                                //std::thread( PersistentConnection, m_vecClients.back().get() ).detach();
                                break;
