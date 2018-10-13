@@ -43,9 +43,9 @@ public:
       if( !fileReader ) { throw std::invalid_argument( "Unable to use file specified for favicon" ); }
 
       const size_t size = fileReader.tellg();
-      m_IconBytes.resize( size - 8 + 1, '\0' ); // construct string
-      fileReader.seekg( 8 ); // the first 8 bytes area header for PNG format
-      fileReader.read( m_IconBytes.data(), size - 8 );
+      m_IconBytes.resize( size + 1, '\0' ); // construct string
+      fileReader.seekg( 0 ); // rewind
+      fileReader.read( m_IconBytes.data(), size );
    }
 
    HttpResponse HandleRequest( const HttpRequest& request ) const noexcept override
