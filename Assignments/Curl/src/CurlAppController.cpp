@@ -195,12 +195,13 @@ void CurlAppController::parsePostOptions( CommandLineParser::ArgIterator itor )
    {
       moreArgsToRead( ++itor, MISSING_URL );
 
-      std::ifstream fileReader( *itor );
+      std::ifstream fileReader( *itor, std::ios::in | std::ios::binary | std::ios::ate );
       if( !fileReader ) { printPostUsage(); throw std::invalid_argument( "Unable to use file specified with -f switch" ); }
 
-      std::stringstream fileBuffer;
-      fileBuffer << fileReader.rdbuf();
-      m_sBody = fileBuffer.str();
+      const size_t size = fileReader.tellg();
+      m_sBody.resize( size + 1, '\0' ); // construct buffer
+      fileReader.seekg( 0 ); // rewind
+      fileReader.read( m_sBody.data(), size );
 
       itor++;
    }
