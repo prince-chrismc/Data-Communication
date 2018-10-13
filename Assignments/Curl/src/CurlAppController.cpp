@@ -84,6 +84,8 @@ void CurlAppController::Run()
    {
       if( m_bVerbose ) std::cout << "Connectioning to " << m_oHref.m_sHostName << " on port " << 80 << "..." << std::endl;
       retval = oClient.Open( m_oHref.m_sHostName.c_str(), 80 );
+
+      if( !retval && m_bVerbose ) std::cout << "Connection could not be established!" << std::endl;
    }
 
    if( retval )
@@ -119,14 +121,17 @@ void CurlAppController::Run()
       if( m_bVerbose ) std::cout << "Transmission Completed..." << std::endl;
    }
 
-   HttpResponse oRes = oResponseParserParser.GetHttpResponse();
+   if( retval )
+   {
+      HttpResponse oRes = oResponseParserParser.GetHttpResponse();
 
-   if( m_bVerbose ) std::cout << "Closing..." << std::endl;
-   oClient.Close();
-   if( m_bVerbose ) std::cout  << std::endl << std::endl << "Here's the response!" << std::endl << std::endl;
+      if( m_bVerbose ) std::cout << "Closing..." << std::endl;
+      oClient.Close();
+      if( m_bVerbose ) std::cout << std::endl << std::endl << "Here's the response!" << std::endl << std::endl;
 
-   std::cout << oRes.GetWireFormat();
-   std::cout.flush();
+      std::cout << oRes.GetWireFormat();
+      std::cout.flush();
+   }
 }
 
 //

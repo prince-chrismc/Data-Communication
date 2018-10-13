@@ -28,8 +28,36 @@ SOFTWARE.
 #include <iostream>
 #include <exception>
 #include <filesystem>
+#include <fstream>
 
 using namespace std::chrono_literals;
+
+class IconServlet : public HttpServlet
+{
+public:
+   IconServlet( const std::string& png_path )
+   {
+      if( png_path.substr( png_path.length() - 4 ) != ".png" ) throw std::invalid_argument( "This server only supports PNG format icons!" );
+
+      std::ifstream fileReader( png_path, std::ios::in | std::ios::binary | std::ios::ate );
+      if( !fileReader ) { throw std::invalid_argument( "Unable to use file specified for favicon" ); }
+
+      const size_t size = fileReader.tellg();
+      m_IconBytes.resize( size - 8 + 1, '\0' ); // construct string
+      fileReader.seekg( 8 ); // the first 8 bytes area header for PNG format
+      fileReader.read( m_IconBytes.data(), size - 8 );
+   }
+
+   HttpResponse HandleRequest( const HttpRequest& request ) const noexcept override
+   {
+      HttpResponse oResponse( HttpVersion10, HttpStatusOk, "OK", HttpContentPng, {} );
+      oResponse.AppendMessageBody( m_IconBytes );
+      return oResponse;
+   }
+
+private:
+   std::string m_IconBytes;
+};
 
 class FileServlet : public HttpServlet
 {
@@ -42,7 +70,7 @@ public:
 
    HttpResponse HandleRequest( const HttpRequest& request ) const noexcept override
    {
-      return{ HttpVersion10, HttpStatusNoContent, "NO CONTENT" };
+      return{ HttpVersion10, HttpStatusOk, "OK" };
    }
 
 private:
@@ -58,10 +86,11 @@ int main( int argc, char** argv )
       // oApp.Run();
 
       HttpServer oServer( HttpVersion10 );
-      std::unique_ptr< FileServlet> oFileExplorer = std::make_unique<FileServlet>("..");
+      std::unique_ptr<FileServlet> oFileExplorer = std::make_unique<FileServlet>( ".." );
+      std::unique_ptr<IconServlet> oFavicon = std::make_unique<IconServlet>( argv[ 1 ] );
 
       oServer.RegisterServlet( "/", oFileExplorer.get() );
-      //oServer.RegisterServlet( "/helloWorld", nullptr );
+      oServer.RegisterServlet( "/favicon.ico", oFavicon.get() );
       //oServer.RegisterServlet( "/test", nullptr );
       //oServer.RegisterServlet( "/test/123", nullptr );
 

@@ -129,6 +129,11 @@ void HttpServer::NonPersistentConnection( CActiveSocket * pClient ) const noexce
       } while( !oParser.AppendRequestData(
          std::string( reinterpret_cast<const char*>( pClient->GetData() ), bytes_rcvd ) ) );
 
+      if( pClient->IsClosed() )
+      {
+         return; // Connection closed!
+      }
+
       HttpRequest oRequest = oParser.GetHttpRequest();
 
       HttpResponse oResponse = BestMatchingServlet( oRequest.GetUri() )->HandleRequest( oRequest );
@@ -142,6 +147,14 @@ void HttpServer::NonPersistentConnection( CActiveSocket * pClient ) const noexce
 
 bool HttpServer::UriComparator::operator()( const std::string & lhs, const std::string & rhs ) const
 {
+   if( lhs == "/" )
+   {
+      return true;
+   }
+   if( rhs == "/" )
+   {
+      return false;
+   }
    if( std::count( lhs.begin(), lhs.end(), '/' ) < std::count( rhs.begin(), rhs.end(), '/' ) )
    {
       return true;
