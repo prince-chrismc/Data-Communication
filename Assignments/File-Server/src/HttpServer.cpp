@@ -131,23 +131,23 @@ void HttpServer::NonPersistentConnection( CActiveSocket * pClient ) const noexce
 
       HttpRequest oRequest = oParser.GetHttpRequest();
 
-      BestMatchingServlet( oRequest.GetUri() );
-
-      //HttpResponse oResponse = 
-
-
+      HttpResponse oResponse = BestMatchingServlet( oRequest.GetUri() )->HandleRequest( oRequest );
    }
 }
 
 bool HttpServer::UriComparator::operator()( const std::string & lhs, const std::string & rhs ) const
 {
-   return ( std::count( lhs.begin(), lhs.end(), '/' ) < std::count( rhs.begin(), rhs.end(), '/' ) ) ? true :
-      ( std::count( lhs.begin(), lhs.end(), '/' ) > std::count( rhs.begin(), rhs.end(), '/' ) ) ? false :
-      [stripped_lhs = reduce( lhs, " ", "/" ), stripped_rhs = reduce( rhs, " ", "/" )]()->bool
+   if( std::count( lhs.begin(), lhs.end(), '/' ) < std::count( rhs.begin(), rhs.end(), '/' ) )
    {
+      return true;
+   }
+   else if( std::count( lhs.begin(), lhs.end(), '/' ) == std::count( rhs.begin(), rhs.end(), '/' ) )
+   {
+      std::string stripped_lhs = reduce( lhs, " ", "/" );
       std::istringstream iss_lhs( stripped_lhs );
       std::vector<std::string> tokens_lhs{ std::istream_iterator<std::string>{iss_lhs}, std::istream_iterator<std::string>{} };
 
+      std::string stripped_rhs = reduce( rhs, " ", "/" );
       std::istringstream iss_rhs( stripped_rhs );
       std::vector<std::string> tokens_rhs{ std::istream_iterator<std::string>{iss_rhs}, std::istream_iterator<std::string>{} };
 
@@ -159,9 +159,7 @@ bool HttpServer::UriComparator::operator()( const std::string & lhs, const std::
          }
       }
 
-      return true;
-   }( );
+   }
 
-
-   ( lhs.length() < rhs.length() ) ? true : ( lhs.length() > rhs.length() ) ? false : lhs.compare( rhs ) < 0;
+   return false;
 }
