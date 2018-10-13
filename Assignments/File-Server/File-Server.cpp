@@ -64,17 +64,27 @@ class FileServlet : public HttpServlet
 public:
    FileServlet( std::string path ) : m_Path( path )
    {
-      std::filesystem::path oServerRoot( m_Path );
-      if( !std::filesystem::is_directory( oServerRoot ) ) throw std::logic_error( "File exploration must happen from a directory!" );
+      if( !std::filesystem::is_directory( m_Path ) ) throw std::logic_error( "File exploration must happen from a directory!" );
    }
 
    HttpResponse HandleRequest( const HttpRequest& request ) const noexcept override
    {
-      return{ HttpVersion10, HttpStatusOk, "OK" };
+      HttpResponse oResponse( HttpVersion10, HttpStatusOk, "OK");
+
+      oResponse.SetContentType( HttpContentText );
+
+      oResponse.AppendMessageBody( "Directory: " + m_Path.string() + "\r\n" );
+
+      for( auto& items: std::filesystem::directory_iterator( m_Path ))
+      {
+         oResponse.AppendMessageBody( "   - " + items.path().string() + "\r\n" );
+      }
+
+      return oResponse;
    }
 
 private:
-   const std::string m_Path;
+   const std::filesystem::path m_Path;
 };
 
 int main( int argc, char** argv )

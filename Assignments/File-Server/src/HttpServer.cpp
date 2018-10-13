@@ -87,7 +87,6 @@ bool HttpServer::Launch( const char* addr, int32 nPort )
                    }
       ).detach();
 
-
       std::thread( [ this, oExitEvent ]
                    {
                       while( oExitEvent->wait_for( 10ms ) == std::future_status::timeout )
