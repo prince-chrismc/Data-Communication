@@ -70,12 +70,7 @@ private:
       // Conditions for sorting URIs
       // - Number of slashes
       // - Left of relative path
-      bool operator()( const std::string& lhs, const std::string& rhs ) const
-      {
-         return ( std::count( lhs.begin(), lhs.end(), '/' ) < std::count( rhs.begin(), rhs.end(), '/' ) ) ? true :
-            ( std::count( lhs.begin(), lhs.end(), '/' ) > std::count( rhs.begin(), rhs.end(), '/' ) ) ? false :
-         ( lhs.length() < rhs.length() ) ? true : ( lhs.length() > rhs.length() ) ? false : lhs.compare( rhs ) < 0;
-      }
+      bool operator()( const std::string& lhs, const std::string& rhs ) const;
    };
 
    std::map<std::string, HttpServlet*, UriComparator> m_RestfulServlets;

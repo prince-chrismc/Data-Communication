@@ -25,6 +25,8 @@ SOFTWARE.
 */
 
 #include "HttpServer.h"
+#include <iterator>
+#include <sstream>
 
 using namespace std::chrono_literals;
 
@@ -135,4 +137,31 @@ void HttpServer::NonPersistentConnection( CActiveSocket * pClient ) const noexce
 
 
    }
+}
+
+bool HttpServer::UriComparator::operator()( const std::string & lhs, const std::string & rhs ) const
+{
+   return ( std::count( lhs.begin(), lhs.end(), '/' ) < std::count( rhs.begin(), rhs.end(), '/' ) ) ? true :
+      ( std::count( lhs.begin(), lhs.end(), '/' ) > std::count( rhs.begin(), rhs.end(), '/' ) ) ? false :
+      [stripped_lhs = reduce( lhs, " ", "/" ), stripped_rhs = reduce( rhs, " ", "/" )]()->bool
+   {
+      std::istringstream iss_lhs( stripped_lhs );
+      std::vector<std::string> tokens_lhs{ std::istream_iterator<std::string>{iss_lhs}, std::istream_iterator<std::string>{} };
+
+      std::istringstream iss_rhs( stripped_rhs );
+      std::vector<std::string> tokens_rhs{ std::istream_iterator<std::string>{iss_rhs}, std::istream_iterator<std::string>{} };
+
+      for( size_t i = 0; i < tokens_rhs.size(); i++ )
+      {
+         if( tokens_lhs.at( i ) != tokens_rhs.at( i ) )
+         {
+            return tokens_lhs.at( i ) < tokens_rhs.at( i );
+         }
+      }
+
+      return true;
+   }( );
+
+
+   ( lhs.length() < rhs.length() ) ? true : ( lhs.length() > rhs.length() ) ? false : lhs.compare( rhs ) < 0;
 }
