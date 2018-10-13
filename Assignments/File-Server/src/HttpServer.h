@@ -32,6 +32,7 @@ SOFTWARE.
 #include <future>
 #include <memory>
 #include <map>
+#include <algorithm>
 #include "HttpResponse.h"
 #include "HttpRequest.h"
 
