@@ -132,6 +132,11 @@ void HttpServer::NonPersistentConnection( CActiveSocket * pClient ) const noexce
       HttpRequest oRequest = oParser.GetHttpRequest();
 
       HttpResponse oResponse = BestMatchingServlet( oRequest.GetUri() )->HandleRequest( oRequest );
+
+      std::string sRawRequest = oResponse.GetWireFormat();
+      pClient->Send( reinterpret_cast<const uint8*>(sRawRequest.c_str()), sRawRequest.size() );
+
+      pClient->Close();
    }
 }
 
@@ -158,7 +163,6 @@ bool HttpServer::UriComparator::operator()( const std::string & lhs, const std::
             return tokens_lhs.at( i ) < tokens_rhs.at( i );
          }
       }
-
    }
 
    return false;

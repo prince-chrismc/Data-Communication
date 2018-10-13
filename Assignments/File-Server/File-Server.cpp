@@ -27,8 +27,27 @@ SOFTWARE.
 #include "HttpServer.h"
 #include <iostream>
 #include <exception>
+#include <filesystem>
 
 using namespace std::chrono_literals;
+
+class FileServlet : public HttpServlet
+{
+public:
+   FileServlet( std::string path ) : m_Path( path )
+   {
+      std::filesystem::path oServerRoot( m_Path );
+      if( !std::filesystem::is_directory( oServerRoot ) ) throw std::logic_error( "File exploration must happen from a directory!" );
+   }
+
+   HttpResponse HandleRequest( const HttpRequest& request ) const noexcept override
+   {
+      return{ HttpVersion10, HttpStatusNoContent, "NO CONTENT" };
+   }
+
+private:
+   const std::string m_Path;
+};
 
 int main( int argc, char** argv )
 {
@@ -38,12 +57,13 @@ int main( int argc, char** argv )
 
       // oApp.Run();
 
-      HttpServer oServer;
+      HttpServer oServer( HttpVersion10 );
+      std::unique_ptr< FileServlet> oFileExplorer = std::make_unique<FileServlet>("..");
 
-      oServer.RegisterServlet( "/", nullptr );
-      oServer.RegisterServlet( "/helloWorld", nullptr );
-      oServer.RegisterServlet( "/test", nullptr );
-      oServer.RegisterServlet( "/test/123", nullptr );
+      oServer.RegisterServlet( "/", oFileExplorer.get() );
+      //oServer.RegisterServlet( "/helloWorld", nullptr );
+      //oServer.RegisterServlet( "/test", nullptr );
+      //oServer.RegisterServlet( "/test/123", nullptr );
 
       oServer.Launch( "127.0.0.1", 8080 );
 
