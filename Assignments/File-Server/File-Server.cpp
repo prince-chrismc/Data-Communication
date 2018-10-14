@@ -105,7 +105,7 @@ public:
    HttpResponse HandleFileRequest( const std::filesystem::path& requested ) const noexcept
    {
       HttpResponse oResponse( HttpVersion10, HttpStatusOk, "OK" );
-      oResponse.SetContentType( HttpContentText );
+      oResponse.SetContentType( FileExtensionToContentType(requested) );
       oResponse.AddMessageHeader( "Content-Disposition", "inline" );
 
       oResponse.AppendMessageBody( "File: " + std::filesystem::canonical( requested ).string() + "\r\n" );
@@ -121,6 +121,26 @@ public:
       oResponse.AppendMessageBody( fileBuffer );
 
       return oResponse;
+   }
+
+   HttpContentType FileExtensionToContentType( const std::filesystem::path& requested ) const noexcept
+   {
+      if( !std::filesystem::is_regular_file( requested ) )
+         return HttpContentInvalid;
+
+      if( ! requested.has_extension() )
+         return HttpContentText;
+
+      if( requested.filename().string().find( "vcxproj") != std::string::npos )
+         return HttpContentXml;
+
+      if( requested.extension() == "html" )
+         return HttpContentHtml;
+
+      if( requested.extension() == "json" )
+         return HttpContentJson;
+
+      return HttpContentText;
    }
 
 private:
