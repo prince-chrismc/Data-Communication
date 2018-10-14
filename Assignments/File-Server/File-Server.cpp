@@ -71,13 +71,27 @@ public:
    {
       std::filesystem::path oRequested = m_Path / request.GetUri().substr(1);
 
+      if( ! std::filesystem::exists( oRequested ) )
+         return{ HttpVersion10, HttpStatusNotFound, "NOT FOUND" };
+
+      if( std::filesystem::is_directory(oRequested) )
+            return HandleDirectoryRequest( oRequested );
+
+      if( std::filesystem::is_regular_file(oRequested) )
+            return HandleFileRequest(oRequested);
+
+      return{ HttpVersion10, HttpStatusNotImplemented, "ONLY SUPPORTS DIRS AND FILES"};
+   }
+
+   HttpResponse HandleDirectoryRequest(const std::filesystem::path& requested ) const noexcept
+   {
       HttpResponse oResponse( HttpVersion10, HttpStatusOk, "OK" );
 
       oResponse.SetContentType( HttpContentText );
 
-      oResponse.AppendMessageBody( "Directory: " + std::filesystem::canonical( oRequested ).string() + "\r\n" );
+      oResponse.AppendMessageBody( "Directory: " + std::filesystem::canonical( requested ).string() + "\r\n" );
 
-      for( auto& oEntry : std::filesystem::directory_iterator( oRequested ) )
+      for( auto& oEntry : std::filesystem::directory_iterator( requested ) )
       {
          if( oEntry.is_directory() )
             oResponse.AppendMessageBody( "   - " + oEntry.path().filename().string() + "/\r\n" );
@@ -88,6 +102,25 @@ public:
       return oResponse;
    }
 
+   HttpResponse HandleFileRequest(const std::filesystem::path& requested ) const noexcept
+   {
+      HttpResponse oResponse( HttpVersion10, HttpStatusOk, "OK" );
+
+      oResponse.SetContentType( HttpContentText );
+      oResponse.AppendMessageBody( "File: " + std::filesystem::canonical( requested ).string() + "\r\n" );
+
+      std::ifstream fileReader( requested.string(), std::ios::in | std::ios::binary | std::ios::ate );
+      if( !fileReader ) return{ HttpVersion10, HttpStatusInternalServerError, "COULD NOT LOAD FILE"};
+
+      const size_t size = fileReader.tellg();
+      std::string fileBuffer( size + 1, '\0' ); // construct buffer
+      fileReader.seekg( 0 ); // rewind
+      fileReader.read( fileBuffer.data(), size );
+
+      oResponse.AppendMessageBody( fileBuffer );
+
+      return oResponse;
+   }
 private:
    const std::filesystem::path m_Path;
 };
