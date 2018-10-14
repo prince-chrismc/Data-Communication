@@ -334,3 +334,4 @@ Assignments/build/
 \.vscode/
 
 Assignments/build-linux/
+Assignments/build-clang/
