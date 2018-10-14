@@ -105,8 +105,9 @@ public:
    HttpResponse HandleFileRequest(const std::filesystem::path& requested ) const noexcept
    {
       HttpResponse oResponse( HttpVersion10, HttpStatusOk, "OK" );
+      oResponse.SetContentType( HttpContentHtml );
+      oResponse.AddMessageHeader( "Content-Disposition", "inline" );
 
-      oResponse.SetContentType( HttpContentText );
       oResponse.AppendMessageBody( "File: " + std::filesystem::canonical( requested ).string() + "\r\n" );
 
       std::ifstream fileReader( requested.string(), std::ios::in | std::ios::binary | std::ios::ate );
