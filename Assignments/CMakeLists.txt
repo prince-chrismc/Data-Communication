@@ -78,7 +78,7 @@ if(UNIX)
 
     ADD_EXECUTABLE(File-Server.run File-Server/File-Server.cpp ${FS} ${HTTP})
     target_include_directories(File-Server.run PRIVATE File-Server/src Simple-Sockets/examples/http/)
-    TARGET_LINK_LIBRARIES(File-Server.run Simple-Socket Cli-Parser pthread)
+    TARGET_LINK_LIBRARIES(File-Server.run Simple-Socket Cli-Parser stdc++fs pthread)
 elseif(WIN32)
     ADD_EXECUTABLE(Curl Curl/Curl.cpp ${CURL} ${HTTP})
     target_include_directories(Curl PRIVATE Curl/src Simple-Sockets/examples/http/)
