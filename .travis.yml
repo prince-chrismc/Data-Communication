@@ -8,11 +8,13 @@ matrix:
       addons:
         apt:
           sources:
-          - ubuntu-toolchain-r-test
-          - llvm-toolchain-trusty-7
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-7
           packages:
-          - clang-7
-          - libstdc++-7-dev
+            - clang-7
+            - llvm-7-dev
+            - libstdc++-7-dev
+            - libc++-7-dev
       env:
       - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7"
 
@@ -23,6 +25,7 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-7
+            - libstdc++-7-dev
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
