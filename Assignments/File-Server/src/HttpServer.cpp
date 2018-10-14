@@ -135,7 +135,7 @@ HttpServlet* HttpServer::BestMatchingServlet( const std::string & uri ) const
 {
    for( auto itor = m_RestfulServlets.crbegin(); itor != m_RestfulServlets.crend(); itor++ )
    {
-      if( itor->first.size() <= uri.size() && itor->first.compare( 0, uri.length(), uri ) == 0 ) return itor->second;
+      if( uri.compare( 0, itor->first.length(), itor->first ) == 0 ) return itor->second;
    }
 
    return nullptr;
