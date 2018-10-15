@@ -10,10 +10,9 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
             - llvm-toolchain-trusty-6.0
-            - llvm-toolchain-trusty-7
           packages:
             - clang-6.0
-            - llvm-toolchain-7
+            - g++-8
       env:
       - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
       
@@ -25,7 +24,7 @@ matrix:
             - llvm-toolchain-trusty-7
           packages:
             - clang-7
-            - llvm-toolchain-7
+            - g++-8
       env:
       - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7"
 
