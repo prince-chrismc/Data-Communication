@@ -9,12 +9,21 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-6.0
+          packages:
+            - clang-6.0
+            - g++-8
+      env:
+      - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
+      
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
             - llvm-toolchain-trusty-7
           packages:
             - clang-7
-            - llvm-7-dev
-            - libstdc++-7-dev
-            - libc++-7-dev
             - g++-8
       env:
       - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7"
