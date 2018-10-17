@@ -3,9 +3,9 @@ This is a C++ networking  repository to contain my work for Data Communications 
 
 ### Table of Contents
 - [Modules](#Modules)
-  - [Libraries Installation](#Libraries-Installation)
-  - [Setting Enviroment Variables](#Setting-Enviroment-Variables)
- - [Building](#Building)
+   - [Assignments](#Assignments)
+   - [External Libraries](#Libraries)
+- [Building](#Building)
   
 ## Modules
 #### [Assignments](https://github.com/prince-chrismc/Data-Communication/tree/master/Assignments)
