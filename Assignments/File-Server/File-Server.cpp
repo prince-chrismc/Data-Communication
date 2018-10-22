@@ -114,7 +114,7 @@ public:
       if( !fileReader ) return{ HttpVersion10, HttpStatusInternalServerError, "COULD NOT LOAD FILE" };
 
       const size_t size = fileReader.tellg();
-      std::string fileBuffer( size + 1, '\0' ); // construct buffer
+      std::string fileBuffer( size, '\0' ); // construct buffer
       fileReader.seekg( 0 ); // rewind
       fileReader.read( fileBuffer.data(), size );
 
@@ -131,14 +131,19 @@ public:
       if( ! requested.has_extension() )
          return HttpContentText;
 
-      if( requested.filename().string().find( "vcxproj") != std::string::npos )
+printf("Requested Extension: %s\r\n", requested.extension().c_str() );
+
+      if( requested.filename().string().find( ".vcxproj") != std::string::npos )
          return HttpContentXml;
 
-      if( requested.extension() == "html" )
+      if( requested.extension() == ".html" )
          return HttpContentHtml;
 
-      if( requested.extension() == "json" )
+      if( requested.extension() == ".json" )
          return HttpContentJson;
+
+      if( requested.extension() == ".yml" )
+         return HttpContentYaml;
 
       return HttpContentText;
    }
