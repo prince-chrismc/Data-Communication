@@ -69,6 +69,20 @@ public:
 
    HttpResponse HandleRequest( const HttpRequest& request ) const noexcept override
    {
+      switch(request.GetMethod())
+      {
+      case HttpRequestGet:
+         return HandleGetRequest( request );
+      case HttpRequestPost:
+         return HandlePostRequest( request );
+      default: break;
+      }
+
+      return{ HttpVersion10, HttpStatusMethodNotAllowed, "SERVER ONLY ACCEPTS GET AND POST METHODS" };
+   }
+
+   HttpResponse HandleGetRequest( const HttpRequest& request ) const noexcept
+   {
       std::string sRequestedItem = request.GetUri().substr( 1 );
 
       if( sRequestedItem.length() && sRequestedItem.at(0) == '.')
@@ -153,6 +167,52 @@ public:
          return HttpContentPng;
 
       return HttpContentText;
+   }
+
+
+   HttpResponse HandlePostRequest( const HttpRequest& request ) const noexcept
+   {
+      std::string sRequestedItem = request.GetUri().substr( 1 );
+
+      if( sRequestedItem.length() && sRequestedItem.at(0) == '.')
+         return{ HttpVersion10, HttpStatusForbidden, "NICE TRY ACCESSING FORBIDDEN DIRECTORY OF FILE SYSTEM" };
+
+      const std::filesystem::path oRequested = m_Path / sRequestedItem;
+
+      if( !std::filesystem::exists( oRequested ) )
+         return CreateItem( oRequested );
+
+      if( std::filesystem::is_directory( oRequested ) )
+         return{ HttpVersion10, HttpStatusBadRequest, "CAN NOT CREATE EXISTING DIRECTORIES" };
+
+      if( std::filesystem::is_regular_file( oRequested ) )
+         return WriteFile( oRequested, request.GetBody() );
+
+      return{ HttpVersion10, HttpStatusNotImplemented, "ONLY SUPPORTS DIRS AND FILES" };
+   }
+
+   HttpResponse CreateItem( const std::filesystem::path& requested ) const noexcept
+   {
+      if( ! requested.has_extension() )
+         return CreateDirectory(requested);
+      else
+         return CreateFile(requested);
+   }
+
+   HttpResponse CreateFile( const std::filesystem::path& requested ) const noexcept
+   {
+      return{ HttpVersion10, HttpStatusNotImplemented, "CREATE FILES NOT IMPLEMENTED" };
+   }
+
+   HttpResponse CreateDirectory( const std::filesystem::path& requested ) const noexcept
+   {
+      return{ HttpVersion10, HttpStatusNotImplemented, "CREATE DIRECTORIES NOT IMPLEMENTED" };
+   }
+
+   HttpResponse WriteFile( const std::filesystem::path& requested,
+                           const std::string& content ) const noexcept
+   {
+      return{ HttpVersion10, HttpStatusNotImplemented, "WRITE FILE NOT IMPLEMENTED" };
    }
 
 private:
