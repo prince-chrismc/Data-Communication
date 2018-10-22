@@ -206,7 +206,21 @@ public:
 
    HttpResponse CreateDirectory( const std::filesystem::path& requested ) const noexcept
    {
-      return{ HttpVersion10, HttpStatusNotImplemented, "CREATE DIRECTORIES NOT IMPLEMENTED" };
+      HttpResponse oResponse(HttpVersion10, HttpStatusConflict, "FAILE TO CREATE DIRECTORIES");
+      try
+      {
+         if( std::filesystem::create_directories( requested ) )
+            oResponse = HttpResponse{ HttpVersion10, HttpStatusCreated, "CREATED DIRECTORIES" };
+         else
+            throw std::runtime_error( "Failed to create directory(ies) for path: " + 
+                                      std::filesystem::absolute(requested).string() + "\r\n" );
+      }
+      catch(const std::exception& e)
+      {
+            oResponse.AppendMessageBody( e.what() );
+      }
+
+      return oResponse;
    }
 
    HttpResponse WriteFile( const std::filesystem::path& requested,
