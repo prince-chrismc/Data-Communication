@@ -108,7 +108,8 @@ public:
       oResponse.SetContentType( FileExtensionToContentType(requested) );
       oResponse.AddMessageHeader( "Content-Disposition", "inline" );
 
-      oResponse.AppendMessageBody( "File: " + std::filesystem::canonical( requested ).string() + "\r\n" );
+      if( oResponse.GetContentType() != HttpContentPng )
+            oResponse.AppendMessageBody( "File: " + std::filesystem::canonical( requested ).string() + "\r\n" );
 
       std::ifstream fileReader( requested.string(), std::ios::in | std::ios::binary | std::ios::ate );
       if( !fileReader ) return{ HttpVersion10, HttpStatusInternalServerError, "COULD NOT LOAD FILE" };
@@ -131,8 +132,6 @@ public:
       if( ! requested.has_extension() )
          return HttpContentText;
 
-printf("Requested Extension: %s\r\n", requested.extension().c_str() );
-
       if( requested.filename().string().find( ".vcxproj") != std::string::npos )
          return HttpContentXml;
 
@@ -144,6 +143,9 @@ printf("Requested Extension: %s\r\n", requested.extension().c_str() );
 
       if( requested.extension() == ".yml" )
          return HttpContentYaml;
+
+      if( requested.extension() == ".png" )
+         return HttpContentPng;
 
       return HttpContentText;
    }
