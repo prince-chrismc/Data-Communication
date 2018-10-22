@@ -69,7 +69,12 @@ public:
 
    HttpResponse HandleRequest( const HttpRequest& request ) const noexcept override
    {
-      const std::filesystem::path oRequested = m_Path / request.GetUri().substr( 1 );
+      std::string sRequestedItem = request.GetUri().substr( 1 );
+
+      if( sRequestedItem.length() && sRequestedItem.at(0) == '.')
+         return{ HttpVersion10, HttpStatusForbidden, "NICE TRY ACCESSING FORBIDDEN DIRECTORY OF FILE SYSTEM" };
+
+      const std::filesystem::path oRequested = m_Path / sRequestedItem;
 
       if( !std::filesystem::exists( oRequested ) )
          return{ HttpVersion10, HttpStatusNotFound, "NOT FOUND" };
