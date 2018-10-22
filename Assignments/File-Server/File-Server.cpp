@@ -180,7 +180,7 @@ public:
       const std::filesystem::path oRequested = m_Path / sRequestedItem;
 
       if( !std::filesystem::exists( oRequested ) )
-         return CreateItem( oRequested );
+         return CreateItem( oRequested, request.GetBody() );
 
       if( std::filesystem::is_directory( oRequested ) )
          return{ HttpVersion10, HttpStatusBadRequest, "CAN NOT CREATE EXISTING DIRECTORIES" };
@@ -191,17 +191,45 @@ public:
       return{ HttpVersion10, HttpStatusNotImplemented, "ONLY SUPPORTS DIRS AND FILES" };
    }
 
-   HttpResponse CreateItem( const std::filesystem::path& requested ) const noexcept
+   HttpResponse CreateItem( const std::filesystem::path& requested,
+                           const std::string& content ) const noexcept
    {
       if( ! requested.has_extension() )
          return CreateDirectory(requested);
       else
-         return CreateFile(requested);
+         return CreateFile(requested, content);
    }
 
-   HttpResponse CreateFile( const std::filesystem::path& requested ) const noexcept
+   HttpResponse CreateFile( const std::filesystem::path& requested,
+                            const std::string& content ) const noexcept
    {
-      return{ HttpVersion10, HttpStatusNotImplemented, "CREATE FILES NOT IMPLEMENTED" };
+      HttpResponse oResponse(HttpVersion10, HttpStatusConflict, "FAILE TO CREATE FILE");
+      try
+      {
+         std::ofstream fileWriter( requested.string() );
+
+         if( !fileWriter )
+            throw std::runtime_error( "Failed to create file located at: " + 
+                                      std::filesystem::canonical(requested).string() + "\r\n" );
+
+         fileWriter << content << std::endl;
+         fileWriter.close();
+
+         oResponse = HttpResponse( HttpVersion10, HttpStatusCreated, "CREATED FILE" );
+         oResponse.SetContentType( FileExtensionToContentType( requested ) );
+         oResponse.AddMessageHeader( "Content-Disposition", "inline" );
+
+         if( oResponse.GetContentType() != HttpContentPng )
+            oResponse.AppendMessageBody( "File: " + std::filesystem::canonical( requested ).string() + "\r\n" );
+
+         oResponse.AppendMessageBody( content + "\r\n" );
+      }
+      catch(const std::exception& e)
+      {
+         oResponse.AppendMessageBody( e.what() );
+      }
+
+      return oResponse;
    }
 
    HttpResponse CreateDirectory( const std::filesystem::path& requested ) const noexcept
