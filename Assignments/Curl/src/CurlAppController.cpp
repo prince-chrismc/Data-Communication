@@ -83,7 +83,7 @@ void CurlAppController::Run()
    if( retval )
    {
       if( m_bVerbose ) std::cout << "Connectioning to " << m_oHref.m_sHostName << " on port " << 80 << "..." << std::endl;
-      retval = oClient.Open( m_oHref.m_sHostName.c_str(), 80 );
+      retval = oClient.Open( m_oHref.m_sHostName.c_str(), m_oHref.m_nPortNumber );
 
       if( !retval && m_bVerbose ) std::cout << "Connection could not be established!" << std::endl;
    }
@@ -91,7 +91,7 @@ void CurlAppController::Run()
    if( retval )
    {
       if( m_bVerbose ) std::cout << "Building Request..." << std::endl;
-      HttpRequest oReq( m_eCommand, m_oHref.m_sUri, HttpVersion10, m_oHref.m_sHostName );
+      HttpRequest oReq( m_eCommand, m_oHref.m_sUri, HttpVersion10, m_oHref.m_sHostName + std::to_string(m_oHref.m_nPortNumber) );
       for( auto& oFeildNameAndValue : m_oExtraHeaders )
       {
          oReq.AddMessageHeader( oFeildNameAndValue.first, oFeildNameAndValue.second );

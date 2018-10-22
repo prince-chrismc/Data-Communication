@@ -53,10 +53,10 @@ HrefParser& HrefParser::Parse( const std::string& fullUrl )
    if( oHref.m_sHostName.empty() ) throw ParseError( "Unable to determine host name or IP addr" );
 
    if( ulColumn != std::string::npos && ulSlash != std::string::npos )
-      oHref.m_nPortNumber = std::stoul( fullUrl.substr( ulColumn, ulSlash - ulColumn ) );
+      oHref.m_nPortNumber = std::stoul( fullUrl.substr( ulColumn + 1, ulSlash - ulColumn - 1 ) );
 
    if( ulEndOfHostName != std::string::npos )
-      oHref.m_sUri = fullUrl.substr( ulEndOfHostName );
+      oHref.m_sUri = fullUrl.substr( ulSlash );
 
    return *this;
 }
