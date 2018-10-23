@@ -24,23 +24,26 @@ SOFTWARE.
 
 */
 
-#include "AppController.h"
-#include <iostream>
-#include <exception>
+#pragma once
 
-int main( int argc, char** argv )
+#include "CliParser.h"
+
+class AppController
 {
-   AppController oApp( argc, argv );
-   try
-   {
-       oApp.Initialize();
+public:
+   AppController( int argc, char** argv );
 
-       oApp.Run();
-   }
-   catch( const std::exception& e )
-   {
-      std::cout << std::endl << "  --> ERROR: " << e.what() << std::endl;
-   }
+   void Initialize();
 
-   return 1;
-}
+   void Run();
+
+private:
+   CommandLineParser m_CliParser;
+
+   bool         m_Verbose;
+   unsigned int m_Port;
+   std::string  m_FileExplorerRoot;
+   std::string  m_FaviconPath;
+
+   static void printGeneralUsage();
+};

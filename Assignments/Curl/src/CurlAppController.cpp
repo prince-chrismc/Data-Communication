@@ -28,6 +28,8 @@ SOFTWARE.
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <stdexcept>
+#include "ActiveSocket.h"
 
 CurlAppController::CurlAppController( int argc, char ** argv )
    : m_oCliParser( argc, argv )
@@ -69,7 +71,7 @@ void CurlAppController::Run()
    case HttpRequestPost:
       break;
    default:
-      std::exception( /*If you see this please don't look for the developer to report a bug =)*/ );
+      std::runtime_error( "If you see this please don't look for the developer to report a bug =)" );
       break;
    }
 
@@ -91,7 +93,7 @@ void CurlAppController::Run()
    if( retval )
    {
       if( m_bVerbose ) std::cout << "Building Request..." << std::endl;
-      HttpRequest oReq( m_eCommand, m_oHref.m_sUri, HttpVersion10, m_oHref.m_sHostName + std::to_string(m_oHref.m_nPortNumber) );
+      HttpRequest oReq( m_eCommand, m_oHref.m_sUri, HttpVersion10, m_oHref.m_sHostName + std::to_string( m_oHref.m_nPortNumber ) );
       for( auto& oFeildNameAndValue : m_oExtraHeaders )
       {
          oReq.AddMessageHeader( oFeildNameAndValue.first, oFeildNameAndValue.second );
@@ -99,7 +101,7 @@ void CurlAppController::Run()
       oReq.AppendMessageBody( m_sBody );
       std::string sRawRequest = oReq.GetWireFormat();
 
-      if( m_bVerbose ) std::cout  << "Raw request:" << std::endl << std::endl << sRawRequest << std::endl << std::endl << "Sending...";
+      if( m_bVerbose ) std::cout << "Raw request:" << std::endl << std::endl << sRawRequest << std::endl << std::endl << "Sending...";
       retval = oClient.Send( (uint8*)sRawRequest.c_str(), sRawRequest.size() );
    }
 

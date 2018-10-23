@@ -24,14 +24,13 @@ SOFTWARE.
 
 */
 
+#pragma once
+
 #include "CliParser.h"
-#include "ActiveSocket.h"
 
 #include "HttpResponse.h"
 #include "HttpRequest.h"
 #include "Href.h"
-
-#include <stdexcept>
 
 class CurlAppController
 {
@@ -47,7 +46,7 @@ private:
    HttpRequestMethod m_eCommand;
    bool              m_bVerbose;
    std::vector<std::pair<std::string, std::string>> m_oExtraHeaders;
-   Href              m_oHref;
+   Href              m_oHref{};
    std::string       m_sBody;
 
    static void printGeneralUsage();
