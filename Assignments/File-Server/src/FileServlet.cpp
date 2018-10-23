@@ -53,7 +53,7 @@ HttpResponse FileServlet::HandleGetRequest( const HttpRequest& request ) const n
 {
    std::string sRequestedItem = request.GetUri().substr( 1 );
 
-   if( sRequestedItem.length() && sRequestedItem.at( 0 ) == '.' )
+   if( sRequestedItem.compare( 0, 2, ".." ) == 0 )
       return{ HttpVersion10, HttpStatusForbidden, "NICE TRY ACCESSING FORBIDDEN DIRECTORY OF FILE SYSTEM" };
 
    const std::filesystem::path oRequested = m_Path / sRequestedItem;
@@ -142,7 +142,7 @@ HttpResponse FileServlet::HandlePostRequest( const HttpRequest& request ) const 
 {
    std::string sRequestedItem = request.GetUri().substr( 1 );
 
-   if( sRequestedItem.length() && sRequestedItem.at( 0 ) == '.' )
+   if( sRequestedItem.compare( 0, 2, ".." ) == 0 )
       return{ HttpVersion10, HttpStatusForbidden, "NICE TRY ACCESSING FORBIDDEN DIRECTORY OF FILE SYSTEM" };
 
    const std::filesystem::path oRequested = m_Path / sRequestedItem;
