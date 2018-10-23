@@ -34,7 +34,6 @@ int main( int argc, char** argv )
    try
    {
        oApp.Initialize();
-
        oApp.Run();
    }
    catch( const std::exception& e )

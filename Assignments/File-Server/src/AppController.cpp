@@ -84,12 +84,21 @@ void AppController::Run()
 {
    HttpServer oServer( HttpVersion10 );
    std::unique_ptr<FileServlet> oFileExplorer = std::make_unique<FileServlet>( m_FileExplorerRoot );
-   std::unique_ptr<IconServlet> oFavicon = std::make_unique<IconServlet>( m_FaviconPath );
-
    oServer.RegisterServlet( "/", oFileExplorer.get() );
-   oServer.RegisterServlet( "/favicon.ico", oFavicon.get() );
 
-   oServer.Launch( "127.0.0.1", 8080 );
+   if( m_FaviconPath.length() )
+   {
+      std::unique_ptr<IconServlet> oFavicon = std::make_unique<IconServlet>( m_FaviconPath );
+      oServer.RegisterServlet( "/favicon.ico", oFavicon.get() );
+   }
+
+   if( m_Verbose )
+      std::cout << "Successfully created sevlets" <<std::endl;
+
+   oServer.Launch( "127.0.0.1", m_Port );
+
+   if( m_Verbose )
+      std::cout << "Successfully launch http server now ready to answer!" <<std::endl;
 
    std::this_thread::sleep_for( 1h );
 
