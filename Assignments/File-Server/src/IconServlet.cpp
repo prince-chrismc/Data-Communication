@@ -24,43 +24,25 @@ SOFTWARE.
 
 */
 
-#include "HttpServer.h"
-#include "FileServlet.h"
 #include "IconServlet.h"
-#include <iostream>
-#include <exception>
+#include <fstream>
 
-using namespace std::chrono_literals;
-
-int main( int argc, char** argv )
+IconServlet::IconServlet( const std::string& png_path )
 {
-   try
-   {
-      // oApp.Initialize();
+   if( png_path.substr( png_path.length() - 4 ) != ".png" ) throw std::invalid_argument( "This server only supports PNG format icons!" );
 
-      // oApp.Run();
+   std::ifstream fileReader( png_path, std::ios::in | std::ios::binary | std::ios::ate );
+   if( !fileReader ) { throw std::invalid_argument( "Unable to use file specified for favicon" ); }
 
-      HttpServer oServer( HttpVersion10 );
-      std::unique_ptr<FileServlet> oFileExplorer = std::make_unique<FileServlet>( ".." );
-      std::unique_ptr<IconServlet> oFavicon = std::make_unique<IconServlet>( argv[ 1 ] );
+   const size_t size = fileReader.tellg();
+   m_IconBytes.resize( size + 1, '\0' ); // construct string
+   fileReader.seekg( 0 ); // rewind
+   fileReader.read( m_IconBytes.data(), size );
+}
 
-      oServer.RegisterServlet( "/", oFileExplorer.get() );
-      oServer.RegisterServlet( "/favicon.ico", oFavicon.get() );
-      //oServer.RegisterServlet( "/test", nullptr );
-      //oServer.RegisterServlet( "/test/123", nullptr );
-
-      oServer.Launch( "127.0.0.1", 8080 );
-
-      std::this_thread::sleep_for( 1h );
-
-      oServer.Close();
-   }
-   catch( const std::exception& e )
-   {
-      std::cout << std::endl << "  --> ERROR: " << e.what() << std::endl;
-   }
-
-   std::this_thread::sleep_for( 1s );
-
-   return 1;
+HttpResponse IconServlet::HandleRequest( const HttpRequest& request ) const noexcept
+{
+   HttpResponse oResponse( HttpVersion10, HttpStatusOk, "OK", HttpContentPng, {} );
+   oResponse.AppendMessageBody( m_IconBytes );
+   return oResponse;
 }

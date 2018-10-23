@@ -24,43 +24,19 @@ SOFTWARE.
 
 */
 
+#pragma once
+
 #include "HttpServer.h"
-#include "FileServlet.h"
-#include "IconServlet.h"
-#include <iostream>
-#include <exception>
 
 using namespace std::chrono_literals;
 
-int main( int argc, char** argv )
+class IconServlet : public HttpServlet
 {
-   try
-   {
-      // oApp.Initialize();
+public:
+   IconServlet( const std::string& png_path );
 
-      // oApp.Run();
+   HttpResponse HandleRequest( const HttpRequest& request ) const noexcept override;
 
-      HttpServer oServer( HttpVersion10 );
-      std::unique_ptr<FileServlet> oFileExplorer = std::make_unique<FileServlet>( ".." );
-      std::unique_ptr<IconServlet> oFavicon = std::make_unique<IconServlet>( argv[ 1 ] );
-
-      oServer.RegisterServlet( "/", oFileExplorer.get() );
-      oServer.RegisterServlet( "/favicon.ico", oFavicon.get() );
-      //oServer.RegisterServlet( "/test", nullptr );
-      //oServer.RegisterServlet( "/test/123", nullptr );
-
-      oServer.Launch( "127.0.0.1", 8080 );
-
-      std::this_thread::sleep_for( 1h );
-
-      oServer.Close();
-   }
-   catch( const std::exception& e )
-   {
-      std::cout << std::endl << "  --> ERROR: " << e.what() << std::endl;
-   }
-
-   std::this_thread::sleep_for( 1s );
-
-   return 1;
-}
+private:
+   std::string m_IconBytes;
+};
