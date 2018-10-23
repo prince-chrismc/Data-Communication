@@ -133,7 +133,7 @@ bool HttpServer::Close()
 
 HttpServlet* HttpServer::BestMatchingServlet( const std::string & uri ) const
 {
-   for( auto itor = m_RestfulServlets.crbegin(); itor != m_RestfulServlets.crend(); itor++ )
+   for( auto itor = m_RestfulServlets.crbegin(); itor != m_RestfulServlets.crend(); ++itor )
    {
       if( uri.compare( 0, itor->first.length(), itor->first ) == 0 ) return itor->second;
    }
