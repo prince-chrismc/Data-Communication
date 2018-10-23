@@ -51,12 +51,10 @@ HttpResponse FileServlet::HandleRequest( const HttpRequest& request ) const noex
 
 HttpResponse FileServlet::HandleGetRequest( const HttpRequest& request ) const noexcept
 {
-   std::string sRequestedItem = request.GetUri().substr( 1 );
-
-   if( sRequestedItem.compare( 0, 2, ".." ) == 0 )
+   if( request.GetUri().find( "/.." ) == std::string::npos )
       return{ HttpVersion10, HttpStatusForbidden, "NICE TRY ACCESSING FORBIDDEN DIRECTORY OF FILE SYSTEM" };
 
-   const std::filesystem::path oRequested = m_Path / sRequestedItem;
+   const std::filesystem::path oRequested = m_Path / request.GetUri().substr(1);
 
    if( !std::filesystem::exists( oRequested ) )
       return{ HttpVersion10, HttpStatusNotFound, "NOT FOUND" };
@@ -140,12 +138,10 @@ HttpContentType FileServlet::FileExtensionToContentType( const std::filesystem::
 
 HttpResponse FileServlet::HandlePostRequest( const HttpRequest& request ) const noexcept
 {
-   std::string sRequestedItem = request.GetUri().substr( 1 );
-
-   if( sRequestedItem.compare( 0, 2, ".." ) == 0 )
+   if( request.GetUri().find( "/.." ) == std::string::npos )
       return{ HttpVersion10, HttpStatusForbidden, "NICE TRY ACCESSING FORBIDDEN DIRECTORY OF FILE SYSTEM" };
 
-   const std::filesystem::path oRequested = m_Path / sRequestedItem;
+   const std::filesystem::path oRequested = m_Path / request.GetUri().substr( 1 );
 
    if( !std::filesystem::exists( oRequested ) )
       return HandleCreateItemRequest( oRequested, request.GetBody() );
