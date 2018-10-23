@@ -58,11 +58,6 @@ bool HttpServer::Launch( const char* addr, int32 nPort )
 
    if( bRetVal )
    {
-      //const auto PersistentConnection = [ oExitEvent = m_oExitEvent.get_future().share(), Servlets = m_RestfulServlets ]( CActiveSocket* pClient )
-      //{
-
-      //};
-
       auto oExitEvent = std::make_shared<std::shared_future<void>>( m_pExitEvent->get_future() );
 
       std::thread( [ this, oExitEvent ]
@@ -91,17 +86,17 @@ bool HttpServer::Launch( const char* addr, int32 nPort )
                    {
                       while( oExitEvent->wait_for( 10ms ) == std::future_status::timeout )
                       {
-                         std::unique_ptr<CActiveSocket> pClient;
-                         if( ( pClient = m_oSocket.Accept() ) != nullptr ) // Wait for an incomming connection
+                         std::shared_ptr<CActiveSocket> pClient;
+                         if( ( pClient = m_oSocket.AcceptSharedOwnership() ) != nullptr ) // Wait for an incomming connection
                          {
                             std::lock_guard<std::mutex> oAutoLock( m_muConnectionList );
-                            m_vecClients.emplace_back( std::chrono::steady_clock::now(), std::move( pClient ) );
+                            m_vecClients.emplace_back( std::chrono::steady_clock::now(), pClient );
 
                             switch( m_eVersion )
                             {
                             case HttpVersion10:
                             case HttpVersion11:
-                               std::thread( [ this ]( CActiveSocket* pClient ) { NonPersistentConnection( pClient ); }, m_vecClients.back().second.get() ).detach();
+                               std::thread( [ this ]( std::shared_ptr<CActiveSocket> pClient ) { NonPersistentConnection( pClient ); }, m_vecClients.back().second ).detach();
                                break;
                                //std::thread( PersistentConnection, m_vecClients.back().get() ).detach();
                                break;
@@ -141,7 +136,7 @@ HttpServlet* HttpServer::BestMatchingServlet( const std::string & uri ) const
    return nullptr;
 }
 
-void HttpServer::NonPersistentConnection( CActiveSocket * pClient ) const noexcept
+void HttpServer::NonPersistentConnection( std::shared_ptr<CActiveSocket> pClient ) const noexcept
 {
    HttpRequestParserAdvance oParser;
    int32 bytes_rcvd = -1;

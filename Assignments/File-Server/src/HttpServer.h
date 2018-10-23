@@ -65,7 +65,7 @@ private:
 
 
    std::mutex m_muConnectionList;
-   std::vector<std::pair<std::chrono::steady_clock::time_point, std::unique_ptr<CActiveSocket>>> m_vecClients;
+   std::vector<std::pair<std::chrono::steady_clock::time_point, std::shared_ptr<CActiveSocket>>> m_vecClients;
 
    std::condition_variable m_cvCleanSignal;
 
@@ -83,5 +83,5 @@ private:
 
 
    HttpServlet* BestMatchingServlet( const std::string& uri ) const;
-   void NonPersistentConnection( CActiveSocket* pClient ) const noexcept;
+   void NonPersistentConnection( std::shared_ptr<CActiveSocket> pClient ) const noexcept;
 };
