@@ -70,10 +70,15 @@ bool HttpServer::Launch( const char* addr, int32 nPort )
                             for( auto itor = m_vecClients.begin(); itor != m_vecClients.end(); /* no itor */ )
                             {
                                if( ( std::chrono::steady_clock::now() - itor->first ) > 100s )
+                               {
                                   // TODO : Close presistent connections !
+                                  if( itor->second != nullptr ) itor->second->Shutdown( CSimpleSocket::Both );
                                   itor = m_vecClients.erase( itor );
+                               }
                                else
-                                  itor++;
+                               {
+                                  ++itor;
+                               }
                             }
 
                             m_vecClients.shrink_to_fit();
@@ -95,9 +100,9 @@ bool HttpServer::Launch( const char* addr, int32 nPort )
                             switch( m_eVersion )
                             {
                             case HttpVersion10:
-                            case HttpVersion11:
                                std::thread( [ this ]( std::shared_ptr<CActiveSocket> pClient ) { NonPersistentConnection( pClient ); }, m_vecClients.back().second ).detach();
                                break;
+                            case HttpVersion11:
                                //std::thread( PersistentConnection, m_vecClients.back().get() ).detach();
                                break;
                             default:
