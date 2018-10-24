@@ -86,9 +86,10 @@ void AppController::Run()
    std::unique_ptr<FileServlet> oFileExplorer = std::make_unique<FileServlet>( m_FileExplorerRoot );
    oServer.RegisterServlet( "/", oFileExplorer.get() );
 
+   std::unique_ptr<IconServlet> oFavicon;
    if( m_FaviconPath.length() )
    {
-      std::unique_ptr<IconServlet> oFavicon = std::make_unique<IconServlet>( m_FaviconPath );
+      oFavicon = std::make_unique<IconServlet>( m_FaviconPath );
       oServer.RegisterServlet( "/favicon.ico", oFavicon.get() );
    }
 
