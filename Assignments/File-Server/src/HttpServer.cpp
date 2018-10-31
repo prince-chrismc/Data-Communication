@@ -47,7 +47,7 @@ bool HttpServer::RegisterServlet( const char * uri, HttpServlet * servlet )
    return m_RestfulServlets.try_emplace( uri, servlet ).second;
 }
 
-bool HttpServer::Launch( const char* addr, int32 nPort )
+bool HttpServer::Launch( const char* addr, int nPort )
 {
    bool bRetVal = m_oSocket.Initialize();
 

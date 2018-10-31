@@ -26,8 +26,6 @@ SOFTWARE.
 
 #pragma once
 
-#include "Constants.h"
-#include "PassiveSocket.h"
 #include <vector>
 #include <future>
 #include <memory>
@@ -35,6 +33,8 @@ SOFTWARE.
 #include <mutex>
 #include "HttpResponse.h"
 #include "HttpRequest.h"
+#include "Constants.h"
+#include "PassiveSocket.h"
 
 class HttpServlet
 {
@@ -53,7 +53,7 @@ public:
 
    bool RegisterServlet( const char* uri, HttpServlet* servlet );
 
-   bool Launch( const char* addr, int32 nPort );
+   bool Launch( const char* addr, int nPort );
 
    bool Close();
 
