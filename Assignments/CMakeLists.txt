@@ -65,11 +65,20 @@ FILE(GLOB HTTP_H "Simple-Sockets/examples/http/*.h")
 SET_SOURCE_FILES_PROPERTIES( ${HTTP_H} PROPERTIES HEADER_FILE_ONLY TRUE )
 LIST(APPEND HTTP ${HTTP_CPP} ${HTTP_H})
 
-# Curl
+# Curl - Assingment 1
 FILE(GLOB CURL "Curl/src/*")
 
-# File Server
+# File Server - Assingment 2
 FILE(GLOB FS "File-Server/src/*")
+
+# httpc && httpfs - Assingment 3
+FILE(GLOB TP_LIB "Text-Protocol/src/*")
+FILE(GLOB TP_CLIENT "Text-Protocol/Client/src/*")
+FILE(GLOB TP_SERVER "Text-Protocol/Server/src/*")
+FILE(GLOB SERVLETS "File-Server/src/*Servlet*")
+
+ADD_LIBRARY(Text-Protocol STATIC ${TP_LIB})
+target_include_directories(Text-Protocol PRIVATE Text-Protocol/src/)
 
 if(UNIX)
     ADD_EXECUTABLE(Curl.run Curl/Curl.cpp ${CURL} ${HTTP})
@@ -79,6 +88,15 @@ if(UNIX)
     ADD_EXECUTABLE(File-Server.run File-Server/File-Server.cpp ${FS} ${HTTP})
     target_include_directories(File-Server.run PRIVATE File-Server/src Simple-Sockets/examples/http/)
     TARGET_LINK_LIBRARIES(File-Server.run Simple-Socket Cli-Parser stdc++fs pthread)
+
+    ADD_EXECUTABLE(Text-Protocol-Client.run Text-Protocol/Client/Main.cpp ${TP_CLIENT} ${HTTP})
+    target_include_directories(Text-Protocol-Client.run PRIVATE Text-Protocol/Client/src/ Simple-Sockets/examples/http/)
+    TARGET_LINK_LIBRARIES(Text-Protocol-Client.run Text-Protocol Simple-Socket Cli-Parser)
+
+    ADD_EXECUTABLE(Text-Protocol-Server.run Text-Protocol/Server/Main.cpp ${TP_SERVER} ${SERVLETS} ${HTTP})
+    target_include_directories(Text-Protocol-Server.run PRIVATE Text-Protocol/Server/src File-Server/src/ Simple-Sockets/examples/http/)
+    TARGET_LINK_LIBRARIES(Text-Protocol-Server.run Text-Protocol Simple-Socket Cli-Parser stdc++fs pthread)
+
 elseif(WIN32)
     ADD_EXECUTABLE(Curl Curl/Curl.cpp ${CURL} ${HTTP})
     target_include_directories(Curl PRIVATE Curl/src Simple-Sockets/examples/http/)
@@ -87,4 +105,12 @@ elseif(WIN32)
     ADD_EXECUTABLE(File-Server File-Server/File-Server.cpp ${FS} ${HTTP})
     target_include_directories(File-Server PRIVATE File-Server/src Simple-Sockets/examples/http/)
     TARGET_LINK_LIBRARIES(File-Server Simple-Socket Cli-Parser)
+
+    ADD_EXECUTABLE(Text-Protocol-Client Text-Protocol/Client/Main.cpp ${TP_CLIENT} ${HTTP})
+    target_include_directories(Text-Protocol-Client PRIVATE Text-Protocol/Client/src/ Simple-Sockets/examples/http/)
+    TARGET_LINK_LIBRARIES(Text-Protocol-Client Text-Protocol Simple-Socket Cli-Parser)
+
+    ADD_EXECUTABLE(Text-Protocol-Server Text-Protocol/Server/Main.cpp ${TP_SERVER} ${SERVLETS} ${HTTP})
+    target_include_directories(Text-Protocol-Server PRIVATE Text-Protocol/Server/src File-Server/src/ Simple-Sockets/examples/http/)
+    TARGET_LINK_LIBRARIES(Text-Protocol-Server Text-Protocol Simple-Socket Cli-Parser)
 endif()
