@@ -28,10 +28,9 @@ SOFTWARE.
 #include <string>
 
 // In little endian, a 32bit integer value of 1 is represented in hex as `0x01 0x00 0x00 0x00`
-constexpr auto TEST_BYTE = 0x00000001;
+constexpr auto TEST_BYTE = 1;
 constexpr bool IS_LITTLE_ENDIAN = ( TEST_BYTE == 0x10000000 );
 constexpr bool IS_BIG_ENDIAN = ( TEST_BYTE == 0x00000001 );
-
 
 namespace TextProtocol
 {
@@ -43,14 +42,28 @@ namespace TextProtocol
       SYN_ACK = SYN + ACK
    };
 
+   enum class SequenceNumber : unsigned long { };
+
+   enum class IpV4Address : unsigned long { };
+
+   enum class PortNumber : unsigned short { };
+
+
    class Message
    {
+   public:
+      Message( PacketType type, SequenceNumber id, IpV4Address dstIp, PortNumber port );
 
+      size_t Size() const;
+      std::string ToByteStream() const;
 
+      static Message Parse( const std::string& rawBytes );
+
+   private:
       PacketType m_PacketType;
-      unsigned long m_SeqNum;
-      unsigned long m_DstIp;
-      unsigned short m_DstPort;
+      SequenceNumber m_SeqNum;
+      IpV4Address m_DstIp;
+      PortNumber m_DstPort;
       std::string m_Payload; // max 1014 bytes
    };
 }

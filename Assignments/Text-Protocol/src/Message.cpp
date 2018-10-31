@@ -26,4 +26,46 @@ SOFTWARE.
 
 #include "Message.h"
 
-using namespace TextProtocol;
+template <typename Enum>
+constexpr auto toBytes( Enum e ) noexcept // https://stackoverflow.com/a/33083231/8480874
+{
+   return static_cast<std::underlying_type_t<Enum>>( e );
+}
+
+uint32_t operator&( const TextProtocol::SequenceNumber& lhs, const int& rhs )
+{
+   return ( static_cast<unsigned long>( lhs ) & static_cast<unsigned long>( rhs ) );
+}
+
+TextProtocol::Message::Message( PacketType type, SequenceNumber id, IpV4Address dstIp, PortNumber port ) :
+   m_PacketType( type ), m_SeqNum( id ), m_DstIp( dstIp ), m_DstPort( port )
+{
+   if constexpr( IS_LITTLE_ENDIAN )
+   {
+      uint32_t b0, b1, b2, b3;
+
+      b0 = ( m_SeqNum & 0x000000ff ) << 24u;
+      b1 = ( m_SeqNum & 0x0000ff00 ) << 8u;
+      b2 = ( m_SeqNum & 0x00ff0000 ) >> 8u;
+      b3 = ( m_SeqNum & 0xff000000 ) >> 24u;
+
+      m_SeqNum = SequenceNumber{ b0 | b1 | b2 | b3 };
+   }
+}
+
+size_t TextProtocol::Message::Size() const
+{
+   static constexpr auto BASE_PACKET_SIZE = sizeof( m_PacketType ) + sizeof( m_SeqNum ) + sizeof( m_DstIp ) + sizeof( m_DstPort );
+   return BASE_PACKET_SIZE + m_Payload.length();
+}
+
+std::string TextProtocol::Message::ToByteStream() const
+{
+   return std::to_string( toBytes( m_PacketType ) ) + std::to_string( toBytes( m_SeqNum ) )
+      + std::to_string( toBytes( m_DstIp ) ) + std::to_string( toBytes( m_DstPort ) ) + m_Payload;
+}
+
+TextProtocol::Message TextProtocol::Message::Parse( const std::string & rawBytes )
+{
+   return Message( PacketType::ACK, SequenceNumber{ 0 }, IpV4Address{ 0 }, PortNumber{ 0 } );
+}
