@@ -47,9 +47,10 @@ bool TextProtocol::Socket::Send( const Message& toSend )
 
    if( msgPayload.length() < 12 ) throw std::runtime_error( "no point in sending an incomplete message" );
 
-   CActiveSocket::Send(
-      reinterpret_cast<const uint8*>( &msgPayload.front() ),
-      toSend.Size()
-   );
-      return false;
+   const auto bytesSent = CActiveSocket::Send( reinterpret_cast<const uint8*>( &msgPayload.front() ),
+                                               toSend.Size() );
+
+   return ( bytesSent == msgPayload.length() );
+}
+
 }
