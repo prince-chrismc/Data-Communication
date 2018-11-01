@@ -27,7 +27,7 @@ SOFTWARE.
 #include "Socket.h"
 
 TextProtocol::Socket::Socket() : CActiveSocket( SocketTypeUdp ), m_Expected{ 0 }, m_Requested{ 0 },
-   m_ServerIp{ 0 }, m_ServerPort{ 0 }
+m_ServerIp{ 0 }, m_ServerPort{ 0 }
 {
 }
 
@@ -53,4 +53,10 @@ bool TextProtocol::Socket::Send( const Message& toSend )
    return ( bytesSent == msgPayload.length() );
 }
 
+TextProtocol::Message TextProtocol::Socket::Receive()
+{
+   CActiveSocket::Receive( Message::MAX_MESSAGE_SIZE );
+   std::string bytesRx = reinterpret_cast<const char*>( GetData() );
+
+   return Message::Parse( bytesRx );
 }

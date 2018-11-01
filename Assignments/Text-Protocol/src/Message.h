@@ -59,6 +59,10 @@ namespace TextProtocol
 
       static Message Parse( const std::string& rawBytes );
 
+      static constexpr auto BASE_PACKET_SIZE = sizeof( PacketType ) + sizeof( SequenceNumber ) + sizeof( IpV4Address ) + sizeof( PortNumber );
+      static constexpr auto MAX_PAYLOAD_LENGTH = 1013;
+      static constexpr auto MAX_MESSAGE_SIZE = BASE_PACKET_SIZE + MAX_PAYLOAD_LENGTH;
+
    private:
       PacketType m_PacketType;
       SequenceNumber m_SeqNum;

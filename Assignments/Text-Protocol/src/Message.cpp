@@ -58,7 +58,6 @@ TextProtocol::Message::Message( PacketType type, SequenceNumber id, IpV4Address 
 
 size_t TextProtocol::Message::Size() const
 {
-   static constexpr auto BASE_PACKET_SIZE = sizeof( m_PacketType ) + sizeof( m_SeqNum ) + sizeof( m_DstIp ) + sizeof( m_DstPort );
    return BASE_PACKET_SIZE + m_Payload.length();
 }
 

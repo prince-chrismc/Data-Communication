@@ -25,6 +25,7 @@ SOFTWARE.
 */
 
 #pragma once
+
 #include "Message.h"
 #include "ActiveSocket.h"
 
@@ -38,6 +39,8 @@ namespace TextProtocol
       bool Open( const char* pAddr, uint16 nPort ) override;
 
       bool Send( const Message& toSend ); // willl be overload
+
+      Message Receive();
 
    private:
       SequenceNumber m_Expected; // by this side
