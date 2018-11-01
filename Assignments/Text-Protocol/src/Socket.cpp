@@ -50,7 +50,7 @@ bool TextProtocol::Socket::Send( const Message& toSend )
    const auto bytesSent = CActiveSocket::Send( reinterpret_cast<const uint8*>( &msgPayload.front() ),
                                                toSend.Size() );
 
-   return ( bytesSent == msgPayload.length() );
+   return ( static_cast<size_t>(bytesSent) == msgPayload.length() );
 }
 
 TextProtocol::Message TextProtocol::Socket::Receive()
