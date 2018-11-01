@@ -30,19 +30,20 @@ SOFTWARE.
 
 namespace TextProtocol
 {
-  class Socket : CActiveSocket
-  {
-  public:
-     Socket() : CActiveSocket( SocketTypeUdp ) {}
+   class Socket : CActiveSocket
+   {
+   public:
+      Socket();
 
-     bool Open(const char* pAddr, uint16 nPort) override;
+      bool Open( const char* pAddr, uint16 nPort ) override;
 
-     int32 Send(const uint8* pBuf, size_t bytesToSend) override; // willl be overload
+      bool Send( const Message& toSend ); // willl be overload
 
-  private:
-     SequenceNumber m_Expected; // by this side
-     SequenceNumber m_Requested; // by the remote
+   private:
+      SequenceNumber m_Expected; // by this side
+      SequenceNumber m_Requested; // by the remote
 
-     IpV4Address m_ServerIp;
-  };
+      IpV4Address m_ServerIp;
+      PortNumber  m_ServerPort;
+   };
 }

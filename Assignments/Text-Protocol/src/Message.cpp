@@ -32,9 +32,19 @@ constexpr auto toBytes( Enum e ) noexcept // https://stackoverflow.com/a/3308323
    return static_cast<std::underlying_type_t<Enum>>( e );
 }
 
-uint32_t operator&( const TextProtocol::SequenceNumber& lhs, const int& rhs )
+constexpr uint32_t operator&( const TextProtocol::SequenceNumber& lhs, const int& rhs )
 {
    return ( static_cast<unsigned long>( lhs ) & static_cast<unsigned long>( rhs ) );
+}
+
+constexpr auto endianSwap(TextProtocol::SequenceNumber num )
+{
+   const uint32_t b0 = (num & 0x000000ff) << 24u;
+   const uint32_t b1 = (num & 0x0000ff00) << 8u;
+   const uint32_t b2 = (num & 0x00ff0000) >> 8u;
+   const uint32_t b3 = (num & 0xff000000) >> 24u;
+
+   return TextProtocol::SequenceNumber{ b0 | b1 | b2 | b3 };
 }
 
 TextProtocol::Message::Message( PacketType type, SequenceNumber id, IpV4Address dstIp, PortNumber port ) :
@@ -42,14 +52,7 @@ TextProtocol::Message::Message( PacketType type, SequenceNumber id, IpV4Address 
 {
    if constexpr( IS_LITTLE_ENDIAN )
    {
-      uint32_t b0, b1, b2, b3;
-
-      b0 = ( m_SeqNum & 0x000000ff ) << 24u;
-      b1 = ( m_SeqNum & 0x0000ff00 ) << 8u;
-      b2 = ( m_SeqNum & 0x00ff0000 ) >> 8u;
-      b3 = ( m_SeqNum & 0xff000000 ) >> 24u;
-
-      m_SeqNum = SequenceNumber{ b0 | b1 | b2 | b3 };
+      m_SeqNum = endianSwap( m_SeqNum );
    }
 }
 
