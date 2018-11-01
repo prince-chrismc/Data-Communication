@@ -25,6 +25,7 @@ SOFTWARE.
 */
 
 #include "Socket.h"
+#include <stdexcept>
 
 TextProtocol::Socket::Socket() : CActiveSocket( SocketTypeUdp ), m_Expected{ 0 }, m_Requested{ 0 },
 m_ServerIp{ 0 }, m_ServerPort{ 0 }
