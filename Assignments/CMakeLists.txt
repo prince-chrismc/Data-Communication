@@ -13,44 +13,43 @@ endif ()
 
 # OS and compiler checks.
 if(UNIX)
-    # linux / normal unix
     add_definitions(-D_LINUX)
     set(CMAKE_CXX_STANDARD 17)
+    set(CMAKE_EXECUTABLE_SUFFIX .run)
+    set(THREAD_LIB pthread)
 
     if(CMAKE_BUILD_TYPE MATCHES Debug)
-      message("Building 'Debug' configuration.")
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -D_DEBUG")
+      add_compile_options(-g -D_DEBUG)
     elseif(CMAKE_BUILD_TYPE MATCHES Release)
-      message("Building 'Release' configuration.")
+      add_compile_options(-O3)
     else()
       set(CMAKE_BUILD_TYPE Release)
       message("Defaulting to 'Release' configuration.")
     endif()
 
-    if(CYGWIN)
-        # Special Cygwin stuff here
-    elseif(APPLE)
-        # Special Apple stuff here
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        add_definitions(-D_CLANG)
+    endif()
+
+    add_compile_options(-Wall -Wextra)
+
+    if(APPLE)
         remove_definitions(-D_LINUX)
         add_definitions(-D_DARWIN)
     endif()
 elseif(WIN32)
     add_definitions(-D_WIN32)
-    if(MINGW)
-        # Special MINGW stuff here
-    elseif(MSVC)
-        # Special MSVC stuff here
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
+
+    if(MSVC)
+        add_compile_options(/std:c++17 -W4)
     else()
-        # No idea what it is, but there's a good chance it's too weird.
-        MESSAGE( FATAL_ERROR "Using unknown WIN32 compiler... NOT. Please add to build system." )
+        message( FATAL_ERROR "Using unknown WIN32 compiler... NOT. Please add to build system." )
     endif()
 endif()
 
 # When done tweaking common stuff, configure the components (subprojects).
 set(SIMPLE_SOCKET_DEP_ONLY true CACHE BOOL "" FORCE)
 set(SIMPLE_SOCKET_EXAMPLES false CACHE BOOL "" FORCE)
-set(CLI_PARSER_DEP_ONLY true CACHE BOOL "" FORCE)
 
 # NOTE: The order matters! The most independent ones should go first.
 add_subdirectory(Simple-Sockets)
@@ -72,45 +71,26 @@ FILE(GLOB CURL "Curl/src/*")
 FILE(GLOB FS "File-Server/src/*")
 
 # httpc && httpfs - Assingment 3
-FILE(GLOB TP_LIB "Text-Protocol/src/*")
+FILE(GLOB TP_SOURCE "Text-Protocol/src/*")
 FILE(GLOB TP_CLIENT "Text-Protocol/Client/src/*")
 FILE(GLOB TP_SERVER "Text-Protocol/Server/src/*")
 FILE(GLOB SERVLETS "File-Server/src/*Servlet*")
 
-ADD_LIBRARY(Text-Protocol STATIC ${TP_LIB})
+ADD_LIBRARY(Text-Protocol STATIC ${TP_SOURCE})
 target_include_directories(Text-Protocol PRIVATE Text-Protocol/src/)
 
-if(UNIX)
-    ADD_EXECUTABLE(Curl.run Curl/Curl.cpp ${CURL} ${HTTP})
-    target_include_directories(Curl.run PRIVATE Curl/src/ Simple-Sockets/examples/http/)
-    TARGET_LINK_LIBRARIES(Curl.run Simple-Socket Cli-Parser)
+ADD_EXECUTABLE(Curl Curl/Curl.cpp ${CURL} ${HTTP})
+target_include_directories(Curl PRIVATE Curl/src/ Simple-Sockets/examples/http/)
+TARGET_LINK_LIBRARIES(Curl Simple-Socket Cli-Parser)
 
-    ADD_EXECUTABLE(File-Server.run File-Server/File-Server.cpp ${FS} ${HTTP})
-    target_include_directories(File-Server.run PRIVATE File-Server/src Simple-Sockets/examples/http/)
-    TARGET_LINK_LIBRARIES(File-Server.run Simple-Socket Cli-Parser stdc++fs pthread)
+ADD_EXECUTABLE(File-Server File-Server/File-Server.cpp ${FS} ${HTTP})
+target_include_directories(File-Server PRIVATE File-Server/src Simple-Sockets/examples/http/)
+TARGET_LINK_LIBRARIES(File-Server Simple-Socket Cli-Parser stdc++fs ${THREAD_LIB})
 
-    ADD_EXECUTABLE(Text-Protocol-Client.run Text-Protocol/Client/Main.cpp ${TP_CLIENT} ${HTTP})
-    target_include_directories(Text-Protocol-Client.run PRIVATE Text-Protocol/Client/src/ Simple-Sockets/examples/http/)
-    TARGET_LINK_LIBRARIES(Text-Protocol-Client.run Text-Protocol Simple-Socket Cli-Parser)
+ADD_EXECUTABLE(Text-Protocol-Client Text-Protocol/Client/Main.cpp ${TP_CLIENT} ${HTTP})
+target_include_directories(Text-Protocol-Client PRIVATE Text-Protocol/Client/src/ Simple-Sockets/examples/http/)
+TARGET_LINK_LIBRARIES(Text-Protocol-Client Text-Protocol Simple-Socket Cli-Parser)
 
-    ADD_EXECUTABLE(Text-Protocol-Server.run Text-Protocol/Server/Main.cpp ${TP_SERVER} ${SERVLETS} ${HTTP})
-    target_include_directories(Text-Protocol-Server.run PRIVATE Text-Protocol/Server/src File-Server/src/ Simple-Sockets/examples/http/)
-    TARGET_LINK_LIBRARIES(Text-Protocol-Server.run Text-Protocol Simple-Socket Cli-Parser stdc++fs pthread)
-
-elseif(WIN32)
-    ADD_EXECUTABLE(Curl Curl/Curl.cpp ${CURL} ${HTTP})
-    target_include_directories(Curl PRIVATE Curl/src Simple-Sockets/examples/http/)
-    TARGET_LINK_LIBRARIES(Curl Simple-Socket Cli-Parser)
-
-    ADD_EXECUTABLE(File-Server File-Server/File-Server.cpp ${FS} ${HTTP})
-    target_include_directories(File-Server PRIVATE File-Server/src Simple-Sockets/examples/http/)
-    TARGET_LINK_LIBRARIES(File-Server Simple-Socket Cli-Parser)
-
-    ADD_EXECUTABLE(Text-Protocol-Client Text-Protocol/Client/Main.cpp ${TP_CLIENT} ${HTTP})
-    target_include_directories(Text-Protocol-Client PRIVATE Text-Protocol/Client/src/ Simple-Sockets/examples/http/)
-    TARGET_LINK_LIBRARIES(Text-Protocol-Client Text-Protocol Simple-Socket Cli-Parser)
-
-    ADD_EXECUTABLE(Text-Protocol-Server Text-Protocol/Server/Main.cpp ${TP_SERVER} ${SERVLETS} ${HTTP})
-    target_include_directories(Text-Protocol-Server PRIVATE Text-Protocol/Server/src File-Server/src/ Simple-Sockets/examples/http/)
-    TARGET_LINK_LIBRARIES(Text-Protocol-Server Text-Protocol Simple-Socket Cli-Parser)
-endif()
+ADD_EXECUTABLE(Text-Protocol-Server Text-Protocol/Server/Main.cpp ${TP_SERVER} ${SERVLETS} ${HTTP})
+target_include_directories(Text-Protocol-Server PRIVATE Text-Protocol/Server/src File-Server/src/ Simple-Sockets/examples/http/)
+TARGET_LINK_LIBRARIES(Text-Protocol-Server Text-Protocol Simple-Socket Cli-Parser stdc++fs ${THREAD_LIB})
