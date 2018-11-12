@@ -25,6 +25,7 @@ SOFTWARE.
 */
 
 #include "Message.h"
+#include <iostream>
 
 template <typename Enum>
 constexpr auto toBytes( Enum e ) noexcept // https://stackoverflow.com/a/33083231/8480874
@@ -65,6 +66,11 @@ std::string TextProtocol::Message::ToByteStream() const
 {
    return std::to_string( toBytes( m_PacketType ) ) + std::to_string( toBytes( m_SeqNum ) )
       + std::to_string( toBytes( m_DstIp ) ) + std::to_string( toBytes( m_DstPort ) ) + m_Payload;
+}
+
+void TextProtocol::Message::Print() const
+{
+   std::cout << "Message: " << ToByteStream() << std::endl;
 }
 
 TextProtocol::Message TextProtocol::Message::Parse( const std::string & rawBytes )

@@ -24,29 +24,29 @@ SOFTWARE.
 
 */
 
-#pragma once
+#include "AppController.h"
+#include "Message.h"
+#include <iostream>
 
-#include "CliParser.h"
-#include "Socket.h"
-
-class AppController
+void AppController::Initialize()
 {
-public:
-   AppController( int argc, char** argv ) : m_CliParser( argc, argv ), m_Verbose( false ), m_Port( 8080 ) {}
+   if( ! m_Socket.Open( "127.0.0.1", 8080 ) )
+      throw std::runtime_error( "Failed to open on port" );
+}
 
-   void Initialize();
+void AppController::Run()
+{
+   while( 1 )
+   {
+      TextProtocol::Message input = m_Socket.Receive();
 
-   void Run();
+      std::cout << "Server obtained the following ";
+      input.Print();
 
-private:
-   CommandLineParser m_CliParser;
+      m_Socket.Send( input );
+   }
 
-   bool         m_Verbose;
-   unsigned int m_Port;
-   std::string  m_FileExplorerRoot;
-   std::string  m_FaviconPath;
+   m_Socket.Close();
 
-   TextProtocol::Socket m_Socket;
-
-   static void printGeneralUsage();
-};
+   return;
+}

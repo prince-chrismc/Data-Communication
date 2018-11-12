@@ -25,6 +25,7 @@ SOFTWARE.
 */
 
 #pragma once
+
 #include <string>
 
 // In little endian, a 32bit integer value of 1 is represented in hex as `0x01 0x00 0x00 0x00`
@@ -56,6 +57,8 @@ namespace TextProtocol
 
       size_t Size() const;
       std::string ToByteStream() const;
+
+      void Print() const;
 
       static Message Parse( const std::string& rawBytes );
 

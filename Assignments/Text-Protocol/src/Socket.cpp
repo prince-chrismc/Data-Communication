@@ -30,6 +30,8 @@ SOFTWARE.
 TextProtocol::Socket::Socket() : CActiveSocket( SocketTypeUdp ), m_Expected{ 0 }, m_Requested{ 0 },
 m_ServerIp{ 0 }, m_ServerPort{ 0 }
 {
+   if( ! Initialize() )
+      throw std::runtime_error( "The OS was unable to create a socket!" );
 }
 
 bool TextProtocol::Socket::Open( const char * pAddr, uint16 nPort )
@@ -46,7 +48,7 @@ bool TextProtocol::Socket::Send( const Message& toSend )
 {
    std::string msgPayload = toSend.ToByteStream();
 
-   if( msgPayload.length() < 12 ) throw std::runtime_error( "no point in sending an incomplete message" );
+   if( msgPayload.length() < 12 ) throw std::logic_error( "no point in sending an incomplete message" );
 
    const auto bytesSent = CActiveSocket::Send( reinterpret_cast<const uint8*>( &msgPayload.front() ),
                                                toSend.Size() );
@@ -60,4 +62,9 @@ TextProtocol::Message TextProtocol::Socket::Receive()
    std::string bytesRx = reinterpret_cast<const char*>( GetData() );
 
    return Message::Parse( bytesRx );
+}
+
+bool TextProtocol::Socket::Close()
+{
+   return CActiveSocket::Close();
 }

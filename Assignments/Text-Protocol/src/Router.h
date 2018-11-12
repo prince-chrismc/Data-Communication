@@ -26,27 +26,8 @@ SOFTWARE.
 
 #pragma once
 
-#include "CliParser.h"
-#include "Socket.h"
-
-class AppController
+namespace TextProtocol::Router
 {
-public:
-   AppController( int argc, char** argv ) : m_CliParser( argc, argv ), m_Verbose( false ), m_Port( 8080 ) {}
-
-   void Initialize();
-
-   void Run();
-
-private:
-   CommandLineParser m_CliParser;
-
-   bool         m_Verbose;
-   unsigned int m_Port;
-   std::string  m_FileExplorerRoot;
-   std::string  m_FaviconPath;
-
-   TextProtocol::Socket m_Socket;
-
-   static void printGeneralUsage();
-};
+   constexpr auto IP_ADDR = "127.0.0.1";
+   constexpr auto PORT = 36578;
+}

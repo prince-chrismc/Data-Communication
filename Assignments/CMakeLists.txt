@@ -88,9 +88,9 @@ target_include_directories(File-Server PRIVATE File-Server/src Simple-Sockets/ex
 TARGET_LINK_LIBRARIES(File-Server Simple-Socket Cli-Parser stdc++fs ${THREAD_LIB})
 
 ADD_EXECUTABLE(Text-Protocol-Client Text-Protocol/Client/Main.cpp ${TP_CLIENT} ${HTTP})
-target_include_directories(Text-Protocol-Client PRIVATE Text-Protocol/Client/src/ Simple-Sockets/examples/http/)
+target_include_directories(Text-Protocol-Client PRIVATE Text-Protocol/Client/src/ Text-Protocol/src Simple-Sockets/examples/http/)
 TARGET_LINK_LIBRARIES(Text-Protocol-Client Text-Protocol Simple-Socket Cli-Parser)
 
 ADD_EXECUTABLE(Text-Protocol-Server Text-Protocol/Server/Main.cpp ${TP_SERVER} ${SERVLETS} ${HTTP})
-target_include_directories(Text-Protocol-Server PRIVATE Text-Protocol/Server/src File-Server/src/ Simple-Sockets/examples/http/)
+target_include_directories(Text-Protocol-Server PRIVATE Text-Protocol/Server/src Text-Protocol/src File-Server/src/ Simple-Sockets/examples/http/)
 TARGET_LINK_LIBRARIES(Text-Protocol-Server Text-Protocol Simple-Socket Cli-Parser stdc++fs ${THREAD_LIB})

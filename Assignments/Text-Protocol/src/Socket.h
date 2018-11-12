@@ -42,6 +42,8 @@ namespace TextProtocol
 
       Message Receive();
 
+      bool Close();
+
    private:
       SequenceNumber m_Expected; // by this side
       SequenceNumber m_Requested; // by the remote
