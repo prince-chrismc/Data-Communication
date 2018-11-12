@@ -27,21 +27,24 @@ SOFTWARE.
 #pragma once
 
 #include "CliParser.h"
+#include "Socket.h"
 
 class AppController
 {
 public:
    AppController( int argc, char** argv ) : m_CliParser( argc, argv ), m_Verbose( false ), m_Port( 8080 ) {}
 
-   void Initialize(){}
+   void Initialize();
 
-   void Run(){}
+   void Run();
 
 private:
    CommandLineParser m_CliParser;
 
    bool         m_Verbose;
    unsigned int m_Port;
+
+   TextProtocol::Socket m_Socket;
 
    static void printGeneralUsage();
 };

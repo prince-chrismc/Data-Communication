@@ -24,31 +24,35 @@ SOFTWARE.
 
 */
 
-#pragma once
-
+#include "AppController.h"
 #include "Message.h"
-#include "ActiveSocket.h"
+#include <iostream>
 
-namespace TextProtocol
+void AppController::Initialize()
 {
-   class Socket : CActiveSocket
-   {
-   public:
-      Socket();
+   if( ! m_Socket.Open( "127.0.0.1", 8080 ) )
+      throw std::runtime_error( "Failed to open on port" );
+}
 
-      bool Open( const char* pAddr, uint16 nPort ) override;
+void AppController::Run()
+{
+      auto output = TextProtocol::Message{TextProtocol::PacketType::ACK, 
+                                          TextProtocol::SequenceNumber{0},
+                                          TextProtocol::IpV4Address{0xEEAA0044},
+                                          TextProtocol::PortNumber{8080}
+      };
 
-      bool Send( const Message& toSend ); // willl be overload
+      std::cout<< "Attempting to send the ";
+      output.Print();
 
-      Message Receive();
+      m_Socket.Send( output );
 
-      bool Close() override;
+      TextProtocol::Message input = m_Socket.Receive();
 
-   private:
-      SequenceNumber m_Expected; // by this side
-      SequenceNumber m_Requested; // by the remote
+      std::cout << "Client obtained the following ";
+      input.Print();
 
-      IpV4Address m_ServerIp;
-      PortNumber  m_ServerPort;
-   };
+   m_Socket.Close();
+
+   return;
 }

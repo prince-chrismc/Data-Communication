@@ -26,6 +26,7 @@ SOFTWARE.
 
 #include "Socket.h"
 #include <stdexcept>
+#include <iostream>
 
 TextProtocol::Socket::Socket() : CActiveSocket( SocketTypeUdp ), m_Expected{ 0 }, m_Requested{ 0 },
 m_ServerIp{ 0 }, m_ServerPort{ 0 }
@@ -46,7 +47,12 @@ bool TextProtocol::Socket::Open( const char * pAddr, uint16 nPort )
 
 bool TextProtocol::Socket::Send( const Message& toSend )
 {
+   std::cout << "Socket::Send >> ";
+   toSend.Print();
+
    std::string msgPayload = toSend.ToByteStream();
+
+   std::cout << "Socket::Send >> " << msgPayload <<std::endl;
 
    if( msgPayload.length() < 12 ) throw std::logic_error( "no point in sending an incomplete message" );
 
@@ -58,10 +64,21 @@ bool TextProtocol::Socket::Send( const Message& toSend )
 
 TextProtocol::Message TextProtocol::Socket::Receive()
 {
-   CActiveSocket::Receive( Message::MAX_MESSAGE_SIZE );
-   std::string bytesRx = reinterpret_cast<const char*>( GetData() );
+   auto bytesObtained = -1;
+   if( ( bytesObtained = CActiveSocket::Receive( Message::MAX_MESSAGE_SIZE ) ) > 0)
+   {
+      std::cout << "Socket::Receive >> " << bytesObtained <<std::endl;
+      std::string bytesRx{ reinterpret_cast<const char*>( GetData() ),
+                           static_cast<size_t>( bytesObtained ) };
 
-   return Message::Parse( bytesRx );
+      return Message::Parse( bytesRx );
+   }
+
+   return{ TextProtocol::PacketType::NACK, 
+           TextProtocol::SequenceNumber{},
+           TextProtocol::IpV4Address{},
+           TextProtocol::PortNumber{}
+         };
 }
 
 bool TextProtocol::Socket::Close()

@@ -31,7 +31,7 @@ if(UNIX)
         add_definitions(-D_CLANG)
     endif()
 
-    add_compile_options(-Wall -Wextra)
+    #add_compile_options(-Wall -Wextra)
 
     if(APPLE)
         remove_definitions(-D_LINUX)

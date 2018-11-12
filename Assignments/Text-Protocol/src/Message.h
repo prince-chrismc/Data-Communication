@@ -71,6 +71,6 @@ namespace TextProtocol
       SequenceNumber m_SeqNum;
       IpV4Address m_DstIp;
       PortNumber m_DstPort;
-      std::string m_Payload; // max 1014 bytes
+      std::string m_Payload = "Hello World!"; // max 1014 bytes
    };
 }
