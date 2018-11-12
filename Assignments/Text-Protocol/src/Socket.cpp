@@ -55,25 +55,34 @@ bool TextProtocol::Socket::Send( const Message& toSend )
    if( msgPayload.length() < TextProtocol::Message::BASE_PACKET_SIZE )
       throw std::logic_error( "no point in sending an incomplete message" );
 
-   if( msgPayload.length() != toSend.Size() )
-      throw std::logic_error( "how did I fuck that up =?" );
+   //if( msgPayload.length() != toSend.Size() )
+   //   throw std::logic_error( "how did I fuck that up =?" );
 
+   std::cout << "Socket::Send >> " << GetServerAddr() << ":" << GetServerPort() << std::endl;
    const auto bytesSent = CActiveSocket::Send( reinterpret_cast<const uint8*>( &msgPayload.front() ),
-                                               toSend.Size() );
+                                               msgPayload.length() );
 
    return ( static_cast<size_t>(bytesSent) == msgPayload.length() );
 }
 
 TextProtocol::Message TextProtocol::Socket::Receive()
 {
+      std::cout << "Socket::Receive >> waiting for message from "
+                << GetClientAddr() << ":" << GetClientPort() <<std::endl;
+
    auto bytesObtained = -1;
    if( ( bytesObtained = CActiveSocket::Receive( Message::MAX_MESSAGE_SIZE ) ) > 0)
    {
-      std::cout << "Socket::Receive >> " << bytesObtained <<std::endl;
+      std::cout << "Socket::Receive >> " << bytesObtained << " from "
+                << GetClientAddr() << ":" << GetClientPort() <<std::endl;
       std::string bytesRx{ reinterpret_cast<const char*>( GetData() ),
                            static_cast<size_t>( bytesObtained ) };
 
       return Message::Parse( bytesRx );
+   }
+   else
+   {
+      std::cout << "Socket::Receive >> " << DescribeError() <<std::endl;
    }
 
    return{ TextProtocol::PacketType::NACK, 

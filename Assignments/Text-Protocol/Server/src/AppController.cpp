@@ -40,7 +40,7 @@ void AppController::Run()
    {
       TextProtocol::Message input = m_Socket.Receive();
 
-      std::cout << "Server obtained the following ";
+      std::cout << "Server >> obtained the following ";
       input.Print();
 
       m_Socket.Send( input );
