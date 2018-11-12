@@ -42,7 +42,7 @@ void AppController::Run()
                                           TextProtocol::PortNumber{8080}
       };
 
-      std::cout<< "Attempting to send the ";
+      std::cout<< "Client attempting to send the ";
       output.Print();
 
       m_Socket.Send( output );

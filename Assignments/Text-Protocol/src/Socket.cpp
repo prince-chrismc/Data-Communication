@@ -52,9 +52,11 @@ bool TextProtocol::Socket::Send( const Message& toSend )
 
    std::string msgPayload = toSend.ToByteStream();
 
-   std::cout << "Socket::Send >> " << msgPayload <<std::endl;
+   if( msgPayload.length() < TextProtocol::Message::BASE_PACKET_SIZE )
+      throw std::logic_error( "no point in sending an incomplete message" );
 
-   if( msgPayload.length() < 12 ) throw std::logic_error( "no point in sending an incomplete message" );
+   if( msgPayload.length() != toSend.Size() )
+      throw std::logic_error( "how did I fuck that up =?" );
 
    const auto bytesSent = CActiveSocket::Send( reinterpret_cast<const uint8*>( &msgPayload.front() ),
                                                toSend.Size() );
