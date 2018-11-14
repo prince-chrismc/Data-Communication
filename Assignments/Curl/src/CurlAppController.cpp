@@ -72,8 +72,7 @@ void CurlAppController::Run()
    case HttpRequestPost:
       break;
    default:
-      std::runtime_error( "If you see this please don't look for the developer to report a bug =)" );
-      break;
+      throw std::runtime_error( "If you see this please don't look for the developer to report a bug =)" );
    }
 
    if( m_bVerbose ) std::cout << "Starting..." << std::endl;
