@@ -27,7 +27,7 @@ SOFTWARE.
 #pragma once
 
 #include "CliParser.h"
-#include "Socket.h"
+#include "PassiveSocket.h"
 
 class AppController
 {
@@ -46,7 +46,7 @@ private:
    std::string  m_FileExplorerRoot;
    std::string  m_FaviconPath;
 
-   TextProtocol::Socket m_Socket;
+   CPassiveSocket m_Socket;
 
    static void printGeneralUsage();
 };

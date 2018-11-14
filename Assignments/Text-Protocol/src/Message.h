@@ -43,7 +43,7 @@ namespace TextProtocol
       SYN_ACK = SYN + ACK
    };
 
-   enum class SequenceNumber : unsigned long { MAX = std::numeric_limits<unsigned long>::max() };
+   enum class SequenceNumber : unsigned long { MAX = 0xffffffffUL };
 
    enum class IpV4Address : unsigned long { };
 

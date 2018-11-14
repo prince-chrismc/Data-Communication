@@ -27,23 +27,27 @@ SOFTWARE.
 #include "AppController.h"
 #include "Message.h"
 #include <iostream>
+#include "Socket.h"
 
 void AppController::Initialize()
 {
-   if( ! m_Socket.Open( "127.0.0.1", 8080 ) )
-      throw std::runtime_error( "Failed to open on port" );
+   if( !m_Socket.Initialize() )
+      throw std::runtime_error( "Failed to init socket" );
+
+   if( ! m_Socket.Listen( "127.0.0.1", 8080 ) )
+      throw std::runtime_error( "Failed to listen on port" );
 }
 
 void AppController::Run()
 {
-   while( 1 )
+   while( true )
    {
-      TextProtocol::Message input = m_Socket.Receive();
+      TextProtocol::Message input = TextProtocol::Socket::Receive( m_Socket );
 
       std::cout << "Server >> obtained the following ";
       input.Print();
 
-      m_Socket.Send( input );
+      TextProtocol::Socket::Send( m_Socket, input );
    }
 
    m_Socket.Close();

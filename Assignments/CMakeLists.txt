@@ -17,6 +17,7 @@ if(UNIX)
     set(CMAKE_CXX_STANDARD 17)
     set(CMAKE_EXECUTABLE_SUFFIX .run)
     set(THREAD_LIB pthread)
+    set(FILESYSTEM_LIB stdc++fs)
 
     if(CMAKE_BUILD_TYPE MATCHES Debug)
       add_compile_options(-g -D_DEBUG)
@@ -82,12 +83,12 @@ TARGET_LINK_LIBRARIES(Curl Simple-Socket Cli-Parser)
 
 ADD_EXECUTABLE(File-Server File-Server/File-Server.cpp ${FS} ${HTTP})
 target_include_directories(File-Server PRIVATE File-Server/src Simple-Sockets/examples/http/)
-TARGET_LINK_LIBRARIES(File-Server Simple-Socket Cli-Parser stdc++fs ${THREAD_LIB})
+TARGET_LINK_LIBRARIES(File-Server Simple-Socket Cli-Parser ${FILESYSTEM_LIB} ${THREAD_LIB})
 
-ADD_EXECUTABLE(Text-Protocol-Client Text-Protocol/Client/Main.cpp ${TP_CLIENT} ${HTTP})
+ADD_EXECUTABLE(Text-Protocol-Client Text-Protocol/Client/Main.cpp Curl/src/Href.cpp Curl/src/Href.h ${TP_CLIENT} ${HTTP})
 target_include_directories(Text-Protocol-Client PRIVATE Text-Protocol/Client/src/ Text-Protocol/src Simple-Sockets/examples/http/)
 TARGET_LINK_LIBRARIES(Text-Protocol-Client Text-Protocol Simple-Socket Cli-Parser)
 
 ADD_EXECUTABLE(Text-Protocol-Server Text-Protocol/Server/Main.cpp ${TP_SERVER} ${SERVLETS} ${HTTP})
 target_include_directories(Text-Protocol-Server PRIVATE Text-Protocol/Server/src Text-Protocol/src File-Server/src/ Simple-Sockets/examples/http/)
-TARGET_LINK_LIBRARIES(Text-Protocol-Server Text-Protocol Simple-Socket Cli-Parser stdc++fs ${THREAD_LIB})
+TARGET_LINK_LIBRARIES(Text-Protocol-Server Text-Protocol Simple-Socket Cli-Parser ${FILESYSTEM_LIB} ${THREAD_LIB})

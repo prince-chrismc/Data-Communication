@@ -27,24 +27,42 @@ SOFTWARE.
 #pragma once
 
 #include "CliParser.h"
-#include "Socket.h"
 
-class AppController
+#include "HttpResponse.h"
+#include "HttpRequest.h"
+#include "../../../Curl/src/Href.h"
+
+class CurlAppController final
 {
 public:
-   AppController( int argc, char** argv ) : m_CliParser( argc, argv ), m_Verbose( false ), m_Port( 8080 ) {}
-
-   void Initialize();
+   CurlAppController( int argc, char** argv );
 
    void Run();
 
+protected:
+   CommandLineParser m_oCliParser;
+   HttpRequestMethod m_eCommand;
+   bool              m_bVerbose;
+   std::vector<std::pair<std::string, std::string>> m_oExtraHeaders;
+   Href              m_oHref{};
+   std::string       m_sBody;
+
 private:
-   CommandLineParser m_CliParser;
-
-   bool         m_Verbose;
-   unsigned int m_Port;
-
-   TextProtocol::Socket m_Socket;
+   void readCommandLineArgs();
 
    static void printGeneralUsage();
+   static void printGetUsage();
+   static void printPostUsage();
+   void printUsageGivenArgs() const;
+
+   void parseGetOptions( CommandLineParser::ArgIterator itor );
+   void parsePostOptions( CommandLineParser::ArgIterator itor );
+
+   void parseVerboseOption( CommandLineParser::ArgIterator& itor );
+   void parseHeaderOption( CommandLineParser::ArgIterator& itor );
+   void parseUrlOption( CommandLineParser::ArgIterator& itor );
+
+   static constexpr std::string_view MISSING_GET_OR_POST = "Missing 'get' or 'post' paramater";
+   static constexpr std::string_view MISSING_URL = "Missing 'URL' paramater";
+   void moreArgsToRead( CommandLineParser::ArgIterator itor, std::string_view errMsg ) const;
 };

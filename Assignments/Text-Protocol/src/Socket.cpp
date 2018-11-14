@@ -24,75 +24,53 @@ SOFTWARE.
 
 */
 
-#include "Socket.h"
 #include <stdexcept>
 #include <iostream>
+#include "Socket.h"
 
-TextProtocol::Socket::Socket() : CActiveSocket( SocketTypeUdp ), m_Expected{ 0 }, m_Requested{ 0 },
-m_ServerIp{ 0 }, m_ServerPort{ 0 }
-{
-   if( ! Initialize() )
-      throw std::runtime_error( "The OS was unable to create a socket!" );
-}
-
-bool TextProtocol::Socket::Open( const char * pAddr, uint16 nPort )
-{
-   const auto retval = CActiveSocket::Open( pAddr, nPort ); // TO DO: Swap with routeres information
-
-   m_ServerIp = IpV4Address{ m_stServerSockaddr.sin_addr.s_addr };
-   m_ServerPort = PortNumber{ m_stServerSockaddr.sin_port };
-
-   return retval;
-}
-
-bool TextProtocol::Socket::Send( const Message& toSend )
+bool TextProtocol::Socket::Send( CSimpleSocket& socket, const Message& toSend )
 {
    std::cout << "Socket::Send >> ";
    toSend.Print();
 
    std::string msgPayload = toSend.ToByteStream();
 
-   if( msgPayload.length() < TextProtocol::Message::BASE_PACKET_SIZE )
+   if( msgPayload.length() < Message::BASE_PACKET_SIZE )
       throw std::logic_error( "no point in sending an incomplete message" );
 
    //if( msgPayload.length() != toSend.Size() )
    //   throw std::logic_error( "how did I fuck that up =?" );
 
-   std::cout << "Socket::Send >> " << GetServerAddr() << ":" << GetServerPort() << std::endl;
-   const auto bytesSent = CActiveSocket::Send( reinterpret_cast<const uint8*>( &msgPayload.front() ),
+   std::cout << "Socket::Send >> " << socket.GetServerAddr() << ":" << socket.GetServerPort() << std::endl;
+   const auto bytesSent = socket.Send( reinterpret_cast<const uint8*>( &msgPayload.front() ),
                                                msgPayload.length() );
 
-   return ( static_cast<size_t>(bytesSent) == msgPayload.length() );
+   return ( static_cast<size_t>( bytesSent ) == msgPayload.length() );
 }
 
-TextProtocol::Message TextProtocol::Socket::Receive()
+TextProtocol::Message TextProtocol::Socket::Receive( CSimpleSocket& socket)
 {
-      std::cout << "Socket::Receive >> waiting for message from "
-                << GetClientAddr() << ":" << GetClientPort() <<std::endl;
+   std::cout << "Socket::Receive >> waiting for message from "
+      << socket.GetClientAddr() << ":" << socket.GetClientPort() << std::endl;
 
    auto bytesObtained = -1;
-   if( ( bytesObtained = CActiveSocket::Receive( Message::MAX_MESSAGE_SIZE ) ) > 0)
+   if( ( bytesObtained = socket.Receive( Message::MAX_MESSAGE_SIZE ) ) > 0 )
    {
       std::cout << "Socket::Receive >> " << bytesObtained << " from "
-                << GetClientAddr() << ":" << GetClientPort() <<std::endl;
-      std::string bytesRx{ reinterpret_cast<const char*>( GetData() ),
+         << socket.GetClientAddr() << ":" << socket.GetClientPort() << std::endl;
+      const std::string bytesRx{ reinterpret_cast<const char*>( socket.GetData() ),
                            static_cast<size_t>( bytesObtained ) };
 
       return Message::Parse( bytesRx );
    }
    else
    {
-      std::cout << "Socket::Receive >> " << DescribeError() <<std::endl;
+      std::cout << "Socket::Receive >> " << socket.DescribeError() << std::endl;
    }
 
-   return{ TextProtocol::PacketType::NACK, 
+   return{ TextProtocol::PacketType::NACK,
            TextProtocol::SequenceNumber{},
            TextProtocol::IpV4Address{},
            TextProtocol::PortNumber{}
-         };
-}
-
-bool TextProtocol::Socket::Close()
-{
-   return CActiveSocket::Close();
+   };
 }

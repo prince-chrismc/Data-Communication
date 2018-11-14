@@ -26,29 +26,12 @@ SOFTWARE.
 
 #pragma once
 
+#include "SimpleSocket.h"
 #include "Message.h"
-#include "ActiveSocket.h"
 
-namespace TextProtocol
+namespace TextProtocol::Socket
 {
-   class Socket : CActiveSocket
-   {
-   public:
-      Socket();
-
-      bool Open( const char* pAddr, uint16 nPort ) override;
-
-      bool Send( const Message& toSend ); // willl be overload
-
-      Message Receive();
-
-      bool Close() override;
-
-   private:
-      SequenceNumber m_Expected; // by this side
-      SequenceNumber m_Requested; // by the remote
-
-      IpV4Address m_ServerIp;
-      PortNumber  m_ServerPort;
-   };
+   // Common
+   bool Send( CSimpleSocket& socket, const Message& toSend );
+   Message Receive( CSimpleSocket& socket );
 }
