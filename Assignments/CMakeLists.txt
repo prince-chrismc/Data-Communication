@@ -49,11 +49,9 @@ elseif(WIN32)
 endif()
 
 # When done tweaking common stuff, configure the components (subprojects).
-set(SIMPLE_SOCKET_DEP_ONLY true CACHE BOOL "" FORCE)
-set(SIMPLE_SOCKET_EXAMPLES false CACHE BOOL "" FORCE)
 
 # NOTE: The order matters! The most independent ones should go first.
-add_subdirectory(Simple-Sockets)
+add_subdirectory(Simple-Sockets EXCLUDE_FROM_ALL)
 add_subdirectory(Cli-Parser)
 
 include_directories("Simple-Sockets/src/")

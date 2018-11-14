@@ -49,11 +49,10 @@ class HttpServer
 {
 public:
    HttpServer( HttpVersion version = HttpVersion11 );
-   ~HttpServer();
 
    bool RegisterServlet( const char* uri, HttpServlet* servlet );
 
-   bool Launch( const char* addr, int nPort );
+   void Launch( const char* addr, unsigned short nPort );
 
    bool Close();
 

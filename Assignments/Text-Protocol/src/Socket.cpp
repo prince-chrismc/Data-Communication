@@ -58,10 +58,8 @@ std::optional<TextProtocol::Message> TextProtocol::Socket::Receive( CSimpleSocke
    {
       std::cout << "Socket::Receive >> " << bytesObtained << " from "
          << socket.GetClientAddr() << ":" << socket.GetClientPort() << std::endl;
-      const std::string bytesRx{ reinterpret_cast<const char*>( socket.GetData() ),
-                           static_cast<size_t>( bytesObtained ) };
 
-      return Message::Parse( bytesRx );
+      return Message::Parse( socket.GetData() );
    }
 
    //std::cout << "Socket::Receive >> " << socket.DescribeError() << std::endl;

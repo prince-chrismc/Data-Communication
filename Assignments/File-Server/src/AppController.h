@@ -41,7 +41,7 @@ private:
    CommandLineParser m_CliParser;
 
    bool         m_Verbose;
-   unsigned int m_Port;
+   unsigned short m_Port;
    std::string  m_FileExplorerRoot;
    std::string  m_FaviconPath;
 

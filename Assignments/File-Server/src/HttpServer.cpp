@@ -37,84 +37,69 @@ HttpServer::HttpServer( HttpVersion version /*= HttpVersion11*/ )
 {
 }
 
-HttpServer::~HttpServer()
-{
-   //m_oExitEvent.set_exception( std::make_exception_ptr( std::runtime_error( "Failed to close server!" ) ) );
-}
-
 bool HttpServer::RegisterServlet( const char * uri, HttpServlet * servlet )
 {
    return m_RestfulServlets.try_emplace( uri, servlet ).second;
 }
 
-bool HttpServer::Launch( const char* addr, int nPort )
+void HttpServer::Launch( const char* addr, unsigned short nPort )
 {
-   bool bRetVal = m_oSocket.Initialize();
+   if( m_oSocket.Listen( addr, nPort ) )
+      throw std::runtime_error( "Unable to bind HTTP Server" );
 
-   if( bRetVal )
-   {
-      bRetVal = m_oSocket.Listen( addr, nPort );
-   }
+   auto oExitEvent = std::make_shared<std::shared_future<void>>( m_pExitEvent->get_future() );
 
-   if( bRetVal )
-   {
-      auto oExitEvent = std::make_shared<std::shared_future<void>>( m_pExitEvent->get_future() );
-
-      std::thread( [ this, oExitEvent ]
+   std::thread( [ this, oExitEvent ]
+                {
+                   while( oExitEvent->wait_for( 10ms ) == std::future_status::timeout )
                    {
-                      while( oExitEvent->wait_for( 10ms ) == std::future_status::timeout )
+                      std::unique_lock<std::mutex> cleanLock( m_muConnectionList );
+                      if( m_cvCleanSignal.wait_for( cleanLock, 20ms, [ this ] { return !m_vecClients.empty(); } ) )
                       {
-                         std::unique_lock<std::mutex> cleanLock( m_muConnectionList );
-                         if( m_cvCleanSignal.wait_for( cleanLock, 20ms, [ this ] { return !m_vecClients.empty(); } ) )
+                         for( auto itor = m_vecClients.begin(); itor != m_vecClients.end(); /* no itor */ )
                          {
-                            for( auto itor = m_vecClients.begin(); itor != m_vecClients.end(); /* no itor */ )
+                            if( ( std::chrono::steady_clock::now() - itor->first ) > 100s )
                             {
-                               if( ( std::chrono::steady_clock::now() - itor->first ) > 100s )
-                               {
-                                  // TODO : Close presistent connections !
-                                  if( itor->second != nullptr ) itor->second->Shutdown( CSimpleSocket::Both );
-                                  itor = m_vecClients.erase( itor );
-                               }
-                               else
-                               {
-                                  ++itor;
-                               }
+                               if( itor->second != nullptr ) itor->second->Shutdown( CSimpleSocket::Both );
+                               itor = m_vecClients.erase( itor );
                             }
+                            else
+                            {
+                               ++itor;
+                            }
+                         }
 
-                            m_vecClients.shrink_to_fit();
+                         m_vecClients.shrink_to_fit();
+                      }
+                   }
+                }
+   ).detach();
+
+   std::thread( [ this, oExitEvent ]
+                {
+                   while( oExitEvent->wait_for( 10ms ) == std::future_status::timeout )
+                   {
+                      std::shared_ptr<CActiveSocket> pClient;
+                      if( ( pClient = m_oSocket.Accept() ) != nullptr ) // Wait for an incomming connection
+                      {
+                         std::lock_guard<std::mutex> oAutoLock( m_muConnectionList );
+                         m_vecClients.emplace_back( std::chrono::steady_clock::now(), pClient );
+
+                         switch( m_eVersion )
+                         {
+                         case HttpVersion10:
+                            std::thread( [ this ]( std::shared_ptr<CActiveSocket> pClient ) { NonPersistentConnection( pClient ); }, m_vecClients.back().second ).detach();
+                            break;
+                         case HttpVersion11:
+                            //std::thread( PersistentConnection, m_vecClients.back().get() ).detach();
+                            break;
+                         default:
+                            throw std::invalid_argument( "Bad HTTP version!" );
                          }
                       }
                    }
-      ).detach();
-
-      std::thread( [ this, oExitEvent ]
-                   {
-                      while( oExitEvent->wait_for( 10ms ) == std::future_status::timeout )
-                      {
-                         std::shared_ptr<CActiveSocket> pClient;
-                         if( ( pClient = m_oSocket.AcceptSharedOwnership() ) != nullptr ) // Wait for an incomming connection
-                         {
-                            std::lock_guard<std::mutex> oAutoLock( m_muConnectionList );
-                            m_vecClients.emplace_back( std::chrono::steady_clock::now(), pClient );
-
-                            switch( m_eVersion )
-                            {
-                            case HttpVersion10:
-                               std::thread( [ this ]( std::shared_ptr<CActiveSocket> pClient ) { NonPersistentConnection( pClient ); }, m_vecClients.back().second ).detach();
-                               break;
-                            case HttpVersion11:
-                               //std::thread( PersistentConnection, m_vecClients.back().get() ).detach();
-                               break;
-                            default:
-                               throw std::invalid_argument( "Bad HTTP version!" );
-                            }
-                         }
-                      }
-                   }
-      ).detach();
-   }
-
-   return bRetVal;
+                }
+   ).detach();
 }
 
 bool HttpServer::Close()
@@ -151,8 +136,7 @@ void HttpServer::NonPersistentConnection( std::shared_ptr<CActiveSocket> pClient
 
       if( bytes_rcvd <= 0 ) return;
 
-   } while( !oParser.AppendRequestData(
-      std::string( reinterpret_cast<const char*>( pClient->GetData() ), bytes_rcvd ) ) );
+   } while( !oParser.AppendRequestData( pClient->GetData() ) );
 
    HttpRequest oRequest = oParser.GetHttpRequest();
    HttpResponse oResponse = BestMatchingServlet( oRequest.GetUri() )->HandleRequest( oRequest );

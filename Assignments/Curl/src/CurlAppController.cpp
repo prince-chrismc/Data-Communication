@@ -78,9 +78,7 @@ void CurlAppController::Run()
    if( m_bVerbose ) std::cout << "Starting..." << std::endl;
    CActiveSocket oClient;
 
-   if( m_bVerbose ) std::cout << "Initializing..." << std::endl;
-
-   bool retval = oClient.Initialize();
+   bool retval = true;
 
    if( retval )
    {
@@ -118,8 +116,8 @@ void CurlAppController::Run()
 
          if( m_bVerbose ) std::cout << "Appending " << bytes_rcvd << " bytes of data..." << std::endl;
 
-      } while( !oResponseParserParser.AppendResponseData(
-         std::string( reinterpret_cast<const char*>(oClient.GetData()), bytes_rcvd ) ) );
+      } while( !oResponseParserParser.AppendResponseData( oClient.GetData() ) );
+
       if( m_bVerbose ) std::cout << "Transmission Completed..." << std::endl;
    }
 

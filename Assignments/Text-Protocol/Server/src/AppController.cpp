@@ -34,9 +34,6 @@ using namespace std::chrono_literals;
 
 void AppController::Initialize()
 {
-   if( !m_Socket.Initialize() )
-      throw std::runtime_error( "Failed to init socket" );
-
    if( ! m_Socket.Listen( "127.0.0.1", 8080 ) )
       throw std::runtime_error( "Failed to listen on port" );
 }
