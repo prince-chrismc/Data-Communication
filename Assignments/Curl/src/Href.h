@@ -32,7 +32,7 @@ struct Href
 {
    std::string m_sProtocol;
    std::string m_sHostName;
-   unsigned int m_nPortNumber;
+   unsigned short m_nPortNumber;
    std::string m_sUri;
 };
 
@@ -43,19 +43,10 @@ public:
 
    HrefParser& Parse( const std::string& fullUrl );
 
-   const Href& GetHref() const { return oHref; }
+   const Href& GetHref() const { return m_Href; }
 
-   class ParseError : public std::exception
-   {
-   public:
-      ParseError( std::string_view what_arg ) : m_sWhat( what_arg ) {}
-
-      const char* what() const noexcept override { return m_sWhat.data(); }
-
-   private:
-      const std::string_view m_sWhat;
-   };
+   using ParseError = std::runtime_error;
 
 private:
-   Href oHref;
+   Href m_Href;
 };

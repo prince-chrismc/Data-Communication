@@ -102,21 +102,23 @@ void CurlAppController::Run()
       std::string sRawRequest = oReq.GetWireFormat();
 
       if( m_bVerbose ) std::cout << "Raw request:" << std::endl << std::endl << sRawRequest << std::endl << std::endl << "Sending...";
-      retval = oClient.Send( (uint8*)sRawRequest.c_str(), sRawRequest.size() );
+      retval = oClient.Send( reinterpret_cast<const uint8*>( sRawRequest.c_str() ), sRawRequest.size() );
    }
 
    HttpResponseParserAdvance oResponseParserParser;
    if( retval )
    {
       if( m_bVerbose ) std::cout << "Receiving..." << std::endl;
-      int32 bytes_rcvd = -1;
       do
       {
-         bytes_rcvd = oClient.Receive( 1024 );
+         if( oClient.Receive( 1024 ) <= 0 )
+         {
+            if( m_bVerbose ) std::cout << "Received failed due to: " << oClient.DescribeError() << std::endl;
+            retval = false;
+            break;
+         }
 
-         if( bytes_rcvd <= 0 ) break;
-
-         if( m_bVerbose ) std::cout << "Appending " << bytes_rcvd << " bytes of data..." << std::endl;
+         if( m_bVerbose ) std::cout << "Appending " << oClient.GetBytesReceived() << " bytes of data..." << std::endl;
 
       } while( !oResponseParserParser.AppendResponseData( oClient.GetData() ) );
       if( m_bVerbose ) std::cout << "Transmission Completed..." << std::endl;

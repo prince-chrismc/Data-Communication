@@ -26,37 +26,42 @@ SOFTWARE.
 
 #include "Href.h"
 #include <algorithm>
+#include <string_view>
 
-constexpr auto PROTOCOL_ENDING = "://";
-int constexpr length( const char* str ) { return *str ? 1 + length( str + 1 ) : 0; }
+using namespace std::string_view_literals;
+
+constexpr auto PROTOCOL_ENDING = "://"sv;
 
 HrefParser& HrefParser::Parse( const std::string& fullUrl )
 {
    // Some Lovely Defaults
-   oHref.m_sProtocol = "http";
-   oHref.m_nPortNumber = 80;
-   oHref.m_sHostName = "www.google.ca";
-   oHref.m_sUri = "/";
+   m_Href.m_sProtocol = "http";
+   m_Href.m_nPortNumber = 80;
+   m_Href.m_sHostName = "www.google.ca";
+   m_Href.m_sUri = "/";
 
    size_t ulProtocol = fullUrl.find( PROTOCOL_ENDING );
-   if( ulProtocol == std::string::npos ) throw ParseError( "URL missing protocol seperator" );
+   if( ulProtocol == std::string::npos )
+      throw ParseError( "URL missing protocol seperator" );
 
-   oHref.m_sProtocol = fullUrl.substr( 0, ulProtocol );
+   m_Href.m_sProtocol = fullUrl.substr( 0, ulProtocol );
 
-   ulProtocol += length( PROTOCOL_ENDING );
+   ulProtocol += PROTOCOL_ENDING.length();
 
-   size_t ulColumn = fullUrl.find( ':', ulProtocol );
-   size_t ulSlash = fullUrl.find( '/', ulProtocol );
+   const size_t ulColumn = fullUrl.find( ':', ulProtocol );
+   const size_t ulSlash = fullUrl.find( '/', ulProtocol );
 
-   size_t ulEndOfHostName = std::min( ulColumn, ulSlash );
-   oHref.m_sHostName = fullUrl.substr( ulProtocol, ulEndOfHostName - ulProtocol );
-   if( oHref.m_sHostName.empty() ) throw ParseError( "Unable to determine host name or IP addr" );
+   const size_t ulEndOfHostName = std::min( ulColumn, ulSlash );
+   m_Href.m_sHostName = fullUrl.substr( ulProtocol, ulEndOfHostName - ulProtocol );
+
+   if( m_Href.m_sHostName.empty() )
+      throw ParseError( "Unable to determine host name or IP addr" );
 
    if( ulColumn != std::string::npos && ulSlash != std::string::npos )
-      oHref.m_nPortNumber = std::stoul( fullUrl.substr( ulColumn + 1, ulSlash - ulColumn - 1 ) );
+      m_Href.m_nPortNumber = static_cast<unsigned short>( std::stoul( fullUrl.substr( ulColumn + 1, ulSlash - ulColumn - 1 ) ) );
 
    if( ulEndOfHostName != std::string::npos )
-      oHref.m_sUri = fullUrl.substr( ulSlash );
+      m_Href.m_sUri = fullUrl.substr( ulSlash );
 
    return *this;
 }
