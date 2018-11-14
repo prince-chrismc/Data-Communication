@@ -59,10 +59,7 @@ include_directories("Simple-Sockets/src/")
 include_directories("Cli-Parser/src/")
 
 # HTTP Library
-FILE(GLOB HTTP_CPP "Simple-Sockets/examples/http/*.cpp")
-FILE(GLOB HTTP_H "Simple-Sockets/examples/http/*.h")
-SET_SOURCE_FILES_PROPERTIES( ${HTTP_H} PROPERTIES HEADER_FILE_ONLY TRUE )
-LIST(APPEND HTTP ${HTTP_CPP} ${HTTP_H})
+FILE(GLOB HTTP "Simple-Sockets/examples/http/*")
 
 # Curl - Assingment 1
 FILE(GLOB CURL "Curl/src/*")
