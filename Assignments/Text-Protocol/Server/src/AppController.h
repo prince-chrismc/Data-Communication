@@ -32,7 +32,7 @@ SOFTWARE.
 class AppController
 {
 public:
-   AppController( int argc, char** argv ) : m_CliParser( argc, argv ), m_Verbose( false ), m_Port( 8080 ) {}
+   AppController( int argc, char** argv ) : m_CliParser( argc, argv ), m_Verbose( false ), m_Port( 8080 ), m_Socket( CSimpleSocket::SocketTypeUdp ) {}
 
    void Initialize();
 
