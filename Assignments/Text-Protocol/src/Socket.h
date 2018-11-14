@@ -26,12 +26,13 @@ SOFTWARE.
 
 #pragma once
 
-#include "SimpleSocket.h"
+#include <optional>
 #include "Message.h"
+#include "SimpleSocket.h"
 
 namespace TextProtocol::Socket
 {
    // Common
    bool Send( CSimpleSocket& socket, const Message& toSend );
-   Message Receive( CSimpleSocket& socket );
+   std::optional<Message> Receive( CSimpleSocket& socket );
 }

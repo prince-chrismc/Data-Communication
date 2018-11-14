@@ -43,15 +43,15 @@ bool TextProtocol::Socket::Send( CSimpleSocket& socket, const Message& toSend )
 
    std::cout << "Socket::Send >> " << socket.GetServerAddr() << ":" << socket.GetServerPort() << std::endl;
    const auto bytesSent = socket.Send( reinterpret_cast<const uint8*>( &msgPayload.front() ),
-                                               msgPayload.length() );
+                                       msgPayload.length() );
 
    return ( static_cast<size_t>( bytesSent ) == msgPayload.length() );
 }
 
-TextProtocol::Message TextProtocol::Socket::Receive( CSimpleSocket& socket)
+std::optional<TextProtocol::Message> TextProtocol::Socket::Receive( CSimpleSocket& socket )
 {
-   std::cout << "Socket::Receive >> waiting for message from "
-      << socket.GetClientAddr() << ":" << socket.GetClientPort() << std::endl;
+   //std::cout << "Socket::Receive >> waiting for message from "
+   //   << socket.GetClientAddr() << ":" << socket.GetClientPort() << std::endl;
 
    auto bytesObtained = -1;
    if( ( bytesObtained = socket.Receive( Message::MAX_MESSAGE_SIZE ) ) > 0 )
@@ -63,14 +63,7 @@ TextProtocol::Message TextProtocol::Socket::Receive( CSimpleSocket& socket)
 
       return Message::Parse( bytesRx );
    }
-   else
-   {
-      std::cout << "Socket::Receive >> " << socket.DescribeError() << std::endl;
-   }
 
-   return{ TextProtocol::PacketType::NACK,
-           TextProtocol::SequenceNumber{},
-           TextProtocol::IpV4Address{},
-           TextProtocol::PortNumber{}
-   };
+   //std::cout << "Socket::Receive >> " << socket.DescribeError() << std::endl;
+   return{};
 }

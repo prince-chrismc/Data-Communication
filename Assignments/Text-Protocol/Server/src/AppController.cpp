@@ -28,6 +28,9 @@ SOFTWARE.
 #include "Message.h"
 #include <iostream>
 #include "Socket.h"
+#include <thread>
+
+using namespace std::chrono_literals;
 
 void AppController::Initialize()
 {
@@ -42,12 +45,19 @@ void AppController::Run()
 {
    while( true )
    {
-      TextProtocol::Message input = TextProtocol::Socket::Receive( m_Socket );
+      //m_Socket.Select();
 
-      std::cout << "Server >> obtained the following ";
-      input.Print();
+      auto input = TextProtocol::Socket::Receive( m_Socket );
 
-      TextProtocol::Socket::Send( m_Socket, input );
+      if( input.has_value() )
+      {
+         std::cout << "Server >> obtained the following ";
+         input->Print();
+
+         TextProtocol::Socket::Send( m_Socket, *input );
+      }
+
+      std::this_thread::sleep_for( 100ms );
    }
 
    m_Socket.Close();
