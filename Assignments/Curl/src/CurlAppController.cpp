@@ -36,6 +36,7 @@ CurlAppController::CurlAppController( int argc, char ** argv )
    , m_eCommand( HttpRequestInvalid )
    , m_bVerbose( false )
 {
+   readCommandLineArgs();
 }
 
 void CurlAppController::readCommandLineArgs()
