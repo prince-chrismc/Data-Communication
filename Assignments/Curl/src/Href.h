@@ -48,5 +48,5 @@ public:
    using ParseError = std::runtime_error;
 
 private:
-   Href m_Href;
+   Href m_Href{ "http" , "www.google.ca", 80, "/" };
 };

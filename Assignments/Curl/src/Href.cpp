@@ -34,12 +34,6 @@ constexpr auto PROTOCOL_ENDING = "://"sv;
 
 HrefParser& HrefParser::Parse( const std::string& fullUrl )
 {
-   // Some Lovely Defaults
-   m_Href.m_sProtocol = "http";
-   m_Href.m_nPortNumber = 80;
-   m_Href.m_sHostName = "www.google.ca";
-   m_Href.m_sUri = "/";
-
    size_t ulProtocol = fullUrl.find( PROTOCOL_ENDING );
    if( ulProtocol == std::string::npos )
       throw ParseError( "URL missing protocol seperator" );
