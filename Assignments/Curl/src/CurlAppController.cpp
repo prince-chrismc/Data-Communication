@@ -38,7 +38,7 @@ CurlAppController::CurlAppController( int argc, char ** argv )
 {
 }
 
-void CurlAppController::Initialize()
+void CurlAppController::readCommandLineArgs()
 {
    auto itor = m_oCliParser.cbegin();
    moreArgsToRead( itor, MISSING_GET_OR_POST );
@@ -119,7 +119,7 @@ void CurlAppController::Run()
          if( m_bVerbose ) std::cout << "Appending " << bytes_rcvd << " bytes of data..." << std::endl;
 
       } while( !oResponseParserParser.AppendResponseData(
-         std::string( (const char*)oClient.GetData(), bytes_rcvd ) ) );
+         std::string( reinterpret_cast<const char*>(oClient.GetData()), bytes_rcvd ) ) );
       if( m_bVerbose ) std::cout << "Transmission Completed..." << std::endl;
    }
 
@@ -196,7 +196,7 @@ void CurlAppController::parsePostOptions( CommandLineParser::ArgIterator itor )
       moreArgsToRead( ++itor, MISSING_URL );
 
       m_sBody = *itor;
-      itor++;
+      ++itor;
    }
    else if( *itor == "-f" )
    {
@@ -210,7 +210,7 @@ void CurlAppController::parsePostOptions( CommandLineParser::ArgIterator itor )
       fileReader.seekg( 0 ); // rewind
       fileReader.read( m_sBody.data(), size );
 
-      itor++;
+      ++itor;
    }
 
    parseUrlOption( itor );
@@ -223,7 +223,7 @@ void CurlAppController::parseVerboseOption( CommandLineParser::ArgIterator& itor
    if( *itor == "-v" )
    {
       m_bVerbose = true;
-      itor++;
+      ++itor;
    }
 }
 
@@ -238,7 +238,7 @@ void CurlAppController::parseHeaderOption( CommandLineParser::ArgIterator& itor 
       if( iSeperatorIndex == std::string::npos ) { printUsageGivenArgs(); throw std::invalid_argument( "Poorly formatted key:value for -h switch" ); }
 
       m_oExtraHeaders.emplace_back( sHeardOptAndValue.substr( 0, iSeperatorIndex ), sHeardOptAndValue.substr( iSeperatorIndex + 1 ) );
-      itor++;
+      ++itor;
 
       moreArgsToRead( itor, MISSING_URL );
    }
@@ -259,7 +259,7 @@ void CurlAppController::parseUrlOption( CommandLineParser::ArgIterator & itor )
    }
 }
 
-void CurlAppController::moreArgsToRead( CommandLineParser::ArgIterator itor, std::string_view errMsg )
+void CurlAppController::moreArgsToRead( CommandLineParser::ArgIterator itor, std::string_view errMsg ) const
 {
    if( itor == m_oCliParser.cend() )
    {

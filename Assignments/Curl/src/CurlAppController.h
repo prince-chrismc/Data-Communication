@@ -32,12 +32,10 @@ SOFTWARE.
 #include "HttpRequest.h"
 #include "Href.h"
 
-class CurlAppController
+class CurlAppController final
 {
 public:
    CurlAppController( int argc, char** argv );
-
-   void Initialize();
 
    void Run();
 
@@ -48,6 +46,8 @@ private:
    std::vector<std::pair<std::string, std::string>> m_oExtraHeaders;
    Href              m_oHref{};
    std::string       m_sBody;
+
+   void readCommandLineArgs();
 
    static void printGeneralUsage();
    static void printGetUsage();
@@ -63,5 +63,5 @@ private:
 
    static constexpr std::string_view MISSING_GET_OR_POST = "Missing 'get' or 'post' paramater";
    static constexpr std::string_view MISSING_URL = "Missing 'URL' paramater";
-   void moreArgsToRead( CommandLineParser::ArgIterator itor, std::string_view errMsg );
+   void moreArgsToRead( CommandLineParser::ArgIterator itor, std::string_view errMsg ) const;
 };

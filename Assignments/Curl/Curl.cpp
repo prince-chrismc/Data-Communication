@@ -30,12 +30,9 @@ SOFTWARE.
 
 int main( int argc, char** argv )
 {
-   CurlAppController oApp( argc, argv );
-
    try
    {
-      oApp.Initialize();
-
+      CurlAppController oApp( argc, argv );
       oApp.Run();
    }
    catch( const std::exception& e )
