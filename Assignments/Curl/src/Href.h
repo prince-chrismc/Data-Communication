@@ -26,6 +26,7 @@ SOFTWARE.
 
 #pragma once
 
+#include <stdexcept>
 #include <string>
 
 struct Href
