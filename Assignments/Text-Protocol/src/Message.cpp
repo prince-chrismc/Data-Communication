@@ -33,19 +33,30 @@ constexpr auto toBytes( Enum e ) noexcept // https://stackoverflow.com/a/3308323
    return static_cast<std::underlying_type_t<Enum>>( e );
 }
 
-constexpr uint32_t operator&( const TextProtocol::SequenceNumber& lhs, const int& rhs )
+constexpr auto toBytes( unsigned long bytes ) noexcept
 {
-   return ( static_cast<unsigned long>( lhs ) & static_cast<unsigned long>( rhs ) );
+   return bytes;
 }
 
-constexpr auto endianSwap(TextProtocol::SequenceNumber num )
+template <typename Enum>
+constexpr auto endianSwap( Enum num )
 {
-   const uint32_t b0 = (num & 0x000000ff) << 24u;
-   const uint32_t b1 = (num & 0x0000ff00) << 8u;
-   const uint32_t b2 = (num & 0x00ff0000) >> 8u;
-   const uint32_t b3 = (num & 0xff000000) >> 24u;
+   if constexpr( sizeof Enum == 4 )
+   {
+      const uint32_t b0 = ( toBytes( num ) & 0x000000ff ) << 24u;
+      const uint32_t b1 = ( toBytes( num ) & 0x0000ff00 ) << 8u;
+      const uint32_t b2 = ( toBytes( num ) & 0x00ff0000 ) >> 8u;
+      const uint32_t b3 = ( toBytes( num ) & 0xff000000 ) >> 24u;
 
-   return TextProtocol::SequenceNumber{ b0 | b1 | b2 | b3 };
+      return Enum{ b0 | b1 | b2 | b3 };
+   }
+   else if constexpr( sizeof Enum == 2 )
+   {
+      const uint16_t b1 = ( toBytes( num ) & 0x00ff ) << 8u;
+      const uint16_t b2 = ( toBytes( num ) & 0xff00 ) >> 8u;
+
+      return Enum{ static_cast<uint16_t>(b1 | b2) };
+   }
 }
 
 TextProtocol::Message::Message( PacketType type, SequenceNumber id, IpV4Address dstIp, PortNumber port ) :
@@ -64,8 +75,20 @@ size_t TextProtocol::Message::Size() const
 
 std::string TextProtocol::Message::ToByteStream() const
 {
-   return std::to_string( toBytes( m_PacketType ) ) + std::to_string( toBytes( m_SeqNum ) )
-      + std::to_string( toBytes( m_DstIp ) ) + std::to_string( toBytes( m_DstPort ) ) + m_Payload;
+   std::string rawBuffer( reinterpret_cast<const char*>( &m_PacketType ), sizeof( m_PacketType ) );
+
+   std::string seqBuffer( reinterpret_cast<const char*>( &m_SeqNum ), sizeof( m_SeqNum ) );
+   seqBuffer.insert( seqBuffer.begin(), 4 - seqBuffer.length(), '0' );
+
+   std::string ipBuffer( reinterpret_cast<const char*>( &m_DstIp ), sizeof( m_DstIp ) );
+   ipBuffer.insert( ipBuffer.begin(), 4 - ipBuffer.length(), '0' );
+
+   std::string portBuffer( reinterpret_cast<const char*>( &m_DstPort ), sizeof( m_DstPort ) );
+   portBuffer.insert( portBuffer.begin(), 2 - portBuffer.length(), '0' );
+
+   rawBuffer += seqBuffer + ipBuffer + portBuffer;
+
+   return rawBuffer + m_Payload;
 }
 
 void TextProtocol::Message::Print() const
@@ -75,5 +98,22 @@ void TextProtocol::Message::Print() const
 
 TextProtocol::Message TextProtocol::Message::Parse( const std::string & rawBytes )
 {
-   return Message( PacketType::ACK, SequenceNumber{ 0 }, IpV4Address{ 0 }, PortNumber{ 0 } );
+   // TO DO: throw parse error is length < 11
+   unsigned short p1 = rawBytes[ 9 ] & 0x00ffu;
+   unsigned short p2 = rawBytes[ 10 ] << 8u;
+
+   auto port{ p1 | p2 };
+
+   const uint32_t b0 = rawBytes[ 5 ] << 24u;
+   const uint32_t b1 = rawBytes[ 6 ] << 16u;
+   const uint32_t b2 = rawBytes[ 7 ] << 8u;
+   const uint32_t b3 = rawBytes[ 8 ];
+
+   const uint32_t ipAddr{ b0 | b1 | b2 | b3 };
+
+   return{ PacketType{ static_cast<unsigned char>( rawBytes[ 0 ] ) },
+           endianSwap( SequenceNumber{ static_cast<unsigned long>( rawBytes[ 1 ] << 24u | rawBytes[ 2 ] << 16u | rawBytes[ 3 ] << 8u | rawBytes[ 4 ] ) } ),
+           endianSwap( IpV4Address{ static_cast<unsigned long>( rawBytes[ 5 ] << 24u | rawBytes[ 6 ] << 16u | rawBytes[ 7 ] << 8u | rawBytes[ 8 ] ) } ),
+           endianSwap( PortNumber{ static_cast<unsigned short>( rawBytes[ 9 ] << 8u | ( rawBytes[ 10 ] & 0x00ff ) ) } )
+   };
 }

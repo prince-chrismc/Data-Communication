@@ -35,6 +35,18 @@ constexpr bool IS_BIG_ENDIAN = ( TEST_BYTE == 0x00000001 );
 
 namespace TextProtocol
 {
+   template <typename Enum>
+   auto operator++( Enum& e, int ) noexcept
+   {
+      static_assert( std::is_enum<Enum>::value, "type must be an enum" );
+
+      Enum temp = e;
+      auto newValue = static_cast<std::underlying_type_t<Enum>>( e );
+      ++newValue;
+      e = Enum{ newValue };
+      return temp;
+   }
+
    enum class PacketType : unsigned char
    {
       ACK = 0x06,

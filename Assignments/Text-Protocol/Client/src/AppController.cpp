@@ -30,6 +30,7 @@ SOFTWARE.
 #include <sstream>
 #include <stdexcept>
 #include "ActiveSocket.h"
+#include "Message.h"
 
 CurlAppController::CurlAppController( int argc, char ** argv )
    : m_oCliParser( argc, argv )
@@ -80,15 +81,37 @@ void CurlAppController::Run()
 
    if( m_bVerbose ) std::cout << "Initializing..." << std::endl;
 
-   bool retval = true;
+   if( m_bVerbose ) std::cout << "Connectioning to " << m_oHref.m_sHostName << " on port " << m_oHref.m_nPortNumber << "..." << std::endl;
+   bool retval = oClient.Open( m_oHref.m_sHostName.c_str(), m_oHref.m_nPortNumber );
 
-   if( retval )
+   if( !retval && m_bVerbose ) std::cout << "Connection could not be established!" << std::endl;
+
+   // TO DO: Send ACK
+   TextProtocol::SequenceNumber Expected{ 0 }; // by this side
+   TextProtocol::SequenceNumber Requested{ 0 }; // by the remote
+
+   const TextProtocol::IpV4Address serverIp{ oClient.GetServerAddrOnWire().s_addr };
+   const TextProtocol::PortNumber serverPort{ oClient.GetServerPort() };
+
+   TextProtocol::Message ackMessage( TextProtocol::PacketType::ACK, Requested++, serverIp, serverPort );
+   std::string rawMsg = ackMessage.ToByteStream();
+
+   if( m_bVerbose ) std::cout << "Sending ACK >> " << rawMsg << std::endl;
+   retval = oClient.Send( reinterpret_cast<const uint8*>( rawMsg.c_str() ), rawMsg.size() );
+
+   if( m_bVerbose ) std::cout << "Waiting for SYN_ACK..." << std::endl;
+
+   if( oClient.Receive( TextProtocol::Message::MAX_MESSAGE_SIZE ) <= 0 )
    {
-      if( m_bVerbose ) std::cout << "Connectioning to " << m_oHref.m_sHostName << " on port " << m_oHref.m_nPortNumber << "..." << std::endl;
-      retval = oClient.Open( m_oHref.m_sHostName.c_str(), m_oHref.m_nPortNumber );
-
-      if( !retval && m_bVerbose ) std::cout << "Connection could not be established!" << std::endl;
+      if( m_bVerbose ) std::cout << "Received failed due to: " << oClient.DescribeError() << std::endl;
+      retval = false;
    }
+
+   TextProtocol::Message synackMessage = TextProtocol::Message::Parse( oClient.GetData() );
+
+   //
+   // Since I have no test code for this and CBA ... Echo server is now working ( AKA message to bytes and parse are good )
+   //
 
    if( retval )
    {
@@ -111,7 +134,7 @@ void CurlAppController::Run()
       if( m_bVerbose ) std::cout << "Receiving..." << std::endl;
       do
       {
-         if( oClient.Receive( 1024 ) <= 0 )
+         if( oClient.Receive( TextProtocol::Message::MAX_MESSAGE_SIZE ) <= 0 )
          {
             if( m_bVerbose ) std::cout << "Received failed due to: " << oClient.DescribeError() << std::endl;
             retval = false;
