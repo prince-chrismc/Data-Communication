@@ -34,7 +34,7 @@ using namespace std::chrono_literals;
 
 void AppController::Initialize()
 {
-   if( ! m_Socket.Listen( "127.0.0.1", 8080 ) )
+   if( !m_Socket.Listen( "127.0.0.1", 8080 ) )
       throw std::runtime_error( "Failed to listen on port" );
 }
 
@@ -51,16 +51,9 @@ void AppController::Run()
          std::cout << "Server >> obtained the following " << *input
             << " from [ " << m_Socket.GetClientAddr() << ":" << m_Socket.GetClientPort() << " ]" << std::endl;
 
-         CActiveSocket client( CSimpleSocket::SocketTypeUdp );
+         if( input->m_PacketType == TextProtocol::PacketType::SYN ) input->m_PacketType = TextProtocol::PacketType::SYN_ACK;
 
-         if ( client.Open( m_Socket.GetClientAddr().c_str(), m_Socket.GetClientPort() ) )
-         {
-            TextProtocol::Socket::Send( client, *input );
-         }
-         else
-         {
-            throw std::exception();
-         }
+         TextProtocol::Socket::Send( m_Socket, *input );
       }
 
       std::this_thread::sleep_for( 100ms );

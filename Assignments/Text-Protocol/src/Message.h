@@ -70,7 +70,7 @@ namespace TextProtocol
       size_t Size() const;
       std::string ToByteStream() const;
 
-      friend std::ostream& operator<<(std::ostream& os, const Message& dt );
+      friend std::ostream& operator<<(std::ostream& os, const Message& message );
 
       static Message Parse( const std::string& rawBytes );
 
@@ -78,7 +78,6 @@ namespace TextProtocol
       static constexpr auto MAX_PAYLOAD_LENGTH = 1013;
       static constexpr auto MAX_MESSAGE_SIZE = BASE_PACKET_SIZE + MAX_PAYLOAD_LENGTH;
 
-   private:
       PacketType m_PacketType;
       SequenceNumber m_SeqNum;
       IpV4Address m_DstIp;

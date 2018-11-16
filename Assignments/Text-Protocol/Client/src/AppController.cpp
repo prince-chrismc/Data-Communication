@@ -94,7 +94,7 @@ void CurlAppController::Run()
    const TextProtocol::IpV4Address serverIp{ oClient.GetServerAddrOnWire().s_addr };
    const TextProtocol::PortNumber serverPort{ oClient.GetServerPort() };
 
-   const TextProtocol::Message ackMessage( TextProtocol::PacketType::ACK, Requested++, serverIp, serverPort );
+   const TextProtocol::Message ackMessage( TextProtocol::PacketType::SYN, Requested++, serverIp, serverPort );
 
    if( m_bVerbose ) std::cout << "Sending >> " << ackMessage << std::endl;
    retval = TextProtocol::Socket::Send( oClient, ackMessage );
@@ -103,13 +103,20 @@ void CurlAppController::Run()
 
    auto synackMessage = TextProtocol::Socket::Receive( oClient );
 
-   if( ! synackMessage.has_value() )
+   if( !synackMessage.has_value() )
    {
       if( m_bVerbose ) std::cout << "Received failed due to: " << oClient.DescribeError() << std::endl;
       retval = false;
    }
 
    if( m_bVerbose ) std::cout << "Obtained >> " << *synackMessage << std::endl;
+
+   if( synackMessage->m_PacketType != TextProtocol::PacketType::SYN_ACK )
+   {
+      retval = false;
+   }
+
+   if( m_bVerbose ) std::cout << "Successfully connected to server!" << std::endl;
 
    //
    // Since I have no test code for this and CBA ... Echo server is now working ( AKA message to bytes and parse are good )
