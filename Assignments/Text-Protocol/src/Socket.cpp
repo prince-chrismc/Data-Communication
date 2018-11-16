@@ -38,21 +38,17 @@ bool TextProtocol::Socket::Send( CSimpleSocket& socket, const Message& toSend )
    if( msgPayload.length() < Message::BASE_PACKET_SIZE )
       throw std::logic_error( "no point in sending an incomplete message" );
 
-   //if( msgPayload.length() != toSend.Size() )
-   //   throw std::logic_error( "how did I fuck that up =?" );
+   if( msgPayload.length() != toSend.Size() )
+      throw std::logic_error( "how did I fuck that up =?" );
 
    std::cout << "Socket::Send >> " << socket.GetServerAddr() << ":" << socket.GetServerPort() << std::endl;
-   const auto bytesSent = socket.Send( reinterpret_cast<const uint8*>( &msgPayload.front() ),
-                                       msgPayload.length() );
+   const auto bytesSent = socket.Send( reinterpret_cast<const uint8*>( &msgPayload.front() ), msgPayload.length() );
 
-   return ( static_cast<size_t>( bytesSent ) == msgPayload.length() );
+   return ( static_cast<size_t>( bytesSent ) == toSend.Size() );
 }
 
 std::optional<TextProtocol::Message> TextProtocol::Socket::Receive( CSimpleSocket& socket )
 {
-   //std::cout << "Socket::Receive >> waiting for message from "
-   //   << socket.GetClientAddr() << ":" << socket.GetClientPort() << std::endl;
-
    auto bytesObtained = -1;
    if( ( bytesObtained = socket.Receive( Message::MAX_MESSAGE_SIZE ) ) > 0 )
    {
