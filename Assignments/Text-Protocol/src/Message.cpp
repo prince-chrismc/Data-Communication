@@ -41,7 +41,7 @@ constexpr auto toBytes( unsigned long bytes ) noexcept
 template <typename Enum>
 constexpr auto endianSwap( Enum num )
 {
-   if constexpr( sizeof Enum == 4 )
+   if constexpr( sizeof( Enum )== 4 )
    {
       const uint32_t b0 = ( toBytes( num ) & 0x000000ff ) << 24u;
       const uint32_t b1 = ( toBytes( num ) & 0x0000ff00 ) << 8u;
@@ -50,13 +50,15 @@ constexpr auto endianSwap( Enum num )
 
       return Enum{ b0 | b1 | b2 | b3 };
    }
-   else if constexpr( sizeof Enum == 2 )
+   else if constexpr( sizeof( Enum ) == 2 )
    {
       const uint16_t b1 = ( toBytes( num ) & 0x00ff ) << 8u;
       const uint16_t b2 = ( toBytes( num ) & 0xff00 ) >> 8u;
 
       return Enum{ static_cast<uint16_t>(b1 | b2) };
    }
+
+   return Enum{ 0 };
 }
 
 TextProtocol::Message::Message( PacketType type, SequenceNumber id, IpV4Address dstIp, PortNumber port ) :
