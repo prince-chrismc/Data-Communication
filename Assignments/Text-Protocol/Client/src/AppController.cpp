@@ -25,7 +25,6 @@ SOFTWARE.
 */
 
 #include "AppController.h"
-#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
@@ -69,63 +68,23 @@ void CurlAppController::Run()
 {
    validateCommand();
 
-   if( m_bVerbose ) std::cout << "Connectioning to " << m_oHref.m_sHostName << " on port " << m_oHref.m_nPortNumber << "..." << std::endl;
-   bool retval = m_Client.Open( m_oHref.m_sHostName.c_str(), 3000 );
-
-   if( !retval && m_bVerbose ) std::cout << "Connection could not be established!" << std::endl;
-
-
-   const TextProtocol::IpV4Address serverIp{ m_Client.GetServerAddrOnWire().s_addr };
-   const TextProtocol::PortNumber serverPort{ 8080 };
-
-   const TextProtocol::Message synMessage( TextProtocol::PacketType::SYN, m_Expected++, serverIp, serverPort );
-
-   if( m_bVerbose ) std::cout << "Sending >> " << synMessage << std::endl;
-   retval = TextProtocol::Socket::Send( m_Client, synMessage );
-
-   if( m_bVerbose ) std::cout << "Waiting for SYN_ACK..." << std::endl;
-
-   auto synackMessage = TextProtocol::Socket::Receive( m_Client );
-
-   if( !synackMessage.has_value() )
-   {
-      if( m_bVerbose ) std::cout << "Received failed due to: " << m_Client.DescribeError() << std::endl;
-      retval = false;
-   }
-
-   if( m_bVerbose ) std::cout << "Obtained >> " << *synackMessage << std::endl;
-
-   if( synackMessage->m_PacketType != TextProtocol::PacketType::SYN_ACK ||
-       synackMessage->m_SeqNum != m_Expected )
-   {
-      retval = false;
-   }
-
-   const TextProtocol::Message ackMessage( TextProtocol::PacketType::ACK, m_Expected++, serverIp, serverPort );
-
-   if( m_bVerbose ) std::cout << "Sending >> " << ackMessage << std::endl;
-   retval = TextProtocol::Socket::Send( m_Client, ackMessage );
-
-   if( m_bVerbose ) std::cout << "Successfully connected to server!" << std::endl;
+   establishConnection();
 
    //
    // Since I have no test code for this and CBA ... Echo server is now working ( AKA message to bytes and parse are good )
    //
 
-   if( retval )
+   if( m_bVerbose ) std::cout << "Building Request..." << std::endl;
+   HttpRequest oReq( m_eCommand, m_oHref.m_sUri, HttpVersion10, m_oHref.m_sHostName + ":" + std::to_string( m_oHref.m_nPortNumber ) );
+   for( auto& oFeildNameAndValue : m_oExtraHeaders )
    {
-      if( m_bVerbose ) std::cout << "Building Request..." << std::endl;
-      HttpRequest oReq( m_eCommand, m_oHref.m_sUri, HttpVersion10, m_oHref.m_sHostName + ":" + std::to_string( m_oHref.m_nPortNumber ) );
-      for( auto& oFeildNameAndValue : m_oExtraHeaders )
-      {
-         oReq.AddMessageHeader( oFeildNameAndValue.first, oFeildNameAndValue.second );
-      }
-      oReq.AppendMessageBody( m_sBody );
-      std::string sRawRequest = oReq.GetWireFormat();
-
-      if( m_bVerbose ) std::cout << "Raw request:" << std::endl << std::endl << sRawRequest << std::endl << std::endl << "Sending...";
-      retval = m_Client.Send( reinterpret_cast<const uint8*>( sRawRequest.c_str() ), sRawRequest.size() );
+      oReq.AddMessageHeader( oFeildNameAndValue.first, oFeildNameAndValue.second );
    }
+   oReq.AppendMessageBody( m_sBody );
+   std::string sRawRequest = oReq.GetWireFormat();
+
+   if( m_bVerbose ) std::cout << "Raw request:" << std::endl << std::endl << sRawRequest << std::endl << std::endl << "Sending...";
+   bool  retval = m_Client.Send( reinterpret_cast<const uint8*>( sRawRequest.c_str() ), sRawRequest.size() );
 
    HttpResponseParserAdvance oResponseParserParser;
    if( retval )
@@ -305,6 +264,52 @@ void CurlAppController::validateCommand() const
 
 void CurlAppController::establishConnection()
 {
+   debugPrint( "Connectioning to router...\r\n" );
 
-   throw std::runtime_error( "Failed to establish connection with remote" );
+   if( !m_Client.Open( m_oHref.m_sHostName.c_str(), 3000 ) )
+   {
+      debugPrint( "Establish connection failed because ", m_Client.DescribeError(), "\r\n" );
+      throw std::runtime_error( "Failed to establish connection with router" );
+   }
+
+   const TextProtocol::IpV4Address serverIp{ m_Client.GetServerAddrOnWire().s_addr };
+   const TextProtocol::PortNumber serverPort{ 8080 };
+
+   const TextProtocol::Message synMessage( TextProtocol::PacketType::SYN, m_Expected++, serverIp, serverPort );
+
+   debugPrint( "Attempting to connect with Server... Sending >> ", synMessage, "\r\n" );
+   if( !TextProtocol::Socket::Send( m_Client, synMessage ) )
+   {
+      debugPrint( "Unable to send message because ", m_Client.DescribeError(), "\r\n" );
+      throw std::runtime_error( "Failed to send SYN to server" );
+   }
+
+   debugPrint( "Waiting for SYN_ACK...", "\r\n" );
+
+   auto synackMessage = TextProtocol::Socket::Receive( m_Client );
+
+   if( !synackMessage.has_value() )
+   {
+      debugPrint( "Received failed due to: ", m_Client.DescribeError(), "\r\n" );
+      throw std::runtime_error( "Failed to receive SYN_ACK from server" );
+   }
+
+   if( synackMessage->m_PacketType != TextProtocol::PacketType::SYN_ACK ||
+       synackMessage->m_SeqNum != m_Expected )
+   {
+      debugPrint( "Obtained >> ", *synackMessage, "\r\n" );
+      throw std::runtime_error( "SYN_ACK did not match expected seq num" );
+   }
+
+   const TextProtocol::Message ackMessage( TextProtocol::PacketType::ACK, m_Expected++, serverIp, serverPort );
+
+   debugPrint( "Completing three-way hand shake... Sending >> ", ackMessage, "\r\n" );
+   if( !TextProtocol::Socket::Send( m_Client, ackMessage ) )
+   {
+      debugPrint( "Unable to send message because ", m_Client.DescribeError(), "\r\n" );
+
+      // Maybe throw -- depends on sever implementation
+   }
+
+   if( m_bVerbose ) std::cout << "Successfully connected to server!" << std::endl;
 }

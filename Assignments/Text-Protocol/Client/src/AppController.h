@@ -33,6 +33,7 @@ SOFTWARE.
 #include "../../../Curl/src/Href.h"
 #include "ActiveSocket.h"
 #include "Message.h"
+#include <iostream>
 
 class CurlAppController final
 {
@@ -48,6 +49,12 @@ private:
    std::vector<std::pair<std::string, std::string>> m_oExtraHeaders;
    Href              m_oHref{};
    std::string       m_sBody;
+
+   template<typename ...Args>
+   void debugPrint( Args&&... args )
+   {
+      if( m_bVerbose ) ( std::cout << ... << args );
+   }
 
    //
    // CLI
