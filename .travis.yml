@@ -3,16 +3,15 @@ sudo: false
 language: cpp
 matrix:
   include:
-    # works on Precise and Trusty
     - os: linux
       addons:
         apt:
           sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-trusty-6.0
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-6.0
           packages:
-            - clang-6.0
-            - g++-8
+          - clang-6.0
+          - libstdc++6
       env:
       - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
       
@@ -20,13 +19,23 @@ matrix:
       addons:
         apt:
           sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-trusty-7
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-7
           packages:
-            - clang-7
-            - g++-8
+          - clang-7
+          - libstdc++-7-dev
       env:
       - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7"
+        
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
     - os: linux
       addons:
@@ -37,6 +46,16 @@ matrix:
             - g++-8
       env:
         - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+
+    - os: osx
+      osx_image: xcode10
+      env:
+        - MATRIX_EVAL=""
+
+    - os: osx
+      osx_image: xcode9.4
+      env:
+        - MATRIX_EVAL=""
         
 before_install:
     - eval "${MATRIX_EVAL}"
