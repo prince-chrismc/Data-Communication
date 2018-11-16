@@ -78,10 +78,10 @@ void CurlAppController::Run()
    const TextProtocol::IpV4Address serverIp{ m_Client.GetServerAddrOnWire().s_addr };
    const TextProtocol::PortNumber serverPort{ m_Client.GetServerPort() };
 
-   const TextProtocol::Message ackMessage( TextProtocol::PacketType::SYN, m_Expected++, serverIp, serverPort );
+   const TextProtocol::Message synMessage( TextProtocol::PacketType::SYN, m_Expected++, serverIp, serverPort );
 
-   if( m_bVerbose ) std::cout << "Sending >> " << ackMessage << std::endl;
-   retval = TextProtocol::Socket::Send( m_Client, ackMessage );
+   if( m_bVerbose ) std::cout << "Sending >> " << synMessage << std::endl;
+   retval = TextProtocol::Socket::Send( m_Client, synMessage );
 
    if( m_bVerbose ) std::cout << "Waiting for SYN_ACK..." << std::endl;
 
@@ -100,6 +100,11 @@ void CurlAppController::Run()
    {
       retval = false;
    }
+
+   const TextProtocol::Message ackMessage( TextProtocol::PacketType::ACK, m_Expected++, serverIp, serverPort );
+
+   if( m_bVerbose ) std::cout << "Sending >> " << ackMessage << std::endl;
+   retval = TextProtocol::Socket::Send( m_Client, ackMessage );
 
    if( m_bVerbose ) std::cout << "Successfully connected to server!" << std::endl;
 
