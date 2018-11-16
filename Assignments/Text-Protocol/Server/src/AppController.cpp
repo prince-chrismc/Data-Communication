@@ -48,10 +48,19 @@ void AppController::Run()
 
       if( input.has_value() )
       {
-         std::cout << "Server >> obtained the following " << *input << std::endl;
+         std::cout << "Server >> obtained the following " << *input
+            << " from [ " << m_Socket.GetClientAddr() << ":" << m_Socket.GetClientPort() << " ]" << std::endl;
 
+         CActiveSocket client( CSimpleSocket::SocketTypeUdp );
 
-         TextProtocol::Socket::Send( m_Socket, *input );
+         if ( client.Open( m_Socket.GetClientAddr().c_str(), m_Socket.GetClientPort() ) )
+         {
+            TextProtocol::Socket::Send( client, *input );
+         }
+         else
+         {
+            throw std::exception();
+         }
       }
 
       std::this_thread::sleep_for( 100ms );
