@@ -30,8 +30,7 @@ SOFTWARE.
 
 bool TextProtocol::Socket::Send( CSimpleSocket& socket, const Message& toSend )
 {
-   std::cout << "Socket::Send >> ";
-   toSend.Print();
+   //std::cout << "Socket::Send >> " << toSend << std::endl;
 
    std::string msgPayload = toSend.ToByteStream();
 
@@ -41,7 +40,7 @@ bool TextProtocol::Socket::Send( CSimpleSocket& socket, const Message& toSend )
    if( msgPayload.length() != toSend.Size() )
       throw std::logic_error( "how did I fuck that up =?" );
 
-   std::cout << "Socket::Send >> " << socket.GetServerAddr() << ":" << socket.GetServerPort() << std::endl;
+   //std::cout << "Socket::Send >> " << socket.GetServerAddr() << ":" << socket.GetServerPort() << std::endl;
    const auto bytesSent = socket.Send( reinterpret_cast<const uint8*>( &msgPayload.front() ), msgPayload.length() );
 
    return ( static_cast<size_t>( bytesSent ) == toSend.Size() );
@@ -52,8 +51,8 @@ std::optional<TextProtocol::Message> TextProtocol::Socket::Receive( CSimpleSocke
    auto bytesObtained = -1;
    if( ( bytesObtained = socket.Receive( Message::MAX_MESSAGE_SIZE ) ) > 0 )
    {
-      std::cout << "Socket::Receive >> " << bytesObtained << " from "
-         << socket.GetClientAddr() << ":" << socket.GetClientPort() << std::endl;
+      //std::cout << "Socket::Receive >> " << bytesObtained << " from "
+      //   << socket.GetClientAddr() << ":" << socket.GetClientPort() << std::endl;
 
       return Message::Parse( socket.GetData() );
    }

@@ -31,6 +31,7 @@ SOFTWARE.
 #include <stdexcept>
 #include "ActiveSocket.h"
 #include "Message.h"
+#include "Socket.h"
 
 CurlAppController::CurlAppController( int argc, char ** argv )
    : m_oCliParser( argc, argv )
@@ -93,21 +94,22 @@ void CurlAppController::Run()
    const TextProtocol::IpV4Address serverIp{ oClient.GetServerAddrOnWire().s_addr };
    const TextProtocol::PortNumber serverPort{ oClient.GetServerPort() };
 
-   TextProtocol::Message ackMessage( TextProtocol::PacketType::ACK, Requested++, serverIp, serverPort );
-   std::string rawMsg = ackMessage.ToByteStream();
+   const TextProtocol::Message ackMessage( TextProtocol::PacketType::ACK, Requested++, serverIp, serverPort );
 
-   if( m_bVerbose ) std::cout << "Sending ACK >> " << rawMsg << std::endl;
-   retval = oClient.Send( reinterpret_cast<const uint8*>( rawMsg.c_str() ), rawMsg.size() );
+   if( m_bVerbose ) std::cout << "Sending >> " << ackMessage << std::endl;
+   retval = TextProtocol::Socket::Send( oClient, ackMessage );
 
    if( m_bVerbose ) std::cout << "Waiting for SYN_ACK..." << std::endl;
 
-   if( oClient.Receive( TextProtocol::Message::MAX_MESSAGE_SIZE ) <= 0 )
+   auto synackMessage = TextProtocol::Socket::Receive( oClient );
+
+   if( ! synackMessage.has_value() )
    {
       if( m_bVerbose ) std::cout << "Received failed due to: " << oClient.DescribeError() << std::endl;
       retval = false;
    }
 
-   TextProtocol::Message synackMessage = TextProtocol::Message::Parse( oClient.GetData() );
+   if( m_bVerbose ) std::cout << "Obtained >> " << *synackMessage << std::endl;
 
    //
    // Since I have no test code for this and CBA ... Echo server is now working ( AKA message to bytes and parse are good )

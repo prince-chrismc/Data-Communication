@@ -70,7 +70,7 @@ namespace TextProtocol
       size_t Size() const;
       std::string ToByteStream() const;
 
-      void Print() const;
+      friend std::ostream& operator<<(std::ostream& os, const Message& dt );
 
       static Message Parse( const std::string& rawBytes );
 

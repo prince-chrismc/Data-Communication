@@ -25,7 +25,6 @@ SOFTWARE.
 */
 
 #include "Message.h"
-#include <iostream>
 
 template <typename Enum>
 constexpr auto toBytes( Enum e ) noexcept // https://stackoverflow.com/a/33083231/8480874
@@ -38,24 +37,43 @@ constexpr auto toBytes( unsigned long bytes ) noexcept
    return bytes;
 }
 
+template <typename Enum, typename Mask>
+constexpr auto operator&( const Enum& lhs, const Mask& rhs )->std::underlying_type_t<Enum>
+{
+   return ( toBytes( lhs ) & rhs );
+}
+
 template <typename Enum>
 constexpr auto endianSwap( Enum num )
 {
-   if constexpr( sizeof( Enum )== 4 )
+   if constexpr( sizeof( Enum ) == 8 ) // hard work done by https://ubuntuforums.org/showthread.php?t=1190710&p=7477357#post7477357
    {
-      const uint32_t b0 = ( toBytes( num ) & 0x000000ff ) << 24u;
-      const uint32_t b1 = ( toBytes( num ) & 0x0000ff00 ) << 8u;
-      const uint32_t b2 = ( toBytes( num ) & 0x00ff0000 ) >> 8u;
-      const uint32_t b3 = ( toBytes( num ) & 0xff000000 ) >> 24u;
+      const uint64_t b0 = ( num & 0x00000000000000ff ) << 56;
+      const uint64_t b1 = ( num & 0x000000000000ff00 ) << 40;
+      const uint64_t b2 = ( num & 0x0000000000ff0000 ) << 24;
+      const uint64_t b3 = ( num & 0x00000000ff000000 ) << 8;
+      const uint64_t b4 = ( num & 0x000000ff00000000 ) >> 8;
+      const uint64_t b5 = ( num & 0x0000ff0000000000 ) >> 24;
+      const uint64_t b6 = ( num & 0x00ff000000000000 ) >> 40;
+      const uint64_t b7 = ( num & 0xff00000000000000 ) >> 56;
+
+      return Enum{ b0 | b1 | b2 | b3 | b4 | b5 | b6 | b7 };
+   }
+   else if constexpr( sizeof( Enum ) == 4 )
+   {
+      const uint32_t b0 = ( num & 0x000000ff ) << 24u;
+      const uint32_t b1 = ( num & 0x0000ff00 ) << 8u;
+      const uint32_t b2 = ( num & 0x00ff0000 ) >> 8u;
+      const uint32_t b3 = ( num & 0xff000000 ) >> 24u;
 
       return Enum{ b0 | b1 | b2 | b3 };
    }
    else if constexpr( sizeof( Enum ) == 2 )
    {
-      const uint16_t b1 = ( toBytes( num ) & 0x00ff ) << 8u;
-      const uint16_t b2 = ( toBytes( num ) & 0xff00 ) >> 8u;
+      const uint16_t b1 = ( num & 0x00ff ) << 8u;
+      const uint16_t b2 = ( num & 0xff00 ) >> 8u;
 
-      return Enum{ static_cast<uint16_t>(b1 | b2) };
+      return Enum{ static_cast<uint16_t>( b1 | b2 ) };
    }
 
    return Enum{ 0 };
@@ -93,11 +111,6 @@ std::string TextProtocol::Message::ToByteStream() const
    return rawBuffer + m_Payload;
 }
 
-void TextProtocol::Message::Print() const
-{
-   std::cout << "Message: " << ToByteStream() << std::endl;
-}
-
 TextProtocol::Message TextProtocol::Message::Parse( const std::string & rawBytes )
 {
    // TO DO: throw parse error is length < 11
@@ -113,9 +126,36 @@ TextProtocol::Message TextProtocol::Message::Parse( const std::string & rawBytes
 
    const uint32_t ipAddr{ b0 | b1 | b2 | b3 };
 
-   return{ PacketType{ static_cast<unsigned char>( rawBytes[ 0 ] ) },
+   Message obtained{ PacketType{ static_cast<unsigned char>( rawBytes[ 0 ] ) },
            endianSwap( SequenceNumber{ static_cast<unsigned long>( rawBytes[ 1 ] << 24u | rawBytes[ 2 ] << 16u | rawBytes[ 3 ] << 8u | rawBytes[ 4 ] ) } ),
            endianSwap( IpV4Address{ static_cast<unsigned long>( rawBytes[ 5 ] << 24u | rawBytes[ 6 ] << 16u | rawBytes[ 7 ] << 8u | rawBytes[ 8 ] ) } ),
            endianSwap( PortNumber{ static_cast<unsigned short>( rawBytes[ 9 ] << 8u | ( rawBytes[ 10 ] & 0x00ff ) ) } )
    };
+
+   obtained.m_Payload = rawBytes.substr( 11 );
+
+   return obtained;
+}
+
+std::ostream & TextProtocol::operator<<( std::ostream & os, const Message & message )
+{
+   os << "MSG: { " << [ type = message.m_PacketType ]()
+   {
+      switch( type )
+      {
+      case PacketType::ACK: return "ACK";
+      case PacketType::NACK: return "NACK";
+      case PacketType::SYN: return "SYN";
+      case PacketType::SYN_ACK: return "SYN_ACK";
+      default: return "??";
+      }
+   }( ) << " }";
+
+   os << " Seq=" << std::to_string( toBytes( message.m_SeqNum ) );
+
+
+   os << " @" << ( ( message.m_DstIp & 0xff000000 ) >> 24u ) << "." << ( ( message.m_DstIp & 0x00ff0000 ) >> 16u ) << ".";
+   os << ( ( message.m_DstIp & 0x0000ff00 ) >> 8u ) << "." << ( message.m_DstIp & 0x000000ff ) << ":" << toBytes( message.m_DstPort );
+
+   return os;
 }

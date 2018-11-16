@@ -48,8 +48,8 @@ void AppController::Run()
 
       if( input.has_value() )
       {
-         std::cout << "Server >> obtained the following ";
-         input->Print();
+         std::cout << "Server >> obtained the following " << *input << std::endl;
+
 
          TextProtocol::Socket::Send( m_Socket, *input );
       }
