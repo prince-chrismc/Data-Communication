@@ -116,7 +116,7 @@ void CurlAppController::Run()
    if( retval )
    {
       if( m_bVerbose ) std::cout << "Building Request..." << std::endl;
-      HttpRequest oReq( m_eCommand, m_oHref.m_sUri, HttpVersion10, m_oHref.m_sHostName + std::to_string( m_oHref.m_nPortNumber ) );
+      HttpRequest oReq( m_eCommand, m_oHref.m_sUri, HttpVersion10, m_oHref.m_sHostName + ":" + std::to_string( m_oHref.m_nPortNumber ) );
       for( auto& oFeildNameAndValue : m_oExtraHeaders )
       {
          oReq.AddMessageHeader( oFeildNameAndValue.first, oFeildNameAndValue.second );
