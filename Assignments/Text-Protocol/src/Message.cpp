@@ -153,9 +153,8 @@ std::ostream & TextProtocol::operator<<( std::ostream & os, const Message & mess
 
    os << " Seq=" << std::to_string( toBytes( message.m_SeqNum ) );
 
-
-   os << " @" << ( ( message.m_DstIp & 0xff000000 ) >> 24u ) << "." << ( ( message.m_DstIp & 0x00ff0000 ) >> 16u ) << ".";
-   os << ( ( message.m_DstIp & 0x0000ff00 ) >> 8u ) << "." << ( message.m_DstIp & 0x000000ff ) << ":" << toBytes( message.m_DstPort );
+   os << " @=" << ( message.m_DstIp & 0x000000ff ) << "." << ( ( message.m_DstIp & 0x0000ff00 ) >> 8u )<< ".";
+   os << ( ( message.m_DstIp & 0x00ff0000 ) >> 16u ) << "." << ( ( message.m_DstIp & 0xff000000 ) >> 24u ) << ":" << toBytes( message.m_DstPort );
 
    return os;
 }
