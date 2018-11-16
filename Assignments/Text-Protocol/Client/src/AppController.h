@@ -31,6 +31,8 @@ SOFTWARE.
 #include "HttpResponse.h"
 #include "HttpRequest.h"
 #include "../../../Curl/src/Href.h"
+#include "ActiveSocket.h"
+#include "Message.h"
 
 class CurlAppController final
 {
@@ -39,7 +41,7 @@ public:
 
    void Run();
 
-protected:
+private:
    CommandLineParser m_oCliParser;
    HttpRequestMethod m_eCommand;
    bool              m_bVerbose;
@@ -47,7 +49,10 @@ protected:
    Href              m_oHref{};
    std::string       m_sBody;
 
-private:
+   //
+   // CLI
+   //
+
    void readCommandLineArgs();
 
    static void printGeneralUsage();
@@ -65,4 +70,16 @@ private:
    static constexpr std::string_view MISSING_GET_OR_POST = "Missing 'get' or 'post' paramater";
    static constexpr std::string_view MISSING_URL = "Missing 'URL' paramater";
    void moreArgsToRead( CommandLineParser::ArgIterator itor, std::string_view errMsg ) const;
+
+
+   //
+   // Run
+   //
+
+   CActiveSocket m_Client;
+   TextProtocol::SequenceNumber m_Expected{ 0 }; // by this side
+
+   void validateCommand() const;
+
+   void establishConnection();
 };

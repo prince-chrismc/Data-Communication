@@ -29,14 +29,13 @@ SOFTWARE.
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
-#include "ActiveSocket.h"
-#include "Message.h"
 #include "Socket.h"
 
 CurlAppController::CurlAppController( int argc, char ** argv )
    : m_oCliParser( argc, argv )
    , m_eCommand( HttpRequestInvalid )
    , m_bVerbose( false )
+   , m_Client( CSimpleSocket::SocketTypeUdp )
 {
    readCommandLineArgs();
 }
@@ -68,50 +67,36 @@ void CurlAppController::readCommandLineArgs()
 
 void CurlAppController::Run()
 {
-   switch( m_eCommand )
-   {
-   case HttpRequestGet:
-   case HttpRequestPost:
-      break;
-   default:
-      throw std::runtime_error( "If you see this please don't look for the developer to report a bug =)" );
-   }
-
-   if( m_bVerbose ) std::cout << "Starting..." << std::endl;
-   CActiveSocket oClient( CSimpleSocket::SocketTypeUdp );
-
-   if( m_bVerbose ) std::cout << "Initializing..." << std::endl;
+   validateCommand();
 
    if( m_bVerbose ) std::cout << "Connectioning to " << m_oHref.m_sHostName << " on port " << m_oHref.m_nPortNumber << "..." << std::endl;
-   bool retval = oClient.Open( m_oHref.m_sHostName.c_str(), m_oHref.m_nPortNumber );
+   bool retval = m_Client.Open( m_oHref.m_sHostName.c_str(), m_oHref.m_nPortNumber );
 
    if( !retval && m_bVerbose ) std::cout << "Connection could not be established!" << std::endl;
 
-   // TO DO: Send ACK
-   TextProtocol::SequenceNumber Expected{ 0 }; // by this side
-   TextProtocol::SequenceNumber Requested{ 0 }; // by the remote
 
-   const TextProtocol::IpV4Address serverIp{ oClient.GetServerAddrOnWire().s_addr };
-   const TextProtocol::PortNumber serverPort{ oClient.GetServerPort() };
+   const TextProtocol::IpV4Address serverIp{ m_Client.GetServerAddrOnWire().s_addr };
+   const TextProtocol::PortNumber serverPort{ m_Client.GetServerPort() };
 
-   const TextProtocol::Message ackMessage( TextProtocol::PacketType::SYN, Requested++, serverIp, serverPort );
+   const TextProtocol::Message ackMessage( TextProtocol::PacketType::SYN, m_Expected++, serverIp, serverPort );
 
    if( m_bVerbose ) std::cout << "Sending >> " << ackMessage << std::endl;
-   retval = TextProtocol::Socket::Send( oClient, ackMessage );
+   retval = TextProtocol::Socket::Send( m_Client, ackMessage );
 
    if( m_bVerbose ) std::cout << "Waiting for SYN_ACK..." << std::endl;
 
-   auto synackMessage = TextProtocol::Socket::Receive( oClient );
+   auto synackMessage = TextProtocol::Socket::Receive( m_Client );
 
    if( !synackMessage.has_value() )
    {
-      if( m_bVerbose ) std::cout << "Received failed due to: " << oClient.DescribeError() << std::endl;
+      if( m_bVerbose ) std::cout << "Received failed due to: " << m_Client.DescribeError() << std::endl;
       retval = false;
    }
 
    if( m_bVerbose ) std::cout << "Obtained >> " << *synackMessage << std::endl;
 
-   if( synackMessage->m_PacketType != TextProtocol::PacketType::SYN_ACK )
+   if( synackMessage->m_PacketType != TextProtocol::PacketType::SYN_ACK ||
+       synackMessage->m_SeqNum != m_Expected )
    {
       retval = false;
    }
@@ -134,7 +119,7 @@ void CurlAppController::Run()
       std::string sRawRequest = oReq.GetWireFormat();
 
       if( m_bVerbose ) std::cout << "Raw request:" << std::endl << std::endl << sRawRequest << std::endl << std::endl << "Sending...";
-      retval = oClient.Send( reinterpret_cast<const uint8*>( sRawRequest.c_str() ), sRawRequest.size() );
+      retval = m_Client.Send( reinterpret_cast<const uint8*>( sRawRequest.c_str() ), sRawRequest.size() );
    }
 
    HttpResponseParserAdvance oResponseParserParser;
@@ -143,16 +128,16 @@ void CurlAppController::Run()
       if( m_bVerbose ) std::cout << "Receiving..." << std::endl;
       do
       {
-         if( oClient.Receive( TextProtocol::Message::MAX_MESSAGE_SIZE ) <= 0 )
+         if( m_Client.Receive( TextProtocol::Message::MAX_MESSAGE_SIZE ) <= 0 )
          {
-            if( m_bVerbose ) std::cout << "Received failed due to: " << oClient.DescribeError() << std::endl;
+            if( m_bVerbose ) std::cout << "Received failed due to: " << m_Client.DescribeError() << std::endl;
             retval = false;
             break;
          }
 
-         if( m_bVerbose ) std::cout << "Appending " << oClient.GetBytesReceived() << " bytes of data..." << std::endl;
+         if( m_bVerbose ) std::cout << "Appending " << m_Client.GetBytesReceived() << " bytes of data..." << std::endl;
 
-      } while( !oResponseParserParser.AppendResponseData( oClient.GetData() ) );
+      } while( !oResponseParserParser.AppendResponseData( m_Client.GetData() ) );
       if( m_bVerbose ) std::cout << "Transmission Completed..." << std::endl;
    }
 
@@ -161,7 +146,7 @@ void CurlAppController::Run()
       HttpResponse oRes = oResponseParserParser.GetHttpResponse();
 
       if( m_bVerbose ) std::cout << "Closing..." << std::endl;
-      oClient.Close();
+      m_Client.Close();
       if( m_bVerbose ) std::cout << std::endl << std::endl << "Here's the response!" << std::endl << std::endl;
 
       std::cout << oRes.GetWireFormat();
@@ -299,4 +284,22 @@ void CurlAppController::moreArgsToRead( CommandLineParser::ArgIterator itor, std
       printUsageGivenArgs();
       throw std::invalid_argument( errMsg.data() );
    }
+}
+
+void CurlAppController::validateCommand() const
+{
+   switch( m_eCommand )
+   {
+   case HttpRequestGet:
+   case HttpRequestPost:
+      break;
+   default:
+      throw std::runtime_error( "If you see this please don't look for the developer to report a bug =)" );
+   }
+}
+
+void CurlAppController::establishConnection()
+{
+
+   throw std::runtime_error( "Failed to establish connection with remote" );
 }

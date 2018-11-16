@@ -52,6 +52,7 @@ void AppController::Run()
             << " from [ " << m_Socket.GetClientAddr() << ":" << m_Socket.GetClientPort() << " ]" << std::endl;
 
          if( input->m_PacketType == TextProtocol::PacketType::SYN ) input->m_PacketType = TextProtocol::PacketType::SYN_ACK;
+         ++input->m_SeqNum;
 
          TextProtocol::Socket::Send( m_Socket, *input );
       }

@@ -47,6 +47,17 @@ namespace TextProtocol
       return temp;
    }
 
+   template <typename Enum>
+   Enum& operator++( Enum& e ) noexcept
+   {
+      static_assert( std::is_enum<Enum>::value, "type must be an enum" );
+
+      auto newValue = static_cast<std::underlying_type_t<Enum>>( e );
+      ++newValue;
+      e = Enum{ newValue };
+      return e;
+   }
+
    enum class PacketType : unsigned char
    {
       ACK = 0x06,
