@@ -139,6 +139,8 @@ TextProtocol::Message TextProtocol::Message::Parse( const std::string & rawBytes
 
 std::ostream & TextProtocol::operator<<( std::ostream & os, const Message & message )
 {
+   using std::operator<<; // Enable ADL
+
    os << "MSG: { " << [ type = message.m_PacketType ]()
    {
       switch( type )
