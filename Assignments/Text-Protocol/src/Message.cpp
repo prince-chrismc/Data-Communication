@@ -32,11 +32,6 @@ constexpr auto toBytes( Enum e ) noexcept // https://stackoverflow.com/a/3308323
    return static_cast<std::underlying_type_t<Enum>>( e );
 }
 
-constexpr auto toBytes( unsigned long bytes ) noexcept
-{
-   return bytes;
-}
-
 template <typename Enum, typename Mask>
 constexpr auto operator&( const Enum& lhs, const Mask& rhs )->std::underlying_type_t<Enum>
 {
@@ -76,7 +71,7 @@ constexpr auto endianSwap( Enum num )
       return Enum{ static_cast<uint16_t>( b1 | b2 ) };
    }
 
-   return Enum{ 0 };
+   return Enum{ num };
 }
 
 TextProtocol::Message::Message( PacketType type, SequenceNumber id, IpV4Address dstIp, PortNumber port ) :
@@ -103,7 +98,8 @@ std::string TextProtocol::Message::ToByteStream() const
    std::string ipBuffer( reinterpret_cast<const char*>( &m_DstIp ), sizeof( m_DstIp ) );
    ipBuffer.insert( ipBuffer.begin(), 4 - ipBuffer.length(), '0' );
 
-   std::string portBuffer( reinterpret_cast<const char*>( &m_DstPort ), sizeof( m_DstPort ) );
+   auto port = endianSwap( m_DstPort );
+   std::string portBuffer( reinterpret_cast<const char*>( &port ), sizeof( port ) );
    portBuffer.insert( portBuffer.begin(), 2 - portBuffer.length(), '0' );
 
    rawBuffer += seqBuffer + ipBuffer + portBuffer;
@@ -129,7 +125,7 @@ TextProtocol::Message TextProtocol::Message::Parse( const std::string & rawBytes
    Message obtained{ PacketType{ static_cast<unsigned char>( rawBytes[ 0 ] ) },
            endianSwap( SequenceNumber{ static_cast<unsigned long>( rawBytes[ 1 ] << 24u | rawBytes[ 2 ] << 16u | rawBytes[ 3 ] << 8u | rawBytes[ 4 ] ) } ),
            endianSwap( IpV4Address{ static_cast<unsigned long>( rawBytes[ 5 ] << 24u | rawBytes[ 6 ] << 16u | rawBytes[ 7 ] << 8u | rawBytes[ 8 ] ) } ),
-           endianSwap( PortNumber{ static_cast<unsigned short>( rawBytes[ 9 ] << 8u | ( rawBytes[ 10 ] & 0x00ff ) ) } )
+           PortNumber{ static_cast<unsigned short>( rawBytes[ 9 ] << 8u | ( rawBytes[ 10 ] & 0x00ff ) ) }
    };
 
    obtained.m_Payload = rawBytes.substr( 11 );
@@ -155,7 +151,7 @@ std::ostream & TextProtocol::operator<<( std::ostream & os, const Message & mess
 
    os << " Seq=" << std::to_string( toBytes( message.m_SeqNum ) );
 
-   os << " @=" << ( message.m_DstIp & 0x000000ff ) << "." << ( ( message.m_DstIp & 0x0000ff00 ) >> 8u )<< ".";
+   os << " @=" << ( message.m_DstIp & 0x000000ff ) << "." << ( ( message.m_DstIp & 0x0000ff00 ) >> 8u ) << ".";
    os << ( ( message.m_DstIp & 0x00ff0000 ) >> 16u ) << "." << ( ( message.m_DstIp & 0xff000000 ) >> 24u ) << ":" << toBytes( message.m_DstPort );
 
    return os;

@@ -70,13 +70,13 @@ void CurlAppController::Run()
    validateCommand();
 
    if( m_bVerbose ) std::cout << "Connectioning to " << m_oHref.m_sHostName << " on port " << m_oHref.m_nPortNumber << "..." << std::endl;
-   bool retval = m_Client.Open( m_oHref.m_sHostName.c_str(), m_oHref.m_nPortNumber );
+   bool retval = m_Client.Open( m_oHref.m_sHostName.c_str(), 3000 );
 
    if( !retval && m_bVerbose ) std::cout << "Connection could not be established!" << std::endl;
 
 
    const TextProtocol::IpV4Address serverIp{ m_Client.GetServerAddrOnWire().s_addr };
-   const TextProtocol::PortNumber serverPort{ m_Client.GetServerPort() };
+   const TextProtocol::PortNumber serverPort{ 8080 };
 
    const TextProtocol::Message synMessage( TextProtocol::PacketType::SYN, m_Expected++, serverIp, serverPort );
 
