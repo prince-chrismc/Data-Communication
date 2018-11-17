@@ -81,10 +81,16 @@ void CurlAppController::Run()
       oReq.AddMessageHeader( oFeildNameAndValue.first, oFeildNameAndValue.second );
    }
    oReq.AppendMessageBody( m_sBody );
-   std::string sRawRequest = oReq.GetWireFormat();
 
-   if( m_bVerbose ) std::cout << "Raw request:" << std::endl << std::endl << sRawRequest << std::endl << std::endl << "Sending...";
-   bool  retval = m_Client.Send( reinterpret_cast<const uint8*>( sRawRequest.c_str() ), sRawRequest.size() );
+   //if( m_bVerbose ) std::cout << "Raw request:" << std::endl << std::endl << sRawRequest << std::endl << std::endl << "Sending...";
+
+   const TextProtocol::IpV4Address serverIp{ m_Client.GetServerAddrOnWire().s_addr };
+   const TextProtocol::PortNumber serverPort{ 8080 };
+
+   TextProtocol::Message request( TextProtocol::PacketType::ACK, m_Expected++, serverIp, serverPort );
+   request.m_Payload = oReq.GetWireFormat();
+
+   bool retval = TextProtocol::Socket::Send( m_Client, request );
 
    HttpResponseParserAdvance oResponseParserParser;
    if( retval )

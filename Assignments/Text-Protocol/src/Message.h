@@ -58,6 +58,13 @@ namespace TextProtocol
       return e;
    }
 
+   template <typename Enum>
+   bool operator>( const Enum& lhs, const std::underlying_type_t<Enum>& rhs )
+   {
+      return static_cast<std::underlying_type_t<Enum>>( lhs ) > rhs;
+   }
+
+
    enum class PacketType : unsigned char
    {
       ACK = 0x06,

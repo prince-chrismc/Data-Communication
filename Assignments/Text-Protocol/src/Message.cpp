@@ -32,8 +32,8 @@ constexpr auto toBytes( Enum e ) noexcept // https://stackoverflow.com/a/3308323
    return static_cast<std::underlying_type_t<Enum>>( e );
 }
 
-template <typename Enum, typename Mask>
-constexpr auto operator&( const Enum& lhs, const Mask& rhs )->std::underlying_type_t<Enum>
+template <typename Enum>
+constexpr auto operator&( const Enum& lhs, const std::underlying_type_t<Enum>& rhs )
 {
    return ( toBytes( lhs ) & rhs );
 }

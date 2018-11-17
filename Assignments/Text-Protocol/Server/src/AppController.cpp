@@ -29,6 +29,7 @@ SOFTWARE.
 #include <iostream>
 #include "Socket.h"
 #include <thread>
+#include "HttpRequest.h"
 
 using namespace std::chrono_literals;
 
@@ -48,10 +49,24 @@ void AppController::Run()
 
       if( input.has_value() )
       {
-         std::cout << "Server >> obtained the following " << *input
+         std::cout << "Server >> obtained " << m_Socket.GetBytesReceived() << " containing the following: " << *input
             << " from [ " << m_Socket.GetClientAddr() << ":" << m_Socket.GetClientPort() << " ]" << std::endl;
 
-         if( input->m_PacketType == TextProtocol::PacketType::SYN ) input->m_PacketType = TextProtocol::PacketType::SYN_ACK;
+         if( input->m_PacketType == TextProtocol::PacketType::SYN )
+         {
+            input->m_PacketType = TextProtocol::PacketType::SYN_ACK;
+         }
+         else if( input->m_PacketType == TextProtocol::PacketType::ACK && input->m_SeqNum > 1 )
+         {
+            HttpRequestParser parser( input->m_Payload );
+
+            auto req = parser.GetHttpRequest();
+
+            req.IsValidRequest();
+
+
+         }
+
          ++input->m_SeqNum;
 
          TextProtocol::Socket::Send( m_Socket, *input );
