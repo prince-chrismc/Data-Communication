@@ -137,7 +137,7 @@ std::ostream& TextProtocol::operator<<( std::ostream & os, const TextProtocol::M
 {
    using std::operator<<; // Enable ADL
 
-   operator<<( os, std::string{"MSG: { "});
+   operator<<( os, std::string{ "MSG: { " } );
 
    os << [ type = message.m_PacketType ]()->std::string
    {
@@ -150,14 +150,14 @@ std::ostream& TextProtocol::operator<<( std::ostream & os, const TextProtocol::M
       default: return "??";
       }
    }( );
-   
+
    operator<<( os, " } Seq=" + std::to_string( toBytes( message.m_SeqNum ) ) + " @=" );
 
-   os << std::to_string( ( message.m_DstIp & 0x000000ff ) >> 0ul ) << std::string{"."}
-      << std::to_string( ( message.m_DstIp & 0x0000ff00 ) >> 8ul ) << std::string{"."}
-      << std::to_string( ( message.m_DstIp & 0x00ff0000 ) >> 16u ) << std::string{"."}
-      << std::to_string( ( message.m_DstIp & 0xff000000 ) >> 24u ) << std::string{":"}
-      << std::to_string( toBytes( message.m_DstPort ) );
+   os << std::to_string( ( message.m_DstIp & 0x000000ff ) >> 0ul ) << std::string{ "." }
+      << std::to_string( ( message.m_DstIp & 0x0000ff00 ) >> 8ul ) << std::string{ "." }
+      << std::to_string( ( message.m_DstIp & 0x00ff0000 ) >> 16u ) << std::string{ "." }
+      << std::to_string( ( message.m_DstIp & 0xff000000 ) >> 24u ) << std::string{ ":" }
+   << std::to_string( toBytes( message.m_DstPort ) );
 
    return os;
 }
