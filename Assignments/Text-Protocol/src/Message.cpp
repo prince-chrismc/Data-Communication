@@ -133,18 +133,16 @@ TextProtocol::Message TextProtocol::Message::Parse( const std::string & rawBytes
    return obtained;
 }
 
-std::ostream & TextProtocol::operator<<( std::ostream & os, const Message & message )
+std::ostream& TextProtocol::operator<<( std::ostream & os, const TextProtocol::Message & message )
 {
-   using std::operator<<; // Enable ADL
-
    os << "MSG: { " << [ type = message.m_PacketType ]()
    {
       switch( type )
       {
-      case PacketType::ACK: return "ACK";
-      case PacketType::NACK: return "NACK";
-      case PacketType::SYN: return "SYN";
-      case PacketType::SYN_ACK: return "SYN_ACK";
+      case TextProtocol::PacketType::ACK: return "ACK";
+      case TextProtocol::PacketType::NACK: return "NACK";
+      case TextProtocol::PacketType::SYN: return "SYN";
+      case TextProtocol::PacketType::SYN_ACK: return "SYN_ACK";
       default: return "??";
       }
    }( ) << " }";
