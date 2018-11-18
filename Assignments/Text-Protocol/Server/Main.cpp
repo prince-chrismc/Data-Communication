@@ -30,11 +30,10 @@ SOFTWARE.
 
 int main( int argc, char** argv )
 {
-   AppController oApp( argc, argv );
    try
    {
-       oApp.Initialize();
-       oApp.Run();
+      AppController oApp( argc, argv );
+      oApp.Run();
    }
    catch( const std::exception& e )
    {

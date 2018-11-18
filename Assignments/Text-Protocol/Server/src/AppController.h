@@ -34,18 +34,17 @@ class AppController
 public:
    AppController(int argc, char** argv);
 
-   void Initialize();
-
    void Run();
 
 private:
    CommandLineParser m_CliParser;
 
-   bool         m_Verbose;
-   unsigned int m_Port;
-   std::string  m_FileExplorerRoot;
+   bool m_Verbose;
+   unsigned short m_Port;
+   std::string m_RootDir;
 
    CPassiveSocket m_Socket;
 
    static void printGeneralUsage();
+   void readCommandLineArgs();
 };
