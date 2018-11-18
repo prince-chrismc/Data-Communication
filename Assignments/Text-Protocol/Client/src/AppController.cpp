@@ -50,23 +50,24 @@ void CurlAppController::readCommandLineArgs()
    auto itor = m_oCliParser.cbegin();
    moreArgsToRead( itor, MISSING_GET_OR_POST );
 
-   if( *itor == "help" ) printUsageGivenArgs();
-   else if( *itor == "get" ) m_eCommand = HttpRequestGet;
-   else if( *itor == "post" ) m_eCommand = HttpRequestPost;
-   else { printUsageGivenArgs(); throw std::invalid_argument( MISSING_GET_OR_POST.data() ); }
-
-   switch( m_eCommand )
+   enum Options { HELP, GET, POST };
+   switch( CommandLineParser::doesMatch<Options>( itor, { "help", "get", "post" } ) )
    {
-   case HttpRequestGet:
-      // Continue parsing GET args
+   case HELP:
+      printUsageGivenArgs();
+      break;
+   case GET:
+      m_eCommand = HttpRequestGet;
       parseGetOptions( ++itor );
       break;
-   case HttpRequestPost:
-      // Continue parsing POST args
+   case POST:
+      m_eCommand = HttpRequestPost;
       parsePostOptions( ++itor );
       break;
+
    default:
-      break;
+      printUsageGivenArgs();
+      throw std::invalid_argument( MISSING_GET_OR_POST.data() );
    }
 }
 
