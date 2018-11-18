@@ -56,6 +56,11 @@ void AppController::Run()
          {
             input->m_PacketType = TextProtocol::PacketType::SYN_ACK;
          }
+         else if( input->m_PacketType == TextProtocol::PacketType::SYN_ACK )
+         {
+            std::cout << "New client connection has been established!" << std::endl;
+            continue;
+         }
          else if( input->m_PacketType == TextProtocol::PacketType::ACK && input->m_SeqNum > 1 )
          {
             HttpRequestParser parser( input->m_Payload );
