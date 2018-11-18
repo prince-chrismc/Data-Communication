@@ -39,6 +39,7 @@ class CurlAppController final
 {
 public:
    CurlAppController( int argc, char** argv );
+   ~CurlAppController();
 
    void Run();
 
@@ -91,4 +92,6 @@ private:
    void establishConnection();
 
    void sendHttpRequest();
+
+   void receiveHttpResponse();
 };

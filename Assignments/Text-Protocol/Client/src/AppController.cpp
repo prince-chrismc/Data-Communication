@@ -39,6 +39,12 @@ CurlAppController::CurlAppController( int argc, char ** argv )
    readCommandLineArgs();
 }
 
+CurlAppController::~CurlAppController()
+{
+   debugPrint( "Closing...", "\r\n" );
+   m_Client.Close();
+}
+
 void CurlAppController::readCommandLineArgs()
 {
    auto itor = m_oCliParser.cbegin();
@@ -72,31 +78,9 @@ void CurlAppController::Run()
 
    sendHttpRequest();
 
-   debugPrint( "Receiving... " );
-   auto response = TextProtocol::Socket::Receive( m_Client );
-   if( response.has_value() )
-   {
-      HttpResponseParser oParser( response->m_Payload );
-      auto httpResponse = oParser.GetHttpResponse();
+   receiveHttpResponse();
 
-      debugPrint( *response, httpResponse.GetStatusLine(), "\r\n\r\nHere's the response!" );
-
-      if( m_bVerbose )
-      {
-         std::cout << httpResponse.GetWireFormat();
-      }
-      else
-      {
-         std::cout << httpResponse.GetBody();
-      }
-   }
-   else
-   {
-      debugPrint( "Received failed due to: ", m_Client.DescribeError() );
-   }
-
-   debugPrint( "Closing...", "\r\n" );
-   m_Client.Close();
+   std::cout.flush();
 }
 
 //
@@ -315,4 +299,30 @@ void CurlAppController::sendHttpRequest()
    debugPrint( " Sending >> ", request, " for ", oReq.GetRequestLine(), "\r\n" );
    if( !TextProtocol::Socket::Send( m_Client, request ) )
       throw std::runtime_error( "Failed to send HTTP request" );
+}
+
+void CurlAppController::receiveHttpResponse()
+{
+   debugPrint( "Receiving... " );
+   auto response = TextProtocol::Socket::Receive( m_Client );
+   if( response.has_value() )
+   {
+      HttpResponseParser oParser( response->m_Payload );
+      auto httpResponse = oParser.GetHttpResponse();
+
+      debugPrint( *response, httpResponse.GetStatusLine(), "\r\n\r\nHere's the response!" );
+
+      if( m_bVerbose )
+      {
+         std::cout << httpResponse.GetWireFormat();
+      }
+      else
+      {
+         std::cout << httpResponse.GetBody();
+      }
+   }
+   else
+   {
+      debugPrint( "Received failed due to: ", m_Client.DescribeError() );
+   }
 }
