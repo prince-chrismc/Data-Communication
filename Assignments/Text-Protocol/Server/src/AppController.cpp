@@ -30,17 +30,54 @@ SOFTWARE.
 #include "Socket.h"
 #include <thread>
 #include "HttpRequest.h"
+#include "FileServlet.h"
 
 using namespace std::chrono_literals;
+using TextProtocol::PacketType;
+
+AppController::AppController( int argc, char** argv ) : m_CliParser( argc, argv ), m_Verbose( false ), m_Port( 8080 ),
+m_FileExplorerRoot( "." ), m_Socket( CSimpleSocket::SocketTypeUdp )
+{
+}
 
 void AppController::Initialize()
 {
-   if( !m_Socket.Listen( "127.0.0.1", 8080 ) )
+   m_Verbose = m_CliParser.DoesSwitchExists( "-v" );
+
+   if( m_CliParser.DoesSwitchExists( "-p" ) )
+   {
+      try
+      {
+         m_Port = std::stoul( *++m_CliParser.find( "-p" ) );
+      }
+      catch( ... )
+      {
+         printGeneralUsage();
+         throw std::logic_error( "Invalid port number specified!" );
+      }
+   }
+
+   if( m_CliParser.DoesSwitchExists( "-d" ) )
+   {
+      try
+      {
+         m_FileExplorerRoot = *++m_CliParser.find( "-d" );
+      }
+      catch( ... )
+      {
+         printGeneralUsage();
+         throw std::logic_error( "Incorrectly specified directory!" );
+      }
+   }
+
+   if( !m_Socket.Listen( "127.0.0.1", m_Port ) )
       throw std::runtime_error( "Failed to listen on port" );
 }
 
 void AppController::Run()
 {
+   FileServlet oFileExplorer( m_FileExplorerRoot );
+
    while( true )
    {
       //m_Socket.Select();
@@ -52,28 +89,39 @@ void AppController::Run()
          std::cout << "Server >> obtained " << m_Socket.GetBytesReceived() << " containing the following: " << *input
             << " from [ " << m_Socket.GetClientAddr() << ":" << m_Socket.GetClientPort() << " ]" << std::endl;
 
-         if( input->m_PacketType == TextProtocol::PacketType::SYN )
+         if( input->m_PacketType == PacketType::SYN )
          {
-            input->m_PacketType = TextProtocol::PacketType::SYN_ACK;
+            input->m_PacketType = PacketType::SYN_ACK;
          }
-         else if( input->m_PacketType == TextProtocol::PacketType::SYN_ACK )
+         else if( input->m_PacketType == PacketType::SYN_ACK )
          {
             std::cout << "New client connection has been established!" << std::endl;
             continue;
          }
-         else if( input->m_PacketType == TextProtocol::PacketType::ACK && input->m_SeqNum > 1 )
+         else if( input->m_PacketType == PacketType::ACK )
          {
+            HttpResponse response( HttpVersion10, HttpStatusBadRequest, "BAD REQUEST" );
             HttpRequestParser parser( input->m_Payload );
 
-            auto req = parser.GetHttpRequest();
+            try
+            {
+               auto req = parser.GetHttpRequest();
 
-            req.IsValidRequest();
+               if( req.IsValidRequest() )
+               {
+                  response = HttpResponse( HttpVersion10, HttpStatusInternalServerError, "INTERNAL SERVER ERROR" );
+                  response = oFileExplorer.HandleRequest( req );
+               }
+            }
+            catch( const std::exception& e )
+            {
+               std::cout << "Error handling request: " << e.what() << std::endl;
+            }
 
-
+            input->m_Payload = response.GetWireFormat().substr( 0, TextProtocol::Message::MAX_PAYLOAD_LENGTH );
          }
 
          ++input->m_SeqNum;
-
          TextProtocol::Socket::Send( m_Socket, *input );
       }
 
@@ -83,4 +131,25 @@ void AppController::Run()
    m_Socket.Close();
 
    return;
+}
+
+//
+// Printing
+//
+void AppController::printGeneralUsage()
+{
+   /*
+    * General Usage
+    *    httpfs help
+    * httpfs is a simple HTTP based file server.
+    * usage:
+    *    httpfs [-v] [-p PORT] [-d PATH-TO-DIR]
+    * -v Prints debugging messages.
+    * -p Specifies the port number that the server will listen and serve at. Default is 8080.
+    * -d Specifies the directory that the server will use to read/write requested files. Default is the current directory when launching the application.
+    */
+
+   std::cout << "General Usage\r\n   httpfs help\r\nhttpfs is a simple file server.\r\nUsage:\r\n   hhttpfs [-v] [-p PORT] [-d PATH-TO-DIR]\r\n";
+   std::cout << "-v   Prints debugging messages.\r\n-p Specifies the port number that the server will listen and serve at. Default is 8080.\r\n";
+   std::cout << "-d Specifies the directory that the server will use to read/write requested files. Default is the current directory when launching the application.\r\n" << std::endl;
 }

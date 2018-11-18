@@ -72,34 +72,31 @@ void CurlAppController::Run()
 
    sendHttpRequest();
 
-   bool retval = true;
-   HttpResponseParserAdvance oResponseParserParser;
-   if( m_bVerbose ) std::cout << "Receiving..." << std::endl;
-   do
+   debugPrint( "Receiving... " );
+   auto response = TextProtocol::Socket::Receive( m_Client );
+   if( response.has_value() )
    {
-      if( m_Client.Receive( TextProtocol::Message::MAX_MESSAGE_SIZE ) <= 0 )
+      HttpResponseParser oParser( response->m_Payload );
+      auto httpResponse = oParser.GetHttpResponse();
+
+      debugPrint( *response, httpResponse.GetStatusLine(), "\r\n\r\nHere's the response!" );
+
+      if( m_bVerbose )
       {
-         if( m_bVerbose ) std::cout << "Received failed due to: " << m_Client.DescribeError() << std::endl;
-         retval = false;
-         break;
+         std::cout << httpResponse.GetWireFormat();
       }
-
-      if( m_bVerbose ) std::cout << "Appending " << m_Client.GetBytesReceived() << " bytes of data..." << std::endl;
-
-   } while( !oResponseParserParser.AppendResponseData( m_Client.GetData() ) );
-   if( m_bVerbose ) std::cout << "Transmission Completed..." << std::endl;
-
-   if( retval )
-   {
-      HttpResponse oRes = oResponseParserParser.GetHttpResponse();
-
-      if( m_bVerbose ) std::cout << "Closing..." << std::endl;
-      m_Client.Close();
-      if( m_bVerbose ) std::cout << std::endl << std::endl << "Here's the response!" << std::endl << std::endl;
-
-      std::cout << oRes.GetWireFormat();
-      std::cout.flush();
+      else
+      {
+         std::cout << httpResponse.GetBody();
+      }
    }
+   else
+   {
+      debugPrint( "Received failed due to: ", m_Client.DescribeError() );
+   }
+
+   debugPrint( "Closing...", "\r\n" );
+   m_Client.Close();
 }
 
 //
@@ -285,7 +282,7 @@ void CurlAppController::establishConnection()
       throw std::runtime_error( "SYN_ACK did not match expected seq num" );
    }
 
-   const TextProtocol::Message ackMessage( TextProtocol::PacketType::ACK, m_Expected++, serverIp, serverPort );
+   const TextProtocol::Message ackMessage( TextProtocol::PacketType::SYN_ACK, m_Expected++, serverIp, serverPort );
 
    debugPrint( "Completing three-way hand shake... Sending >> ", ackMessage, "\r\n" );
    if( !TextProtocol::Socket::Send( m_Client, ackMessage ) )
@@ -309,17 +306,13 @@ void CurlAppController::sendHttpRequest()
    }
    oReq.AppendMessageBody( m_sBody );
 
-   //if( m_bVerbose ) std::cout << "Raw request:" << std::endl << std::endl << sRawRequest << std::endl << std::endl << "Sending...";
-
    const TextProtocol::IpV4Address serverIp{ m_Client.GetServerAddrOnWire().s_addr };
    const TextProtocol::PortNumber serverPort{ 8080 };
 
    TextProtocol::Message request( TextProtocol::PacketType::ACK, m_Expected++, serverIp, serverPort );
    request.m_Payload = oReq.GetWireFormat();
 
-
    debugPrint( " Sending >> ", request, " for ", oReq.GetRequestLine(), "\r\n" );
    if( !TextProtocol::Socket::Send( m_Client, request ) )
       throw std::runtime_error( "Failed to send HTTP request" );
-
 }

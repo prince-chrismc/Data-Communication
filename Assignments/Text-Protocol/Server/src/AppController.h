@@ -32,7 +32,7 @@ SOFTWARE.
 class AppController
 {
 public:
-   AppController( int argc, char** argv ) : m_CliParser( argc, argv ), m_Verbose( false ), m_Port( 8080 ), m_Socket( CSimpleSocket::SocketTypeUdp ) {}
+   AppController(int argc, char** argv);
 
    void Initialize();
 
@@ -44,7 +44,6 @@ private:
    bool         m_Verbose;
    unsigned int m_Port;
    std::string  m_FileExplorerRoot;
-   std::string  m_FaviconPath;
 
    CPassiveSocket m_Socket;
 
