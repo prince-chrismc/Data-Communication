@@ -123,7 +123,7 @@ void AppController::printGeneralUsage()
     * -i Specifies the path to the favorite icon saved in a PNG format.
     */
 
-   std::cout << "General Usage\r\n   httpfs help\r\nhttpfs is a simple file server.\r\nUsage:\r\n   hhttpfs [-v] [-p PORT] [-d PATH-TO-DIR]\r\n";
+   std::cout << "General Usage\r\n   httpfs help\r\nhttpfs is a simple file server.\r\nUsage:\r\n   hhttpfs [-v] [-p PORT] [-d PATH-TO-DIR] [-i ICON-PATH]\r\n";
    std::cout << "-v   Prints debugging messages.\r\n-p Specifies the port number that the server will listen and serve at. Default is 8080.\r\n";
    std::cout << "-d Specifies the directory that the server will use to read/write requested files. Default is the current directory when launching the application.\r\n";
    std::cout << "-i Specifies the path to the favorite icon saved in a PNG format." << std::endl;
