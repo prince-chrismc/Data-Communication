@@ -42,7 +42,7 @@ private:
 
    bool         m_Verbose;
    unsigned short m_Port;
-   std::string  m_RootDir;
+   std::string  m_FileExplorerRoot;
    std::string  m_FaviconPath;
 
    static void printGeneralUsage();
