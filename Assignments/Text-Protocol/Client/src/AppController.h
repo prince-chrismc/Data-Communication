@@ -89,4 +89,6 @@ private:
    void validateCommand() const;
 
    void establishConnection();
+
+   void sendHttpRequest();
 };

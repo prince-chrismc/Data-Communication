@@ -70,46 +70,24 @@ void CurlAppController::Run()
 
    establishConnection();
 
-   //
-   // Since I have no test code for this and CBA ... Echo server is now working ( AKA message to bytes and parse are good )
-   //
+   sendHttpRequest();
 
-   if( m_bVerbose ) std::cout << "Building Request..." << std::endl;
-   HttpRequest oReq( m_eCommand, m_oHref.m_sUri, HttpVersion10, m_oHref.m_sHostName + ":" + std::to_string( m_oHref.m_nPortNumber ) );
-   for( auto& oFeildNameAndValue : m_oExtraHeaders )
-   {
-      oReq.AddMessageHeader( oFeildNameAndValue.first, oFeildNameAndValue.second );
-   }
-   oReq.AppendMessageBody( m_sBody );
-
-   //if( m_bVerbose ) std::cout << "Raw request:" << std::endl << std::endl << sRawRequest << std::endl << std::endl << "Sending...";
-
-   const TextProtocol::IpV4Address serverIp{ m_Client.GetServerAddrOnWire().s_addr };
-   const TextProtocol::PortNumber serverPort{ 8080 };
-
-   TextProtocol::Message request( TextProtocol::PacketType::ACK, m_Expected++, serverIp, serverPort );
-   request.m_Payload = oReq.GetWireFormat();
-
-   bool retval = TextProtocol::Socket::Send( m_Client, request );
-
+   bool retval = true;
    HttpResponseParserAdvance oResponseParserParser;
-   if( retval )
+   if( m_bVerbose ) std::cout << "Receiving..." << std::endl;
+   do
    {
-      if( m_bVerbose ) std::cout << "Receiving..." << std::endl;
-      do
+      if( m_Client.Receive( TextProtocol::Message::MAX_MESSAGE_SIZE ) <= 0 )
       {
-         if( m_Client.Receive( TextProtocol::Message::MAX_MESSAGE_SIZE ) <= 0 )
-         {
-            if( m_bVerbose ) std::cout << "Received failed due to: " << m_Client.DescribeError() << std::endl;
-            retval = false;
-            break;
-         }
+         if( m_bVerbose ) std::cout << "Received failed due to: " << m_Client.DescribeError() << std::endl;
+         retval = false;
+         break;
+      }
 
-         if( m_bVerbose ) std::cout << "Appending " << m_Client.GetBytesReceived() << " bytes of data..." << std::endl;
+      if( m_bVerbose ) std::cout << "Appending " << m_Client.GetBytesReceived() << " bytes of data..." << std::endl;
 
-      } while( !oResponseParserParser.AppendResponseData( m_Client.GetData() ) );
-      if( m_bVerbose ) std::cout << "Transmission Completed..." << std::endl;
-   }
+   } while( !oResponseParserParser.AppendResponseData( m_Client.GetData() ) );
+   if( m_bVerbose ) std::cout << "Transmission Completed..." << std::endl;
 
    if( retval )
    {
@@ -318,4 +296,30 @@ void CurlAppController::establishConnection()
    }
 
    if( m_bVerbose ) std::cout << "Successfully connected to server!" << std::endl;
+}
+
+void CurlAppController::sendHttpRequest()
+{
+   debugPrint( "Building Request..." );
+
+   HttpRequest oReq( m_eCommand, m_oHref.m_sUri, HttpVersion10, m_oHref.m_sHostName + ":" + std::to_string( m_oHref.m_nPortNumber ) );
+   for( auto& oFeildNameAndValue : m_oExtraHeaders )
+   {
+      oReq.AddMessageHeader( oFeildNameAndValue.first, oFeildNameAndValue.second );
+   }
+   oReq.AppendMessageBody( m_sBody );
+
+   //if( m_bVerbose ) std::cout << "Raw request:" << std::endl << std::endl << sRawRequest << std::endl << std::endl << "Sending...";
+
+   const TextProtocol::IpV4Address serverIp{ m_Client.GetServerAddrOnWire().s_addr };
+   const TextProtocol::PortNumber serverPort{ 8080 };
+
+   TextProtocol::Message request( TextProtocol::PacketType::ACK, m_Expected++, serverIp, serverPort );
+   request.m_Payload = oReq.GetWireFormat();
+
+
+   debugPrint( " Sending >> ", request, " for ", oReq.GetRequestLine(), "\r\n" );
+   if( !TextProtocol::Socket::Send( m_Client, request ) )
+      throw std::runtime_error( "Failed to send HTTP request" );
+
 }
