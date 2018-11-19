@@ -24,10 +24,10 @@ SOFTWARE.
 
 */
 
-
 #include "FileServlet.h"
 #include <exception>
 #include <fstream>
+#include <sstream>
 
 FileServlet::FileServlet( const std::string& path ) : m_Path( path )
 {
@@ -54,7 +54,7 @@ HttpResponse FileServlet::HandleGetRequest( const HttpRequest& request ) const n
    if( request.GetUri().find( "/.." ) != std::string::npos )
       return{ HttpVersion10, HttpStatusForbidden, "NICE TRY ACCESSING FORBIDDEN DIRECTORY OF FILE SYSTEM" };
 
-   const std::filesystem::path oRequested = m_Path / request.GetUri().substr(1);
+   const std::filesystem::path oRequested = m_Path / request.GetUri().substr( 1 );
 
    if( !std::filesystem::exists( oRequested ) )
       return{ HttpVersion10, HttpStatusNotFound, "NOT FOUND" };
@@ -167,7 +167,7 @@ HttpResponse FileServlet::HandleCreateItemRequest( const std::filesystem::path& 
 HttpResponse FileServlet::HandleCreateFileRequest( const std::filesystem::path& requested,
                                                    const std::string& content ) const noexcept
 {
-   HttpResponse oResponse( HttpVersion10, HttpStatusConflict, "FAILE TO CREATE FILE" );
+   HttpResponse oResponse( HttpVersion10, HttpStatusConflict, "FAILED TO CREATE FILE" );
    try
    {
       std::ofstream fileWriter( requested.string() );
@@ -198,7 +198,7 @@ HttpResponse FileServlet::HandleCreateFileRequest( const std::filesystem::path& 
 
 HttpResponse FileServlet::HandleCreateDirectoryRequest( const std::filesystem::path& requested ) const noexcept
 {
-   HttpResponse oResponse( HttpVersion10, HttpStatusConflict, "FAILE TO CREATE DIRECTORIES" );
+   HttpResponse oResponse( HttpVersion10, HttpStatusConflict, "FAILED TO CREATE DIRECTORIES" );
    try
    {
       if( std::filesystem::create_directories( requested ) )
@@ -218,5 +218,25 @@ HttpResponse FileServlet::HandleCreateDirectoryRequest( const std::filesystem::p
 HttpResponse FileServlet::HandleWriteFileRequest( const std::filesystem::path& requested,
                                                   const std::string& content ) const noexcept
 {
-   return{ HttpVersion10, HttpStatusNotImplemented, "WRITE FILE NOT IMPLEMENTED" };
+   auto lasWrite = std::chrono::time_point_cast<std::chrono::seconds>(
+         std::filesystem::last_write_time( requested )
+      ).time_since_epoch();
+
+   std::time_t t = lasWrite.count();
+
+   std::stringstream timeBuffer;
+   timeBuffer << std::ctime( &t );
+
+   try
+   {
+      std::filesystem::rename( requested, requested.parent_path() / ( timeBuffer.str() + requested.filename().string() ) );
+   }
+   catch( std::exception e )
+   {
+      HttpResponse oResponse( HttpVersion10, HttpStatusConflict, "FAILED TO BACKUP OLD FILE" );
+      oResponse.AppendMessageBody( e.what() );
+      return oResponse;
+   }
+
+   return HandleCreateFileRequest( requested, content );
 }
