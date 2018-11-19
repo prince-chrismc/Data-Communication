@@ -227,9 +227,15 @@ HttpResponse FileServlet::HandleWriteFileRequest( const std::filesystem::path& r
    std::stringstream timeBuffer;
    timeBuffer << std::ctime( &t );
 
+   std::string timeStamp = timeBuffer.str();
+   timeStamp = reduce( timeStamp, "_", ":" );
+   timeStamp = reduce( timeStamp, "_", "\n" );
+   timeStamp = reduce( timeStamp, "_", " " );
+
    try
    {
-      std::filesystem::rename( requested, requested.parent_path() / ( timeBuffer.str() + requested.filename().string() ) );
+      auto newPath = requested.parent_path() / ( timeStamp + requested.filename().string() );
+      std::filesystem::rename( requested, newPath );
    }
    catch( std::exception e )
    {
