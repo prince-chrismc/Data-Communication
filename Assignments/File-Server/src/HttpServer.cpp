@@ -44,7 +44,7 @@ bool HttpServer::RegisterServlet( const char * uri, HttpServlet * servlet )
 
 void HttpServer::Launch( const char* addr, unsigned short nPort )
 {
-   if( m_oSocket.Listen( addr, nPort ) )
+   if( ! m_oSocket.Listen( addr, nPort ) )
       throw std::runtime_error( "Unable to bind HTTP Server" );
 
    auto oExitEvent = std::make_shared<std::shared_future<void>>( m_pExitEvent->get_future() );
