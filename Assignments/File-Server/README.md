@@ -41,6 +41,6 @@ These tests are made to be run with the accommanying Curl application on a Linux
 ./Curl.run post http://127.0.0.1:8080/Hello/.hidden-dir # 201
 ./Curl.run post -d "New Dir/ Text File\r\n" http://127.0.0.1:8080/Hello/World.txt # 201
 ./Curl.run post -d "{}" http://127.0.0.1:8080/post.json  # 201 # Inline application/json for browsers
-./Curl.run post -d "{\"error\":{}}" http://127.0.0.1:8080/post.json # 501 # Overwrite not implemented
+./Curl.run post -d "{\"error\":{}}" http://127.0.0.1:8080/post.json # 201 # old backed up to disk
 # TO DO : More use cases
 ```
