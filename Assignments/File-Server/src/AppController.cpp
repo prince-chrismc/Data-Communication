@@ -96,7 +96,7 @@ void AppController::Run()
    if( m_Verbose )
       std::cout << "Successfully created sevlets" <<std::endl;
 
-   oServer.Launch( "127.0.0.1", m_Port );
+   oServer.Launch( nullptr, m_Port );
 
    if( m_Verbose )
       std::cout << "Successfully launch http server now ready to answer!" <<std::endl;
