@@ -164,12 +164,23 @@ HttpResponse FileServlet::HandleCreateItemRequest( const std::filesystem::path& 
       return HandleCreateDirectoryRequest( requested );
 }
 
+void CreateParentDirectories( const std::filesystem::path& requested )
+{
+   const auto parentPath = requested.parent_path();
+   if( !std::filesystem::exists( parentPath ) )
+      if( !std::filesystem::create_directories( parentPath ) )
+         throw std::runtime_error( "Failed to create directory(ies) for path: " +
+                                   std::filesystem::canonical( parentPath ).string() + "\r\n" );
+}
+
 HttpResponse FileServlet::HandleCreateFileRequest( const std::filesystem::path& requested,
                                                    const std::string& content ) const noexcept
 {
    HttpResponse oResponse( HttpVersion10, HttpStatusConflict, "FAILED TO CREATE FILE" );
    try
    {
+      CreateParentDirectories( requested );
+
       std::ofstream fileWriter( requested.string() );
 
       if( !fileWriter )
