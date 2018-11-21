@@ -141,7 +141,7 @@ HttpResponse FileServlet::HandlePostRequest( const HttpRequest& request ) const 
    if( request.GetUri().find( "/.." ) != std::string::npos )
       return{ HttpVersion10, HttpStatusForbidden, "NICE TRY ACCESSING FORBIDDEN DIRECTORY OF FILE SYSTEM" };
 
-   const std::filesystem::path oRequested = m_Path / request.GetUri().substr( 1 );
+   const std::filesystem::path oRequested = std::filesystem::absolute( m_Path / request.GetUri().substr( 1 ) );
 
    if( !std::filesystem::exists( oRequested ) )
       return HandleCreateItemRequest( oRequested, request.GetBody() );
