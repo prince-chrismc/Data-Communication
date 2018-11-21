@@ -158,10 +158,10 @@ HttpResponse FileServlet::HandlePostRequest( const HttpRequest& request ) const 
 HttpResponse FileServlet::HandleCreateItemRequest( const std::filesystem::path& requested,
                                                    const std::string& content ) const noexcept
 {
-   if( !requested.has_extension() )
-      return HandleCreateDirectoryRequest( requested );
-   else
+   if( requested.has_extension() || content.length() )
       return HandleCreateFileRequest( requested, content );
+   else
+      return HandleCreateDirectoryRequest( requested );
 }
 
 HttpResponse FileServlet::HandleCreateFileRequest( const std::filesystem::path& requested,
