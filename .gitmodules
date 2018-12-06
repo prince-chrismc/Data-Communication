@@ -4,3 +4,6 @@
 [submodule "Assignments/Cli-Parser"]
 	path = Assignments/Cli-Parser
 	url = https://github.com/prince-chrismc/Cli-Parser.git
+[submodule "benchmark"]
+	path = benchmark
+	url = https://github.com/google/benchmark.git
