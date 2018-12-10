@@ -46,6 +46,17 @@ any use. Conduct a small research to find out why these two modes of connections
 provided. In specific, you should find out some of the advantages and disadvantages of
 each of them, hence justifying their concurrent existence.
 
+```
+Persistent connections allow for multiple requests to be made over the same connection. If may
+requests are made to the same server the slow TCP startup could cause a performance bottleneck.
+However if accessing a resource is a one time affair, there is no need to have a persistent
+connection in such a case non-persistent access is more then sufficent.
+
+It is always important to note that new technologies take time to be adopted, for instance HTTP/2
+which depiste having advantages for browsing the web internal or private implementations often do
+not support this new feature making backwards compatability a nessecity.
+```
+
 4. A successful attack to the Internet DNS would be devastating. Explain what type of
 attacks can be made towards DNS. Why, to-date, such attacks in practice have not been
 successful? In your answer, you should consider caching in particular. Why such
