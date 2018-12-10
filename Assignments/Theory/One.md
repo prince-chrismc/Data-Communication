@@ -8,6 +8,15 @@ Switching may actually end up harming its users instead of providing a better se
 them. If yes, provide a scenario/case that shows that. If no, explain why this service will
 indeed provide the best service to its users at all times.
 
+```
+The link between nodes is very costly to setup. This means in the case of a node going down
+or a route no longer being viable the cost to re-establish a new path is very costly. Similarly
+after a path is established it will be used indefinately even if a new better route becomes
+avaiable. Cuircuit switch users are at a disadvantage when the amounth of communicationis very
+limited, setup time would be longer than the actual communication. Circuit switch users could not
+benifit from newer better routes being established.
+```
+
 2. With DSL ISPs, dedicated lines usually connect to the local offices to the location where
 the service is provided (i.e. residential homes). In contrast, with Cable ISPs, the
 connection is shared between multiple homes in a neighborhood. In spite of this
