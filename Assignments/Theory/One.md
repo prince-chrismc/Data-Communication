@@ -26,6 +26,20 @@ this. Further, if you are hired by a DSL provider, and taking into account that 
 the company’s infrastructure (i.e. wiring) is quite costly, what would you propose in
 order to speed up the provided service while balancing the cost.
 
+```
+DSL users suffer from the poor quality of the "last mile", the qualitity of the wire is too low
+to carry higher frequencies. Cable users already share high-bandwith cable which is multiplexed
+between channels. This allows Cable ISP to provide higher speeds than DSL ISPs.
+
+In order to offer higher speends to costumers without drastically changing infrastucture, it is
+possible to remove some of the analog to digital conversions at the regional stations which can
+have a direct digital connection to the internet.
+
+Offering client the choice of half versus full duplex is also a possibility. Most systems do not
+have intense bi-directional communication, as such one-way communication ( at a time ) is more than
+sufficent for most costumers.
+```
+
 3. HTTP provides two connections methods: persistent and non-persistent. While there are
 clear advantages of persistent-HTTP, it is rather unclear whether non-persistent can be of
 any use. Conduct a small research to find out why these two modes of connections are
