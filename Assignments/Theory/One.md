@@ -63,11 +63,43 @@ successful? In your answer, you should consider caching in particular. Why such
 technique has not only proven to provide better performance, which is its original goal,
 but also protection against security attacks.
 
+```
+DNS is most suseptable to bandwidth flooding DoS attacks. this is due to the fact that it works
+over UDP with a small number of root servers. Flooding a root server with requests could overwhelm
+the system and distrupt web browsing. Attacks of this style have yet to be successful because DNS
+requests rarely make it to the root servers, this is because many DNS server cache results to avoid
+duplicate lookups. Regional ISP tend to provide their own chached DNS servers to help midigate
+traffic that would otherwise hit root servers.
+```
+
 5. Perform a Traceroute between your machine and any other host/server on the Internet,
 preferably an overseas server. Provide snapshots of what was returned and analyze the
 returned information. In specific, you should comment on any behavior that looks either
 different or unusual. Indicate the number of routers between your machine and the
-targeted host/server. 
+targeted host/server.
+
+```
+Tracing route to www.bbc.net.uk [212.58.249.213]
+over a maximum of 30 hops:
+
+  1     1 ms     2 ms    <1 ms  EMG2926 [192.168.0.1]
+  2    19 ms    42 ms    24 ms  modemcable001.134-62-166.mc.videotron.ca [166.62.134.1]
+  3    18 ms    16 ms    16 ms  10.170.166.229 # A Private address =?
+  4    13 ms    15 ms    15 ms  216.113.124.61
+  5    15 ms    14 ms    11 ms  216.113.122.210 # Last IP owned by videotron!
+  6    16 ms    14 ms    16 ms  motl-b1-link.telia.net [62.115.148.108] # Welcome to Sweeden! With little latency !
+  7    89 ms    90 ms    89 ms  nyk-bb4-link.telia.net [62.115.134.52] # Latency spike ! IXP point?
+  8    90 ms    89 ms    91 ms  ldn-bb4-link.telia.net [62.115.136.184]
+  9    91 ms    93 ms    94 ms  ldn-b5-link.telia.net [213.155.132.197]
+ 10    90 ms    92 ms    95 ms  atos-ic-315186-ldn-b5.c.telia.net [62.115.144.161] # Last stop in sweeden
+ 11     *        *        *     Request timed out. # No data crossing EU =(
+ 12     *        *        *     Request timed out. # No data crossing EU =(
+ 13    95 ms    91 ms    89 ms  ae1.er02.lbh.bbc.co.uk [132.185.254.142] # Finally we arrive in London =D
+ 14   115 ms   111 ms   123 ms  132.185.252.130 # High latency, looks like a reverse proxy
+ 15    92 ms    88 ms    92 ms  bbc-vip151.lbh.bbc.co.uk [212.58.249.213] # Finally server by a webserver!
+
+Trace complete.
+```
 
 6. Suppose two hosts, A and B, are 12,000km apart and are connected by a direct link of
 rate R = 5 Mbps. Assume further that the propagation speed over the link is 2.5 x 10<sup>8</sup>
@@ -76,6 +108,10 @@ rate R = 5 Mbps. Assume further that the propagation speed over the link is 2.5 
    a. What is the propagation delay to send one packet from A to B?
    
    b. What is the transmission delay to send 8 packets from A to B?
+
+```
+Math is hard. Missing Units on 2.5x10^8 makes it a crab shoot... m/s? nano-m/s =? km/s mm/min ???
+```
 
 7. Now assume some modifications to the network specified in Question 6 above, where 2
 routers are installed between A and B at more or less equal distances. Further assume the
@@ -90,19 +126,23 @@ b. What is the total transmission delay to send 2 packets from A to B?
 
 c. How much time is needed to send one file of size 20 Mbits from A to B?
 
-8. Consider distributing a file _F_ of size 15Gb to N peers. The server has an upload rate of us= 30 Mbps, and each
-peer has a download rate of di = 2 Mbps and an upload rate of u. For N = 10, 100, and
-1000 and u = 300 Kbps, 700 Kbps, and 2 Mbps, fill the following table by the minimum
-distribution time for each of the combinations of N and u for both client-server
-distribution and P2P distribution. 
+```
+Math is hard. Missing Units on 2.5x10^8 makes it a crab shoot... m/s? nano-m/s =? km/s mm/min ???
+```
+
+8. Consider distributing a file _F_ of size 15Gb/15360Mb to _N_ peers. The server has an upload
+rate of u<sub>s</sub>= 30 Mbps, and each peer has a download rate of d<sub>i</sub> = 2 Mbps and an
+upload rate of _u_. For N = 10, 100, and 1000 and u = 300 Kbps, 700 Kbps, and 2 Mbps, fill the
+following table by the minimum distribution time for each of the combinations of N and u for both
+client-server distribution and P2P distribution. 
 
 Client-Server
 
 bps     | 10 | 100 | 100
 --------|----|-----|-----
-300Kbps |
-700Kbps |
-2Mbps   |
+300Kbps | 5120s |  51200s|  512000s
+700Kbps | 5120s |  51200s|  512000s
+2Mbps   | 5120s |  51200s|  512000s
 
 Peer-to-peer
 
