@@ -16,33 +16,33 @@ script:
 
 matrix:
   include:
-    addons:
-      apt:
-        sources:
-        - ubuntu-toolchain-r-test
-        - llvm-toolchain-trusty-6.0
-        packages:
-        - clang-6.0
-        - libstdc++-8-dev
-    env:
-    - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
+    - addons:
+        apt:
+          sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-6.0
+          packages:
+          - clang-6.0
+          - libstdc++-8-dev
+      env:
+      - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
 
-    addons:
-      apt:
-        sources:
-        - ubuntu-toolchain-r-test
-        - llvm-toolchain-trusty-7
-        packages:
-        - clang-7
-        - libstdc++-8-dev
-    env:
-    - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7"
+    - addons:
+        apt:
+          sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-7
+          packages:
+          - clang-7
+          - libstdc++-8-dev
+      env:
+      - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7"
 
-    addons:
-      apt:
-        sources:
-        - ubuntu-toolchain-r-test
-        packages:
-        - g++-8
-    env:
-    - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+    - addons:
+        apt:
+          sources:
+          - ubuntu-toolchain-r-test
+          packages:
+          - g++-8
+      env:
+      - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
