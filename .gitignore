@@ -329,9 +329,5 @@ ASALocalRun/
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
 
-Assignments/build/
-
 \.vscode/
-
-Assignments/build-linux/
-Assignments/build-clang/
+**/build*/
