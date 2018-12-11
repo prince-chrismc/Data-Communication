@@ -3,7 +3,7 @@
 1) E-mail requires both sender and receiver mail servers to communicate directly. Further,
 all communications must be made between these two servers using SMTP.
   
-   1) Is it possible to allow intermediate servers as part of this communications? If so,
+   i) Is it possible to allow intermediate servers as part of this communications? If so,
 what are the main advantages of doing so? If no, why is that infeasible, or what
 are the disadvantages of utilizing it if it was feasible?
 
@@ -15,7 +15,7 @@ doamin. This has second distinct advantage whereby local email traffic is kept w
 reduce the internet usage of the company ( saving money ).
 ```
   
-   2) Considering webmail, are there any cases when SMTP between the two mail
+   ii) Considering webmail, are there any cases when SMTP between the two mail
 servers can be replaced by HTTP? Explain why, or why not.
 
 ```
