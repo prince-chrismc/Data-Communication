@@ -5,4 +5,4 @@ This project contains all the assignments for the class
 :---: | :--- | ---
 1 | Curl | Completed
 2 | File-Server | Completed
-3 | Text-Protocol | _WIP_
+3 | Text-Protocol | Done
