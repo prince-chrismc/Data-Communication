@@ -6,9 +6,26 @@ all communications must be made between these two servers using SMTP.
    1) Is it possible to allow intermediate servers as part of this communications? If so,
 what are the main advantages of doing so? If no, why is that infeasible, or what
 are the disadvantages of utilizing it if it was feasible?
+
+```
+It is possible, and is typical in coperate setups where outside traffic is tagged as more dangerous.
+It's common to hav an external mail server which has an enhanced firewall scanning for know viruses
+or malware. This mail would then be fetched by an internal mail server and made accessible within the
+doamin. This has second distinct advantage whereby local email traffic is kept within the company and
+reduce the internet usage of the company ( saving money ).
+```
   
    2) Considering webmail, are there any cases when SMTP between the two mail
 servers can be replaced by HTTP? Explain why, or why not.
+
+```
+Contiuing with the internal/external mail server for a company. Inbound mail would be best suited for
+HTTP as it's better for pulling large amounts of data at once. The internal sever could use HTTP to
+fetch the inbound mail.
+
+Heavy media content based would also be suited for HTTP implace of SMTP as there is better support for
+transfering any content type instead of being restricted to ASCII
+```
 
 2) Client-Server architecture can be used for file transfer; however, it is assumed/said to be
 inferior in comparison to P2P for such operations. Considering a small number of
@@ -16,6 +33,13 @@ interacting hosts that need to share files, is it true that client-server would 
 Explain clearly your answer. You must indicate why the number of interacting
 hosts/peers is significant in determining whether or not client-server is suitable for file
 transfer.
+
+```
+Client-Server architectures are bottle-necked at the servers bandwidth. When there are very few hosts
+accessing a file at any given moment such that the upload bandwidth of the server is greater than the
+total download bandwidth of the client hosts; the centralized architecture will no perform worse than
+a P2P distributed system.
+```
 
 3) Show, through a detailed scenario/example, why GBN protocol would fail in case the
 sender’s window size exceeds 2k<sup>-1</sup>, where k is the number of frame bits for the sequence
@@ -29,6 +53,12 @@ what conditions, GBN could produce the same performance of the Unrestricted Prot
 indefinitely! If so, what would you propose as changes to UDP to mitigate this problem?
 Your solution must mainly keep the advantages/purpose of UDP, while mitigating the
 problem at hand.
+
+```
+UDP has no congestion control, ie it can flod the network. This is a specific feature of TCP allowing
+it to throttle back how much is sent to not overwhelm the network. If UDP traffic were to flood a host
+it would cause TCP to hold back sending ( potential indefinitely ).
+```
 
 5) Show, through an example, how checksum could be inconclusive of error detection (i.e.
 does not guarantee that errors can be detected). In your example, assume transmitted data
