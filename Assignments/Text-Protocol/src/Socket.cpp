@@ -41,7 +41,7 @@ bool TextProtocol::Socket::Send( CSimpleSocket& socket, const Message& toSend )
       throw std::logic_error( "how did I fuck that up =?" );
 
    //std::cout << "Socket::Send >> " << socket.GetServerAddr() << ":" << socket.GetServerPort() << std::endl;
-   const auto bytesSent = socket.Send( reinterpret_cast<const uint8*>( &msgPayload.front() ), msgPayload.length() );
+   const auto bytesSent = socket.Send( reinterpret_cast<const uint8_t*>( &msgPayload.front() ), msgPayload.length() );
 
    return ( static_cast<size_t>( bytesSent ) == toSend.Size() );
 }

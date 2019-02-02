@@ -62,7 +62,7 @@ include_directories("Simple-Sockets/src/")
 include_directories("Cli-Parser/src/")
 
 # HTTP Library
-FILE(GLOB HTTP "Simple-Sockets/examples/http/*")
+FILE(GLOB HTTP "http/*")
 
 # httpc && httpfs - Assingment 3
 FILE(GLOB TP_SOURCE "Text-Protocol/src/*")
@@ -74,9 +74,9 @@ ADD_LIBRARY(Text-Protocol STATIC ${TP_SOURCE})
 target_include_directories(Text-Protocol PRIVATE Text-Protocol/src/)
 
 ADD_EXECUTABLE(Text-Protocol-Client Text-Protocol/Client/Main.cpp Curl/src/Href.cpp Curl/src/Href.h ${TP_CLIENT} ${HTTP})
-target_include_directories(Text-Protocol-Client PRIVATE Text-Protocol/Client/src/ Text-Protocol/src Simple-Sockets/examples/http/)
+target_include_directories(Text-Protocol-Client PRIVATE Text-Protocol/Client/src/ Text-Protocol/src http)
 TARGET_LINK_LIBRARIES(Text-Protocol-Client Text-Protocol Simple-Socket Cli-Parser)
 
 ADD_EXECUTABLE(Text-Protocol-Server Text-Protocol/Server/Main.cpp ${TP_SERVER} ${SERVLETS} ${HTTP})
-target_include_directories(Text-Protocol-Server PRIVATE Text-Protocol/Server/src Text-Protocol/src File-Server/src/ Simple-Sockets/examples/http/)
+target_include_directories(Text-Protocol-Server PRIVATE Text-Protocol/Server/src Text-Protocol/src File-Server/src/ http)
 TARGET_LINK_LIBRARIES(Text-Protocol-Server Text-Protocol Simple-Socket Cli-Parser ${FILESYSTEM_LIB} ${THREAD_LIB})

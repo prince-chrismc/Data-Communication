@@ -44,7 +44,7 @@ void AppController::Initialize()
    {
       try
       {
-         m_Port = std::stoul( *++m_CliParser.find( "-p" ) );
+         m_Port = static_cast<unsigned short>( std::stoul( *++m_CliParser.find( "-p" ) ) );
       }
       catch( ... )
       {

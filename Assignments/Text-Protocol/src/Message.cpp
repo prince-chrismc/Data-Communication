@@ -65,8 +65,8 @@ constexpr auto endianSwap( Enum num )
    }
    else if constexpr( sizeof( Enum ) == 2 )
    {
-      const uint16_t b1 = ( num & 0x00ff ) << 8u;
-      const uint16_t b2 = ( num & 0xff00 ) >> 8u;
+      const uint16_t b1 = static_cast<uint16_t>( ( num & 0x00ff ) << 8u );
+      const uint16_t b2 = static_cast<uint16_t>( ( num & 0xff00 ) >> 8u );
 
       return Enum{ static_cast<uint16_t>( b1 | b2 ) };
    }
@@ -110,10 +110,10 @@ std::string TextProtocol::Message::ToByteStream() const
 TextProtocol::Message TextProtocol::Message::Parse( const std::string & rawBytes )
 {
    // TO DO: throw parse error is length < 11
-   unsigned short p1 = rawBytes[ 9 ] & 0x00ffu;
-   unsigned short p2 = rawBytes[ 10 ] << 8u;
+   //unsigned short p1 = rawBytes[ 9 ] & 0x00ffu;
+   //unsigned short p2 = rawBytes[ 10 ] << 8u;
 
-   auto port{ p1 | p2 };
+   //auto port{ p1 | p2 };
 
    const uint32_t b0 = rawBytes[ 5 ] << 24u;
    const uint32_t b1 = rawBytes[ 6 ] << 16u;

@@ -129,7 +129,7 @@ HttpServlet* HttpServer::BestMatchingServlet( const std::string & uri ) const
 void HttpServer::NonPersistentConnection( std::shared_ptr<CActiveSocket> pClient ) const noexcept
 {
    HttpRequestParserAdvance oParser;
-   int32 bytes_rcvd = -1;
+   int32_t bytes_rcvd = -1;
    do
    {
       bytes_rcvd = pClient->Receive( 1024 );
@@ -142,7 +142,7 @@ void HttpServer::NonPersistentConnection( std::shared_ptr<CActiveSocket> pClient
    HttpResponse oResponse = BestMatchingServlet( oRequest.GetUri() )->HandleRequest( oRequest );
 
    std::string sRawRequest = oResponse.GetWireFormat();
-   pClient->Send( reinterpret_cast<const uint8*>( sRawRequest.c_str() ), sRawRequest.size() );
+   pClient->Send( reinterpret_cast<const uint8_t*>( sRawRequest.c_str() ), sRawRequest.size() );
 
    pClient->Close();
 }

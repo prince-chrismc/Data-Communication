@@ -100,14 +100,14 @@ void CurlAppController::Run()
       std::string sRawRequest = oReq.GetWireFormat();
 
       if( m_bVerbose ) std::cout << "Raw request:" << std::endl << std::endl << sRawRequest << std::endl << std::endl << "Sending...";
-      retval = oClient.Send( (uint8*)sRawRequest.c_str(), sRawRequest.size() );
+      retval = oClient.Send( (uint8_t*)sRawRequest.c_str(), sRawRequest.size() );
    }
 
    HttpResponseParserAdvance oResponseParserParser;
    if( retval )
    {
       if( m_bVerbose ) std::cout << "Receiving..." << std::endl;
-      int32 bytes_rcvd = -1;
+      int32_t bytes_rcvd = -1;
       do
       {
          bytes_rcvd = oClient.Receive( 1024 );

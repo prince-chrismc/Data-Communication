@@ -29,6 +29,7 @@ SOFTWARE.
 #include <sstream>
 #include <stdexcept>
 #include "Socket.h"
+#include <Ws2tcpip.h>
 
 CurlAppController::CurlAppController( int argc, char ** argv )
    : m_oCliParser( argc, argv )
@@ -238,7 +239,13 @@ void CurlAppController::establishConnection()
       throw std::runtime_error( "Failed to establish connection with router" );
    }
 
-   const TextProtocol::IpV4Address serverIp{ m_Client.GetServerAddrOnWire().s_addr };
+
+
+   sockaddr_in sa{};
+   // store this IP address in sa:
+   inet_pton( AF_INET, m_Client.GetServerAddr().c_str(), &( sa.sin_addr ) );
+   const TextProtocol::IpV4Address serverIp{ sa.sin_addr.s_addr };
+
    const TextProtocol::PortNumber serverPort{ 8080 };
 
    const TextProtocol::Message synMessage( TextProtocol::PacketType::SYN, m_Expected++, serverIp, serverPort );
@@ -291,7 +298,10 @@ void CurlAppController::sendHttpRequest()
    }
    oReq.AppendMessageBody( m_sBody );
 
-   const TextProtocol::IpV4Address serverIp{ m_Client.GetServerAddrOnWire().s_addr };
+   sockaddr_in sa{};
+   // store this IP address in sa:
+   inet_pton( AF_INET, m_Client.GetServerAddr().c_str(), &( sa.sin_addr ) );
+   const TextProtocol::IpV4Address serverIp{ sa.sin_addr.s_addr };
    const TextProtocol::PortNumber serverPort{ 8080 };
 
    TextProtocol::Message request( TextProtocol::PacketType::ACK, m_Expected++, serverIp, serverPort );
