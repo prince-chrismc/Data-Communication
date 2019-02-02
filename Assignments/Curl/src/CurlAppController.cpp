@@ -94,7 +94,7 @@ void CurlAppController::Run()
       HttpRequest oReq( m_eCommand, m_oHref.m_sUri, HttpVersion10, m_oHref.m_sHostName + std::to_string( m_oHref.m_nPortNumber ) );
       for( auto& oFeildNameAndValue : m_oExtraHeaders )
       {
-         oReq.AddMessageHeader( oFeildNameAndValue.first, oFeildNameAndValue.second );
+         oReq.SetMessageHeader( oFeildNameAndValue.first, oFeildNameAndValue.second );
       }
       oReq.AppendMessageBody( m_sBody );
       std::string sRawRequest = oReq.GetWireFormat();

@@ -35,11 +35,11 @@ SOFTWARE.
 #include "HttpRequest.h"
 #include "Constants.h"
 #include "PassiveSocket.h"
+#include <optional>
 
 class HttpServlet
 {
 public:
-   virtual ~HttpServlet() = default;
    virtual HttpResponse HandleRequest( const HttpRequest& request ) const noexcept = 0;
 };
 
@@ -52,7 +52,7 @@ public:
 
    bool RegisterServlet( const char* uri, HttpServlet* servlet );
 
-   void Launch( const char* addr, unsigned short nPort );
+   void Launch( unsigned short nPort );
 
    bool Close();
 
@@ -62,16 +62,21 @@ private:
 
    std::unique_ptr<std::promise<void>> m_pExitEvent;
 
-
    std::mutex m_muConnectionList;
-   std::vector<std::pair<std::chrono::steady_clock::time_point, std::shared_ptr<CActiveSocket>>> m_vecClients;
+   struct ClientConnection
+   {
+      ClientConnection(std::shared_ptr<CActiveSocket>&& client);
+
+      std::shared_ptr<CActiveSocket> m_pClient;
+      std::chrono::steady_clock::time_point m_tLastSighting = std::chrono::steady_clock::now();
+      size_t m_nRemainingRequests = 125;
+   };
+   std::vector<std::shared_ptr<ClientConnection>> m_vecClients;
 
    std::condition_variable m_cvCleanSignal;
 
-
    struct UriComparator
    {
-      //
       // Conditions for sorting URIs
       // - Number of slashes
       // - Left of relative path
@@ -82,5 +87,11 @@ private:
 
 
    HttpServlet* BestMatchingServlet( const std::string& uri ) const;
-   void NonPersistentConnection( std::shared_ptr<CActiveSocket> pClient ) const noexcept;
+   void NonPersistentConnection( ClientConnection* pConnection ) const;
+   void PersistentConnection( ClientConnection* pClient ) const;
+
+   static std::optional<HttpRequest> ReadNextRequest( CActiveSocket* pClient );
+   void ProcessNewRequest( ClientConnection* pConnection, const HttpRequest& oRequest ) const;
+
+   static bool ConnectionIsAlive( ClientConnection* pConnection );
 };

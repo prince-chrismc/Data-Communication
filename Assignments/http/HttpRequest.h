@@ -101,7 +101,7 @@ public:
    bool IsValidRequest() const;
 
    void SetContentType( const HttpContentType& in_kreContentType );
-   void AddMessageHeader( const std::string& in_krsFeildName, const std::string& in_krsFeildValue );
+   void SetMessageHeader( const std::string& in_krsFeildName, const std::string& in_krsFeildValue );
    void AppendMessageBody( const std::string & in_krsToAdd );
 
    const HttpRequestMethod& GetMethod() const { return m_eMethod; }

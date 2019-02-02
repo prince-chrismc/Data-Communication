@@ -82,7 +82,7 @@ void AppController::Initialize()
 
 void AppController::Run()
 {
-   HttpServer oServer( HttpVersion10 );
+   HttpServer oServer;
    std::unique_ptr<FileServlet> oFileExplorer = std::make_unique<FileServlet>( m_FileExplorerRoot );
    oServer.RegisterServlet( "/", oFileExplorer.get() );
 
@@ -96,7 +96,7 @@ void AppController::Run()
    if( m_Verbose )
       std::cout << "Successfully created sevlets" <<std::endl;
 
-   oServer.Launch( nullptr, m_Port );
+   oServer.Launch( m_Port );
 
    if( m_Verbose )
       std::cout << "Successfully launch http server now ready to answer!" <<std::endl;

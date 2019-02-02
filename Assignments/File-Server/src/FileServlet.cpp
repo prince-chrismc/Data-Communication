@@ -91,7 +91,7 @@ HttpResponse FileServlet::HandleFileRequest( const std::filesystem::path& reques
 {
    HttpResponse oResponse( HttpVersion10, HttpStatusOk, "OK" );
    oResponse.SetContentType( FileExtensionToContentType( requested ) );
-   oResponse.AddMessageHeader( "Content-Disposition", "inline" );
+   oResponse.SetMessageHeader( "Content-Disposition", "inline" );
 
    if( oResponse.GetContentType() != HttpContentPng )
       oResponse.AppendMessageBody( "File: " + std::filesystem::canonical( requested ).string() + "\r\n" );
@@ -192,7 +192,7 @@ HttpResponse FileServlet::HandleCreateFileRequest( const std::filesystem::path& 
 
       oResponse = HttpResponse( HttpVersion10, HttpStatusCreated, "CREATED FILE" );
       oResponse.SetContentType( FileExtensionToContentType( requested ) );
-      oResponse.AddMessageHeader( "Content-Disposition", "inline" );
+      oResponse.SetMessageHeader( "Content-Disposition", "inline" );
 
       if( oResponse.GetContentType() != HttpContentPng )
          oResponse.AppendMessageBody( "File: " + std::filesystem::canonical( requested ).string() + "\r\n" );
@@ -230,7 +230,7 @@ HttpResponse FileServlet::HandleWriteFileRequest( const std::filesystem::path& r
                                                   const std::string& content ) const noexcept
 {
    auto lasWrite = std::chrono::time_point_cast<std::chrono::seconds>(
-         std::filesystem::last_write_time( requested )
+      std::filesystem::last_write_time( requested )
       ).time_since_epoch();
 
    std::time_t t = lasWrite.count();
@@ -240,15 +240,14 @@ HttpResponse FileServlet::HandleWriteFileRequest( const std::filesystem::path& r
 
    std::string timeStamp = timeBuffer.str();
    timeStamp = reduce( timeStamp, "_", ":" );
-   timeStamp = reduce( timeStamp, "_", "\n" );
-   timeStamp = reduce( timeStamp, "_", " " );
+   timeStamp = reduce( timeStamp, "_" );
 
    try
    {
       auto newPath = requested.parent_path() / ( timeStamp + requested.filename().string() );
       std::filesystem::rename( requested, newPath );
    }
-   catch( std::exception e )
+   catch( const std::exception& e )
    {
       HttpResponse oResponse( HttpVersion10, HttpStatusConflict, "FAILED TO BACKUP OLD FILE" );
       oResponse.AppendMessageBody( e.what() );

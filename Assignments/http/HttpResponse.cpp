@@ -49,6 +49,7 @@ Content-Length: 286
 */
 
 #define CRLF "\r\n"
+#define HTTP_CONTENT_LENGTH "Content-Length"
 
 //---------------------------------------------------------------------------------------------------------------------
 HttpResponse::HttpResponse( const HttpVersion & in_kreVersion, const HttpStatus & in_kreStatusCode,
@@ -87,17 +88,25 @@ void HttpResponse::SetContentType( const HttpContentType & in_kreContentType )
 }
 
 //---------------------------------------------------------------------------------------------------------------------
-void HttpResponse::AddMessageHeader( const std::string & in_krsFeildName, const std::string & in_krsFeildValue )
+void HttpResponse::SetMessageHeader( const std::string & in_krsFeildName, const std::string & in_krsFeildValue )
 {
    if( in_krsFeildName.empty() || in_krsFeildValue.empty() ) return;
 
-   m_oHeaders.emplace( reduce( in_krsFeildName, "-" ), reduce( in_krsFeildValue ) );
+   const HttpHeaders::EmplaceResult retval = m_oHeaders.emplace( reduce( in_krsFeildName, "-" ), reduce( in_krsFeildValue ) );
+
+   if( !retval.success ) // already exists
+   {
+      HttpHeaders::Header existingHeader( *retval.itor );
+      existingHeader.value = in_krsFeildValue;
+      //m_oHeaders.at( in_krsFeildName ) = in_krsFeildValue;
+   }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 void HttpResponse::AppendMessageBody( const std::string & in_krsToAdd )
 {
    m_sBody.append( in_krsToAdd );
+   SetMessageHeader( HTTP_CONTENT_LENGTH, std::to_string( m_sBody.length() ) );
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -110,9 +119,7 @@ std::string HttpResponse::GetStatusLine() const
 //---------------------------------------------------------------------------------------------------------------------
 std::string HttpResponse::GetHeaders() const
 {
-   std::string sCostumHeaders( "User-Agent: clsocket_example/1.0" );
-   sCostumHeaders += CRLF;
-   sCostumHeaders += ( "Content-Length: " + std::to_string( m_sBody.size() ) + CRLF );
+   std::string sCostumHeaders;
 
    for( auto& sMessageHeader : m_oHeaders )
       sCostumHeaders += ( sMessageHeader.first + ": " + sMessageHeader.second + CRLF );
@@ -185,7 +192,7 @@ void HttpResponseParser::STATIC_AppenedParsedHeaders( HttpResponse & io_roReques
          if( sHeaderKey == "Content-Length" || sHeaderKey == "Content-Type" )
             continue; // Skip always formatted hedaers !
 
-         io_roRequest.AddMessageHeader( sHeaderKey, sNextHeader.substr( iSeperatorIndex + 1 ) );
+         io_roRequest.SetMessageHeader( sHeaderKey, sNextHeader.substr( iSeperatorIndex + 1 ) );
       }
    }
 }

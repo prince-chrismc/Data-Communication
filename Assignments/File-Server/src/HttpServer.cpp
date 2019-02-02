@@ -39,12 +39,14 @@ HttpServer::HttpServer( HttpVersion version /*= HttpVersion11*/ )
 
 bool HttpServer::RegisterServlet( const char * uri, HttpServlet * servlet )
 {
+   if( uri == nullptr || uri[ 0 ] != '/' ) return false;
+
    return m_RestfulServlets.try_emplace( uri, servlet ).second;
 }
 
-void HttpServer::Launch( const char* addr, unsigned short nPort )
+void HttpServer::Launch( unsigned short nPort )
 {
-   if( ! m_oSocket.Listen( addr, nPort ) )
+   if( !m_oSocket.Listen( nullptr, nPort ) )
       throw std::runtime_error( "Unable to bind HTTP Server" );
 
    auto oExitEvent = std::make_shared<std::shared_future<void>>( m_pExitEvent->get_future() );
@@ -58,9 +60,9 @@ void HttpServer::Launch( const char* addr, unsigned short nPort )
                       {
                          for( auto itor = m_vecClients.begin(); itor != m_vecClients.end(); /* no itor */ )
                          {
-                            if( ( std::chrono::steady_clock::now() - itor->first ) > 100s )
+                            if( !ConnectionIsAlive( itor->get() ) )
                             {
-                               if( itor->second != nullptr ) itor->second->Shutdown( CSimpleSocket::Both );
+                               if( ( *itor )->m_pClient != nullptr ) ( *itor )->m_pClient->Shutdown( CSimpleSocket::Both );
                                itor = m_vecClients.erase( itor );
                             }
                             else
@@ -83,15 +85,21 @@ void HttpServer::Launch( const char* addr, unsigned short nPort )
                       if( ( pClient = m_oSocket.Accept() ) != nullptr ) // Wait for an incomming connection
                       {
                          std::lock_guard<std::mutex> oAutoLock( m_muConnectionList );
-                         m_vecClients.emplace_back( std::chrono::steady_clock::now(), pClient );
+                         m_vecClients.push_back( std::make_shared<ClientConnection>( std::move( pClient ) ) );
 
                          switch( m_eVersion )
                          {
                          case HttpVersion10:
-                            std::thread( [ this ]( std::shared_ptr<CActiveSocket> pClient ) { NonPersistentConnection( pClient ); }, m_vecClients.back().second ).detach();
+                            std::thread( [ this ]( std::shared_ptr<ClientConnection> pClient )
+                                         { NonPersistentConnection( pClient.get() ); },
+                                         m_vecClients.back()
+                            ).detach();
                             break;
                          case HttpVersion11:
-                            //std::thread( PersistentConnection, m_vecClients.back().get() ).detach();
+                            std::thread( [ this ]( std::shared_ptr<ClientConnection> pClient )
+                                         { PersistentConnection( pClient.get() ); },
+                                         m_vecClients.back()
+                            ).detach();
                             break;
                          default:
                             throw std::invalid_argument( "Bad HTTP version!" );
@@ -116,6 +124,10 @@ bool HttpServer::Close()
    return bRetVal;
 }
 
+HttpServer::ClientConnection::ClientConnection( std::shared_ptr<CActiveSocket>&& client ) : m_pClient( client )
+{
+}
+
 HttpServlet* HttpServer::BestMatchingServlet( const std::string & uri ) const
 {
    for( auto itor = m_RestfulServlets.crbegin(); itor != m_RestfulServlets.crend(); ++itor )
@@ -126,25 +138,69 @@ HttpServlet* HttpServer::BestMatchingServlet( const std::string & uri ) const
    return nullptr;
 }
 
-void HttpServer::NonPersistentConnection( std::shared_ptr<CActiveSocket> pClient ) const noexcept
+void HttpServer::ProcessNewRequest( ClientConnection* pConnection, const HttpRequest& oRequest ) const
+{
+   pConnection->m_tLastSighting = std::chrono::steady_clock::now();
+   pConnection->m_nRemainingRequests -= 1;
+   HttpResponse oResponse = BestMatchingServlet( oRequest.GetUri() )->HandleRequest( oRequest );
+
+   // TODO : Handle HTTP Headers
+
+   std::string sRawRequest = oResponse.GetWireFormat();
+   pConnection->m_pClient->Send( reinterpret_cast<const uint8_t*>( sRawRequest.c_str() ), sRawRequest.size() );
+}
+
+bool HttpServer::ConnectionIsAlive( ClientConnection* pConnection )
+{
+   return std::chrono::steady_clock::now() - pConnection->m_tLastSighting <= 100s &&
+      pConnection->m_pClient->IsSocketValid() ||
+      pConnection->m_nRemainingRequests > 0;
+
+}
+
+void HttpServer::NonPersistentConnection( ClientConnection* pConnection ) const
+{
+   auto pClient = pConnection->m_pClient.get();
+   auto oPotentialRequest = ReadNextRequest( pClient );
+
+   if( oPotentialRequest.has_value() )
+   {
+      ProcessNewRequest( pConnection, oPotentialRequest.value() );
+   }
+
+   pClient->Close();
+}
+
+void HttpServer::PersistentConnection( ClientConnection* pConnection ) const
+{
+   auto pClient = pConnection->m_pClient.get();
+
+   do
+   {
+      auto oPotentialRequest = ReadNextRequest( pClient );
+
+      if( oPotentialRequest.has_value() )
+      {
+         ProcessNewRequest( pConnection, oPotentialRequest.value() );
+      }
+   } while( ConnectionIsAlive( pConnection ) );
+
+   pClient->Close();
+}
+
+std::optional<HttpRequest> HttpServer::ReadNextRequest( CActiveSocket* pClient )
 {
    HttpRequestParserAdvance oParser;
    int32_t bytes_rcvd = -1;
    do
    {
-      bytes_rcvd = pClient->Receive( 1024 );
+      bytes_rcvd += pClient->Receive( 2048 );
 
-      if( bytes_rcvd <= 0 ) return;
+      if( bytes_rcvd <= 0 ) return{};
 
    } while( !oParser.AppendRequestData( pClient->GetData() ) );
 
-   HttpRequest oRequest = oParser.GetHttpRequest();
-   HttpResponse oResponse = BestMatchingServlet( oRequest.GetUri() )->HandleRequest( oRequest );
-
-   std::string sRawRequest = oResponse.GetWireFormat();
-   pClient->Send( reinterpret_cast<const uint8_t*>( sRawRequest.c_str() ), sRawRequest.size() );
-
-   pClient->Close();
+   return oParser.GetHttpRequest();
 }
 
 bool HttpServer::UriComparator::operator()( const std::string & lhs, const std::string & rhs ) const

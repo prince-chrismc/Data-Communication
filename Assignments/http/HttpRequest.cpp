@@ -68,7 +68,7 @@ Upgrade-Insecure-Requests: 1
 
 #define HTTP_HOST "Host: "
 #define HTTP_CONTENT_TYPE "Content-Type"
-#define HTTP_CONTENT_LENGTH "Content-Length: "
+#define HTTP_CONTENT_LENGTH "Content-Length"
 
 #define HTTP_BODY_SEPERATOR "\r\n\r\n"
 #define SIZE_OF_CRLF ( sizeof( CRLF ) - 1 )
@@ -177,16 +177,24 @@ void HttpRequest::SetContentType( const HttpContentType & in_kreContentType )
    m_oHeaders.SetContentType( m_eContentType );
 }
 
-void HttpRequest::AddMessageHeader( const std::string & in_krsFeildName, const std::string & in_krsFeildValue )
+void HttpRequest::SetMessageHeader( const std::string & in_krsFeildName, const std::string & in_krsFeildValue )
 {
    if( in_krsFeildName.empty() || in_krsFeildValue.empty() ) return;
 
-   m_oHeaders.emplace( reduce( in_krsFeildName, "-" ), reduce( in_krsFeildValue ) );
+   const HttpHeaders::EmplaceResult retval = m_oHeaders.emplace( reduce( in_krsFeildName, "-" ), reduce( in_krsFeildValue ) );
+
+   if( !retval.success ) // already exists
+   {
+      HttpHeaders::Header existingHeader( *retval.itor );
+      existingHeader.value = in_krsFeildValue;
+      //m_oHeaders.at( in_krsFeildName ) = in_krsFeildValue;
+   }
 }
 
 void HttpRequest::AppendMessageBody( const std::string & in_krsToAdd )
 {
    m_sBody.append( in_krsToAdd );
+   SetMessageHeader( HTTP_CONTENT_LENGTH, std::to_string( m_sBody.length() ) );
 }
 
 std::string HttpRequest::GetRequestLine() const
@@ -196,10 +204,7 @@ std::string HttpRequest::GetRequestLine() const
 
 std::string HttpRequest::GetHeaders() const
 {
-   std::string sCostumHeaders( "User-Agent: clsocket_example/1.0" );
-   sCostumHeaders += CRLF;
-   sCostumHeaders += ( "Content-Length: " + std::to_string( m_sBody.length() ) + CRLF );
-
+   std::string sCostumHeaders;
 
    for( auto& sMessageHeader : m_oHeaders )
       sCostumHeaders += ( sMessageHeader.first + ": " + sMessageHeader.second + CRLF );
@@ -380,7 +385,7 @@ void HttpRequestParser::STATIC_AppenedParsedHeaders( HttpRequest & io_roRequest,
       const size_t iSeperatorIndex = sNextHeader.find( ':' );
 
       if( iSeperatorIndex != std::string::npos )
-         io_roRequest.AddMessageHeader( sNextHeader.substr( 0, iSeperatorIndex ), sNextHeader.substr( iSeperatorIndex + 1 ) );
+         io_roRequest.SetMessageHeader( sNextHeader.substr( 0, iSeperatorIndex ), sNextHeader.substr( iSeperatorIndex + 1 ) );
    }
 }
 

@@ -38,7 +38,7 @@ public:
                  const std::initializer_list<HttpHeaders::Headers::value_type>& in_kroMessageHeaders );
 
    void SetContentType( const HttpContentType& in_kreContentType );
-   void AddMessageHeader( const std::string& in_krsFeildName, const std::string& in_krsFeildValue );
+   void SetMessageHeader( const std::string& in_krsFeildName, const std::string& in_krsFeildValue );
    void AppendMessageBody( const std::string & in_krsToAdd );
 
    const HttpVersion&     GetVersion() const { return m_eVersion; }
