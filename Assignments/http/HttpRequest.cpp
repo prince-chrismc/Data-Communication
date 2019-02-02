@@ -67,7 +67,7 @@ Upgrade-Insecure-Requests: 1
 #define HTTP_VERSION_11_STRING "HTTP/1.1"
 
 #define HTTP_HOST "Host: "
-#define HTTP_CONTENT_TYPE "Content-Type: "
+#define HTTP_CONTENT_TYPE "Content-Type"
 #define HTTP_CONTENT_LENGTH "Content-Length: "
 
 #define HTTP_BODY_SEPERATOR "\r\n\r\n"
@@ -111,24 +111,58 @@ std::string reduce( const std::string& str,
    return result;
 }
 
+HttpHeaders::Headers::Headers( std::initializer_list<value_type> in_kroMessageHeaders )
+   : std::unordered_map<std::string, std::string, std::hash<std::string>, comparison>( in_kroMessageHeaders )
+{
+}
+
+void HttpHeaders::Headers::SetContentType( HttpContentType in_eContentType )
+{
+   if( in_eContentType != HttpContentInvalid )
+   {
+      const EmplaceResult retval = emplace( HTTP_CONTENT_TYPE, HttpRequest::STATIC_ContentTypeAsString( in_eContentType ) );
+
+      if( !retval.success ) // already exists
+      {
+         at( HTTP_CONTENT_TYPE ) = HttpRequest::STATIC_ContentTypeAsString( in_eContentType );
+      }
+   }
+   else // Now invalid
+   {
+      const auto itor = find( HTTP_CONTENT_TYPE );
+      if( itor != std::end( *this ) )
+      {
+         erase( itor );
+      }
+   }
+}
+
 HttpRequest::HttpRequest( const HttpRequestMethod & in_kreMethod, const std::string & in_krsRequestUri,
                           const HttpVersion & in_kreVersion, const std::string & in_krsHostAndPort ) :
-   HttpRequest( in_kreMethod, in_krsRequestUri, in_kreVersion, in_krsHostAndPort, HttpContentInvalid, { ( in_kreVersion == HttpVersion11 ) ? "Connection: keep-alive" : ( in_kreVersion == HttpVersion10 ) ? "Connection: closed" : "",
-                "Cache-Control: no-cache", "Accept: */*", "Accept-Encoding: deflate" } )
+   HttpRequest( in_kreMethod, in_krsRequestUri, in_kreVersion, in_krsHostAndPort, HttpContentInvalid,
+                {
+                   ( in_kreVersion == HttpVersion11 ) ? HttpHeaders::Headers::value_type{ "Connection" , "keep-alive" } :
+                   ( in_kreVersion == HttpVersion10 ) ? HttpHeaders::Headers::value_type{ "Connection" ,"closed" } :
+                     HttpHeaders::Headers::value_type{ "", "" },
+                   { "Cache-Control",  "no-cache" },
+                   { "Accept",  "*/*" },
+                   { "Accept-Encoding", "deflate" }
+                }
+   )
 {
 }
 
 HttpRequest::HttpRequest( const HttpRequestMethod & in_kreMethod, const std::string & in_krsRequestUri,
                           const HttpVersion & in_kreVersion, const std::string & in_krsHostAndPort,
-                          const HttpContentType & in_kreContentType, const std::initializer_list<std::string>& in_kroMessageHeaders ) :
+                          const HttpContentType & in_kreContentType, std::initializer_list<HttpHeaders::Headers::value_type> in_kroMessageHeaders ) :
    m_eMethod( in_kreMethod ),
    m_sRequestUri( in_krsRequestUri ),
    m_eVersion( in_kreVersion ),
    m_sHostAndPort( in_krsHostAndPort ),
-   m_eContentType( in_kreContentType ),
-   m_vecsMessageHeaders( in_kroMessageHeaders ),
-   m_sBody( "" )
+   m_eContentType( HttpContentInvalid ),
+   m_oHeaders( in_kroMessageHeaders )
 {
+   SetContentType( in_kreContentType );
 }
 
 bool HttpRequest::IsValidRequest() const
@@ -140,11 +174,14 @@ bool HttpRequest::IsValidRequest() const
 void HttpRequest::SetContentType( const HttpContentType & in_kreContentType )
 {
    m_eContentType = in_kreContentType;
+   m_oHeaders.SetContentType( m_eContentType );
 }
 
 void HttpRequest::AddMessageHeader( const std::string & in_krsFeildName, const std::string & in_krsFeildValue )
 {
-   m_vecsMessageHeaders.emplace_back( reduce( in_krsFeildName, "-" ) + ": " + reduce( in_krsFeildValue ) );
+   if( in_krsFeildName.empty() || in_krsFeildValue.empty() ) return;
+
+   m_oHeaders.emplace( reduce( in_krsFeildName, "-" ), reduce( in_krsFeildValue ) );
 }
 
 void HttpRequest::AppendMessageBody( const std::string & in_krsToAdd )
@@ -161,13 +198,11 @@ std::string HttpRequest::GetHeaders() const
 {
    std::string sCostumHeaders( "User-Agent: clsocket_example/1.0" );
    sCostumHeaders += CRLF;
-   sCostumHeaders += ( "Content-Length: " + std::to_string( m_sBody.size() ) + CRLF );
+   sCostumHeaders += ( "Content-Length: " + std::to_string( m_sBody.length() ) + CRLF );
 
-   if( m_eContentType != HttpContentInvalid )
-      sCostumHeaders += CRLF + HttpRequest::STATIC_ContentTypeAsString( m_eContentType );
 
-   for( auto& sMessageHeader : m_vecsMessageHeaders )
-      sCostumHeaders += ( sMessageHeader + CRLF );
+   for( auto& sMessageHeader : m_oHeaders )
+      sCostumHeaders += ( sMessageHeader.first + ": " + sMessageHeader.second + CRLF );
 
    return sCostumHeaders;
 }
@@ -210,14 +245,14 @@ std::string HttpRequest::STATIC_ContentTypeAsString( const HttpContentType & in_
 {
    switch( in_kreContentType )
    {
-   case HttpContentText: return std::string( HTTP_CONTENT_TYPE ) + "text/plain;";
-   case HttpContentHtml: return std::string( HTTP_CONTENT_TYPE ) + "application/html; text/html;";
-   case HttpContentJson: return std::string( HTTP_CONTENT_TYPE ) + "application/json; text/json;";
-   case HttpContentYaml: return std::string( HTTP_CONTENT_TYPE ) + "application/x-yaml; text/yaml;";
-   case HttpContentXml: return std::string( HTTP_CONTENT_TYPE ) + "application/xml; text/xml;";
-   case HttpContentGif: return std::string( HTTP_CONTENT_TYPE ) + "image/gif";
-   case HttpContentIco: return std::string( HTTP_CONTENT_TYPE ) + "image/x-icon";
-   case HttpContentPng: return std::string( HTTP_CONTENT_TYPE ) + "image/png";
+   case HttpContentText: return "text/plain;";
+   case HttpContentHtml: return "application/html; text/html;";
+   case HttpContentJson: return "application/json; text/json;";
+   case HttpContentYaml: return "application/x-yaml; text/yaml;";
+   case HttpContentXml:  return "text/xml;";
+   case HttpContentGif:  return "image/gif";
+   case HttpContentIco:  return "image/x-icon";
+   case HttpContentPng:  return "image/png";
    default: return "";
    }
 }
@@ -233,7 +268,7 @@ std::string HttpRequest::STATIC_ContentLengthToString( size_t in_ullContentLengt
 // HttpRequestParser
 //
 //---------------------------------------------------------------------------------------------------------------------
-HttpRequest HttpRequestParser::GetHttpRequest()
+HttpRequest HttpRequestParser::GetHttpRequest() const
 {
    HttpRequest oRequest( STATIC_ParseForMethod( m_sRequestToParse ),
                          STATIC_ParseForRequestUri( m_sRequestToParse ),
@@ -305,11 +340,11 @@ HttpContentType HttpRequestParser::STATIC_ParseForContentType( const std::string
    size_t ulEnd = in_krsRequest.find( CRLF, ulOffset );
    std::string sContentTypeLine = in_krsRequest.substr( ulOffset, ulEnd - ulOffset );
 
-   size_t ulTextPos = sContentTypeLine.find( "text" );
-   size_t ulHtmlPos = sContentTypeLine.find( "text/html" );
-   size_t ulJsonPos = sContentTypeLine.find( "text/json" );
-   size_t ulHtmlAppPos = sContentTypeLine.find( "application/html" );
-   size_t ulJsonAppPos = sContentTypeLine.find( "application/json" );
+   const size_t ulTextPos = sContentTypeLine.find( "text" );
+   const size_t ulHtmlPos = sContentTypeLine.find( "text/html" );
+   const size_t ulJsonPos = sContentTypeLine.find( "text/json" );
+   const size_t ulHtmlAppPos = sContentTypeLine.find( "application/html" );
+   const size_t ulJsonAppPos = sContentTypeLine.find( "application/json" );
 
    // TODO : Support new format types { PNG, GIF, ICO }
 
@@ -360,7 +395,7 @@ bool HttpRequestParserAdvance::AppendRequestData( const std::string & in_krsData
 }
 
 //---------------------------------------------------------------------------------------------------------------------
-HttpRequest HttpRequestParserAdvance::GetHttpRequest()
+HttpRequest HttpRequestParserAdvance::GetHttpRequest() const
 {
    if( m_sHttpHeader.empty() ) return { HttpRequestInvalid, "", HttpVersionInvalid, "" }; // No data has been obtained!
 

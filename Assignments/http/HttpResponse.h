@@ -26,9 +26,7 @@ SOFTWARE.
 
 #pragma once
 
-#include "Constants.h"
-#include <vector>
-#include <string>
+#include "HttpRequest.h"
 
 class HttpResponse
 {
@@ -37,7 +35,7 @@ public:
                  const std::string & in_krsReasonPhrase );
    HttpResponse( const HttpVersion & in_kreVersion, const HttpStatus & in_kreStatusCode,
                  const std::string & in_krsReasonPhrase, const HttpContentType & in_kreContentType,
-                 const std::initializer_list<std::string>& in_kroMessageHeaders );
+                 const std::initializer_list<HttpHeaders::Headers::value_type>& in_kroMessageHeaders );
 
    void SetContentType( const HttpContentType& in_kreContentType );
    void AddMessageHeader( const std::string& in_krsFeildName, const std::string& in_krsFeildValue );
@@ -60,7 +58,7 @@ private:
 
    // Optional
    HttpContentType m_eContentType;
-   std::vector<std::string> m_vecsMessageHeaders;
+   HttpHeaders::Headers m_oHeaders;
    std::string m_sBody;
 };
 
@@ -69,7 +67,7 @@ class HttpResponseParser
 public:
    HttpResponseParser( const std::string& in_krsRequest ) : m_sResponseToParse( in_krsRequest ) { }
 
-   HttpResponse GetHttpResponse();
+   HttpResponse GetHttpResponse() const;
 
    static HttpStatus STATIC_ParseForStatus( const std::string& in_krsRequest );
    static std::string STATIC_ParseForReasonPhrase( const std::string& in_krsRequest );
@@ -83,10 +81,10 @@ private:
 class HttpResponseParserAdvance
 {
 public:
-   HttpResponseParserAdvance() : m_sHttpHeader( "" ), m_sResponseBody( "" ) { }
+   HttpResponseParserAdvance() = default;
 
    bool AppendResponseData( const std::string& in_krsData );
-   HttpResponse GetHttpResponse();
+   HttpResponse GetHttpResponse() const;
 
 private:
    std::string m_sHttpHeader;

@@ -28,10 +28,66 @@ SOFTWARE.
 
 #include "Constants.h"
 #include <string>
-#include <vector>
+#include <unordered_map>
 
 std::string trim( const std::string& str, const std::string& whitespace = " \t" );
 std::string reduce( const std::string& str, const std::string& fill = " ", const std::string& whitespace = " \t" );
+
+namespace HttpHeaders
+{
+   struct comparison {
+      bool operator() ( const std::string & s1, const std::string & s2 ) const {
+         return std::lexicographical_compare(
+            s1.begin(), s1.end(),
+            s2.begin(), s2.end(),
+            []( char c1, char c2 ) {
+               return ::tolower( c1 ) < ::tolower( c2 );
+            } );
+      }
+   };
+
+   struct Headers : std::unordered_map<std::string, std::string, std::hash<std::string>, comparison>
+   {
+      Headers( std::initializer_list<value_type> in_kroMessageHeaders );
+      void SetContentType( HttpContentType in_eContentType );
+   };
+
+   using Key = Headers::key_type;
+   using Value = Headers::mapped_type;
+
+   struct Header : private Headers::value_type
+   {
+      Header( Headers::value_type::first_type& first, Headers::value_type::second_type second )
+         : Headers::value_type( first, second ),
+         key( this->first ),
+         value( this->second )
+      {}
+
+      Header( Headers::value_type val )
+         : Headers::value_type( val ),
+         key( this->first ),
+         value( this->second )
+      {}
+
+      const Key& key;
+      Value value;
+   };
+
+   struct EmplaceResult : private std::pair<Headers::iterator, bool>
+   {
+      EmplaceResult( std::pair<Headers::iterator, bool> val )
+         : std::pair<Headers::iterator, bool>( val ),
+         itor( this->first ),
+         success( this->second )
+      {}
+
+      Headers::iterator::value_type getHeader() const { return *itor; }
+
+      Headers::iterator& itor;
+      bool& success;
+   };
+
+};
 
 class HttpRequest
 {
@@ -40,7 +96,7 @@ public:
                 const HttpVersion & in_kreVersion, const std::string & in_krsHostAndPort );
    HttpRequest( const HttpRequestMethod & in_kreMethod, const std::string & in_krsRequestUri,
                 const HttpVersion & in_kreVersion, const std::string & in_krsHostAndPort,
-                const HttpContentType & in_kreContentType, const std::initializer_list<std::string>& in_kroMessageHeaders );
+                const HttpContentType & in_kreContentType, std::initializer_list<HttpHeaders::Headers::value_type> in_kroMessageHeaders );
 
    bool IsValidRequest() const;
 
@@ -72,7 +128,7 @@ private:
 
    // Optional
    HttpContentType m_eContentType;
-   std::vector<std::string> m_vecsMessageHeaders;
+   HttpHeaders::Headers m_oHeaders;
    std::string m_sBody;
 
 };
@@ -82,7 +138,7 @@ class HttpRequestParser
 public:
    HttpRequestParser( const std::string& in_krsRequest ) : m_sRequestToParse( in_krsRequest ) { }
 
-   HttpRequest GetHttpRequest();
+   HttpRequest GetHttpRequest() const;
 
    static HttpRequestMethod STATIC_ParseForMethod( const std::string& in_krsRequest );
    static std::string STATIC_ParseForRequestUri( const std::string& in_krsRequest );
@@ -101,10 +157,10 @@ private:
 class HttpRequestParserAdvance
 {
 public:
-   HttpRequestParserAdvance() : m_sHttpHeader( "" ), m_sRequestBody( "" ) { }
+   HttpRequestParserAdvance() = default;
 
    bool AppendRequestData( const std::string& in_krsData );
-   HttpRequest GetHttpRequest();
+   HttpRequest GetHttpRequest() const;
 
    static size_t STATIC_ParseForContentLength( const std::string& in_krsHttpHeader );
    static bool STATIC_IsHeaderComplete( const std::string& in_krsHttpHeader );
