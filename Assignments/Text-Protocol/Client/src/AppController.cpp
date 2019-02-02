@@ -29,7 +29,14 @@ SOFTWARE.
 #include <sstream>
 #include <stdexcept>
 #include "Socket.h"
+
+#ifdef _WIN32
 #include <Ws2tcpip.h>
+#endif
+
+#ifdef LINUX_PLATFORM
+#include <arpa/inet.h>
+#endif
 
 CurlAppController::CurlAppController( int argc, char ** argv )
    : m_oCliParser( argc, argv )
