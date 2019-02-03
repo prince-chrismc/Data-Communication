@@ -96,9 +96,9 @@ void HttpResponse::SetMessageHeader( const std::string & in_krsFeildName, const 
 
    if( !retval.success ) // already exists
    {
-      HttpHeaders::Header existingHeader( *retval.itor );
-      existingHeader.value = in_krsFeildValue;
-      //m_oHeaders.at( in_krsFeildName ) = in_krsFeildValue;
+      //HttpHeaders::Header existingHeader( *retval.itor );
+      //existingHeader.value = in_krsFeildValue;
+      retval.itor->second = in_krsFeildValue;
    }
 }
 

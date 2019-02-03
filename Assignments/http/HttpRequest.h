@@ -28,7 +28,7 @@ SOFTWARE.
 
 #include "Constants.h"
 #include <string>
-#include <unordered_map>
+#include <map>
 
 std::string trim( const std::string& str, const std::string& whitespace = " \t" );
 std::string reduce( const std::string& str, const std::string& fill = " ", const std::string& whitespace = " \t" );
@@ -46,7 +46,7 @@ namespace HttpHeaders
       }
    };
 
-   struct Headers : std::unordered_map<std::string, std::string, std::hash<std::string>, comparison>
+   struct Headers : std::map<std::string, std::string, comparison>
    {
       Headers( std::initializer_list<value_type> in_kroMessageHeaders );
       void SetContentType( HttpContentType in_eContentType );
@@ -55,18 +55,16 @@ namespace HttpHeaders
    using Key = Headers::key_type;
    using Value = Headers::mapped_type;
 
-   struct Header : private Headers::value_type
+   struct Header
    {
       Header( Headers::value_type::first_type& first, Headers::value_type::second_type second )
-         : Headers::value_type( first, second ),
-         key( this->first ),
-         value( this->second )
+         : key( first ),
+         value( second )
       {}
 
-      Header( Headers::value_type val )
-         : Headers::value_type( val ),
-         key( this->first ),
-         value( this->second )
+      Header( Headers::value_type& val )
+         : key( val.first ),
+         value( val.second )
       {}
 
       const Key& key;

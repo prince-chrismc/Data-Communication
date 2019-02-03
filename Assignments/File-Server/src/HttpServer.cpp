@@ -28,6 +28,7 @@ SOFTWARE.
 #include <iterator>
 #include <sstream>
 #include <algorithm>
+#include <iostream>
 
 using namespace std::chrono_literals;
 
@@ -79,31 +80,31 @@ void HttpServer::Launch( unsigned short nPort )
 
    std::thread( [ this, oExitEvent ]
                 {
+                   std::function<void( std::shared_ptr<ClientConnection> )> HandleNewConnection;
+
+                   switch( m_eVersion )
+                   {
+                   case HttpVersion10:
+                      HandleNewConnection = [ this ]( std::shared_ptr<ClientConnection> pClient ) { NonPersistentConnection( pClient.get() ); };
+                      break;
+                   case HttpVersion11:
+                      HandleNewConnection = [ this ]( std::shared_ptr<ClientConnection> pClient ) { PersistentConnection( pClient.get() ); };
+                      break;
+                   default:
+                      throw std::invalid_argument( "Bad HTTP version!" );
+                   }
+
                    while( oExitEvent->wait_for( 10ms ) == std::future_status::timeout )
                    {
                       std::shared_ptr<CActiveSocket> pClient;
                       if( ( pClient = m_oSocket.Accept() ) != nullptr ) // Wait for an incomming connection
                       {
+                         std::cout << "New client obtained { " << std::hex << pClient.get() << " }" << std::endl;
+
                          std::lock_guard<std::mutex> oAutoLock( m_muConnectionList );
                          m_vecClients.push_back( std::make_shared<ClientConnection>( std::move( pClient ) ) );
 
-                         switch( m_eVersion )
-                         {
-                         case HttpVersion10:
-                            std::thread( [ this ]( std::shared_ptr<ClientConnection> pClient )
-                                         { NonPersistentConnection( pClient.get() ); },
-                                         m_vecClients.back()
-                            ).detach();
-                            break;
-                         case HttpVersion11:
-                            std::thread( [ this ]( std::shared_ptr<ClientConnection> pClient )
-                                         { PersistentConnection( pClient.get() ); },
-                                         m_vecClients.back()
-                            ).detach();
-                            break;
-                         default:
-                            throw std::invalid_argument( "Bad HTTP version!" );
-                         }
+                         std::thread( HandleNewConnection, m_vecClients.back() ).detach();
                       }
                    }
                 }
@@ -138,22 +139,10 @@ HttpServlet* HttpServer::BestMatchingServlet( const std::string & uri ) const
    return nullptr;
 }
 
-void HttpServer::ProcessNewRequest( ClientConnection* pConnection, const HttpRequest& oRequest ) const
-{
-   pConnection->m_tLastSighting = std::chrono::steady_clock::now();
-   pConnection->m_nRemainingRequests -= 1;
-   HttpResponse oResponse = BestMatchingServlet( oRequest.GetUri() )->HandleRequest( oRequest );
-
-   // TODO : Handle HTTP Headers
-
-   std::string sRawRequest = oResponse.GetWireFormat();
-   pConnection->m_pClient->Send( reinterpret_cast<const uint8_t*>( sRawRequest.c_str() ), sRawRequest.size() );
-}
-
 bool HttpServer::ConnectionIsAlive( ClientConnection* pConnection )
 {
    return std::chrono::steady_clock::now() - pConnection->m_tLastSighting <= 100s &&
-      pConnection->m_pClient->IsSocketValid() ||
+      pConnection->m_pClient->IsSocketValid() &&
       pConnection->m_nRemainingRequests > 0;
 
 }
@@ -196,11 +185,30 @@ std::optional<HttpRequest> HttpServer::ReadNextRequest( CActiveSocket* pClient )
    {
       bytes_rcvd += pClient->Receive( 2048 );
 
-      if( bytes_rcvd <= 0 ) return{};
+      if( bytes_rcvd <= 0 )
+      {
+         pClient->Close();
+         return{};
+      }
 
    } while( !oParser.AppendRequestData( pClient->GetData() ) );
 
    return oParser.GetHttpRequest();
+}
+
+void HttpServer::ProcessNewRequest( ClientConnection* pConnection, const HttpRequest& oRequest ) const
+{
+   pConnection->m_tLastSighting = std::chrono::steady_clock::now();
+   pConnection->m_nRemainingRequests -= 1;
+   std::cout << "New request from { " << std::hex << pConnection->m_pClient.get() << " }. Remaining :" << std::dec << pConnection->m_nRemainingRequests << std::endl;
+
+   HttpResponse oResponse = BestMatchingServlet( oRequest.GetUri() )->HandleRequest( oRequest );
+   std::cout << "{ " << std::hex << pConnection->m_pClient.get() << " } " << oRequest.GetRequestLine() << " --> " << oResponse.GetStatusLine() << std::endl;
+
+   // TODO : Handle HTTP Headers
+
+   std::string sRawRequest = oResponse.GetWireFormat();
+   pConnection->m_pClient->Send( reinterpret_cast<const uint8_t*>( sRawRequest.c_str() ), sRawRequest.size() );
 }
 
 bool HttpServer::UriComparator::operator()( const std::string & lhs, const std::string & rhs ) const

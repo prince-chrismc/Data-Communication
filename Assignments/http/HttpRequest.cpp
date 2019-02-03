@@ -69,6 +69,7 @@ Upgrade-Insecure-Requests: 1
 #define HTTP_HOST "Host: "
 #define HTTP_CONTENT_TYPE "Content-Type"
 #define HTTP_CONTENT_LENGTH "Content-Length"
+#define HTTP_CONTENT_LENGTH_RAW "Content-Length: "
 
 #define HTTP_BODY_SEPERATOR "\r\n\r\n"
 #define SIZE_OF_CRLF ( sizeof( CRLF ) - 1 )
@@ -112,7 +113,7 @@ std::string reduce( const std::string& str,
 }
 
 HttpHeaders::Headers::Headers( std::initializer_list<value_type> in_kroMessageHeaders )
-   : std::unordered_map<std::string, std::string, std::hash<std::string>, comparison>( in_kroMessageHeaders )
+   : std::map<std::string, std::string, comparison>( in_kroMessageHeaders )
 {
 }
 
@@ -162,6 +163,7 @@ HttpRequest::HttpRequest( const HttpRequestMethod & in_kreMethod, const std::str
    m_eContentType( HttpContentInvalid ),
    m_oHeaders( in_kroMessageHeaders )
 {
+   SetMessageHeader( "Host", in_krsHostAndPort );
    SetContentType( in_kreContentType );
 }
 
@@ -185,9 +187,9 @@ void HttpRequest::SetMessageHeader( const std::string & in_krsFeildName, const s
 
    if( !retval.success ) // already exists
    {
-      HttpHeaders::Header existingHeader( *retval.itor );
-      existingHeader.value = in_krsFeildValue;
-      //m_oHeaders.at( in_krsFeildName ) = in_krsFeildValue;
+      //HttpHeaders::Header existingHeader( *retval.itor );
+      //existingHeader.value = in_krsFeildValue;
+      retval.itor->second = in_krsFeildValue;
    }
 }
 
@@ -199,7 +201,7 @@ void HttpRequest::AppendMessageBody( const std::string & in_krsToAdd )
 
 std::string HttpRequest::GetRequestLine() const
 {
-   return STATIC_MethodAsString( m_eMethod ) + " " + m_sRequestUri + " " + STATIC_VersionAsString( m_eVersion ) + CRLF + "Host: " + m_sHostAndPort + CRLF;
+   return STATIC_MethodAsString( m_eMethod ) + " " + m_sRequestUri + " " + STATIC_VersionAsString( m_eVersion ) + CRLF;
 }
 
 std::string HttpRequest::GetHeaders() const
@@ -423,7 +425,11 @@ size_t HttpRequestParserAdvance::STATIC_ParseForContentLength( const std::string
 {
    if( in_krsHttpHeader.empty() ) return 0;
 
-   size_t sizeStart = in_krsHttpHeader.find( HTTP_CONTENT_LENGTH ) + sizeof( HTTP_CONTENT_LENGTH ) - 1;
+   size_t sizeStart = in_krsHttpHeader.find( HTTP_CONTENT_LENGTH_RAW );
+
+   if( sizeStart == std::string::npos ) return 0;
+
+   sizeStart += sizeof( HTTP_CONTENT_LENGTH_RAW ) - 1;
    size_t sizeEnd = in_krsHttpHeader.find( CRLF, sizeStart );
 
    std::string sContentLength = in_krsHttpHeader.substr( sizeStart, sizeEnd - sizeStart );
@@ -450,7 +456,7 @@ bool HttpRequestParserAdvance::STATIC_IsHeaderComplete( const std::string & in_k
 //---------------------------------------------------------------------------------------------------------------------
 bool HttpRequestParserAdvance::STATIC_AppendData( const std::string & in_krsData, std::string & io_krsHttpHeader, std::string & io_krsHttpBody )
 {
-   if( in_krsData.empty() ) return false;
+   if( in_krsData.empty() ) return true;
 
    if( STATIC_IsHeaderComplete( io_krsHttpHeader ) )
    {
