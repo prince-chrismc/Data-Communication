@@ -42,7 +42,7 @@ HTTP/1.1 200 OK
 Cache-Control: no-cache
 Server: libnhttpd
 Date: Wed Jul 4 15:38:53 2012
-Connection: ep-Alive:
+Connection: keep-Alive:
 Content-Type: application/json;charset=UTF-8
 Content-Length: 286
 

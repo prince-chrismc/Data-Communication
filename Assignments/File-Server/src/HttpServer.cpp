@@ -205,7 +205,8 @@ void HttpServer::ProcessNewRequest( ClientConnection* pConnection, const HttpReq
    //std::cout << "{ " << std::hex << pConnection->m_pClient.get() << " } " << oRequest.GetRequestLine() << " --> " << oResponse.GetStatusLine() << std::endl;
 
    // TODO : Handle HTTP Headers
-   oResponse.SetMessageHeader("Keep-Alive", "100, " + std::to_string( pConnection->m_nRemainingRequests ));
+   oResponse.SetMessageHeader( "Server", "HTTP Server by Christopher McArthur" );
+   oResponse.SetMessageHeader( "Keep-Alive", "100, " + std::to_string( pConnection->m_nRemainingRequests ) );
 
    std::string sRawRequest = oResponse.GetWireFormat();
    pConnection->m_pClient->Send( reinterpret_cast<const uint8_t*>( sRawRequest.c_str() ), sRawRequest.size() );
