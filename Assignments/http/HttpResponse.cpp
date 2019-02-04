@@ -49,15 +49,13 @@ Content-Length: 286
 */
 
 #define CRLF "\r\n"
-#define HTTP_CONTENT_LENGTH "Content-Length"
 
 //---------------------------------------------------------------------------------------------------------------------
-HttpResponse::HttpResponse( const HttpVersion & in_kreVersion, const HttpStatus & in_kreStatusCode,
-                            const std::string & in_krsReasonPhrase ) :
-   HttpResponse( in_kreVersion, in_kreStatusCode, in_krsReasonPhrase, HttpContentInvalid,
+HttpResponse::HttpResponse( Http::Version version, Http::Status status, const std::string & in_krsReasonPhrase ) :
+   HttpResponse( version, status, in_krsReasonPhrase, Http::ContentType::Invalid,
                  {
-                   ( in_kreVersion == HttpVersion11 ) ? HttpHeaders::Headers::value_type{ "Connection" , "keep-alive" } :
-                   ( in_kreVersion == HttpVersion10 ) ? HttpHeaders::Headers::value_type{ "Connection" ,"closed" } :
+                   ( version == Http::Version::v11 ) ? HttpHeaders::Headers::value_type{ "Connection" , "keep-alive" } :
+                   ( version == Http::Version::v10 ) ? HttpHeaders::Headers::value_type{ "Connection" ,"closed" } :
                      HttpHeaders::Headers::value_type{ "", "" },
                    { "Cache-Control",  "no-cache" },
                    { "Accept",  "*/*" },
@@ -68,22 +66,21 @@ HttpResponse::HttpResponse( const HttpVersion & in_kreVersion, const HttpStatus 
 }
 
 //---------------------------------------------------------------------------------------------------------------------
-HttpResponse::HttpResponse( const HttpVersion & in_kreVersion, const HttpStatus & in_kreStatusCode,
-                            const std::string & in_krsReasonPhrase, const HttpContentType & in_kreContentType,
-                            const std::initializer_list<HttpHeaders::Headers::value_type>& in_kroMessageHeaders ) :
-   m_eVersion( in_kreVersion ),
-   m_eStatusCode( in_kreStatusCode ),
+HttpResponse::HttpResponse( Http::Version version, Http::Status status, const std::string & in_krsReasonPhrase,
+                            Http::ContentType content_type, std::initializer_list<HttpHeaders::Headers::value_type> in_kroMessageHeaders ) :
+   m_eVersion( version ),
+   m_eStatusCode( status ),
    m_sReasonPhrase( reduce( in_krsReasonPhrase, "", CRLF ) ),
-   m_eContentType( HttpContentInvalid ),
+   m_eContentType( Http::ContentType::Invalid ),
    m_oHeaders( in_kroMessageHeaders )
 {
-   SetContentType( in_kreContentType );
+   SetContentType( content_type );
 }
 
 //---------------------------------------------------------------------------------------------------------------------
-void HttpResponse::SetContentType( const HttpContentType & in_kreContentType )
+void HttpResponse::SetContentType( Http::ContentType content_type )
 {
-   m_eContentType = in_kreContentType;
+   m_eContentType = content_type;
    m_oHeaders.SetContentType( m_eContentType );
 }
 
@@ -106,7 +103,7 @@ void HttpResponse::SetMessageHeader( const std::string & in_krsFeildName, const 
 void HttpResponse::AppendMessageBody( const std::string & in_krsToAdd )
 {
    m_sBody.append( in_krsToAdd );
-   SetMessageHeader( HTTP_CONTENT_LENGTH, std::to_string( m_sBody.length() ) );
+   m_oHeaders.SetContentLength( m_sBody.length() );
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -145,7 +142,7 @@ HttpResponse HttpResponseParser::GetHttpResponse() const
                            STATIC_ParseForReasonPhrase( m_sResponseToParse ),
                            HttpRequestParser::STATIC_ParseForContentType( m_sResponseToParse ),
                            {} );
-   STATIC_AppenedParsedHeaders( oResponse, m_sResponseToParse );
+   HttpRequestParser::STATIC_AppenedParsedHeaders( oResponse, m_sResponseToParse );
 
    oResponse.AppendMessageBody( HttpRequestParser::STATIC_ParseForBody( m_sResponseToParse ) );
 
@@ -153,16 +150,16 @@ HttpResponse HttpResponseParser::GetHttpResponse() const
 }
 
 //---------------------------------------------------------------------------------------------------------------------
-HttpStatus HttpResponseParser::STATIC_ParseForStatus( const std::string & in_krsRequest )
+Http::Status HttpResponseParser::STATIC_ParseForStatus( const std::string & in_krsRequest )
 {
-   if( in_krsRequest.empty() ) return HttpStatusInvalid;
+   if( in_krsRequest.empty() ) return Http::Status::Invalid;
 
    const size_t ulStart = in_krsRequest.find( ' ' ) + sizeof( " " ) - 1;
    const size_t ulEnd = in_krsRequest.find( ' ', ulStart );
 
    const long long llCode = std::stoull( in_krsRequest.substr( ulStart, ulEnd - ulStart ) );
 
-   return HttpStatus( llCode );
+   return Http::Status( llCode );
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -174,27 +171,6 @@ std::string HttpResponseParser::STATIC_ParseForReasonPhrase( const std::string &
    ulOffset = in_krsRequest.find( ' ', ulOffset ) + 1;
    const size_t ulEnd = in_krsRequest.find( CRLF, ulOffset );
    return in_krsRequest.substr( ulOffset, ulEnd - ulOffset );
-}
-
-void HttpResponseParser::STATIC_AppenedParsedHeaders( HttpResponse & io_roRequest, const std::string & in_krsRequest )
-{
-   for( std::string sRawHeaders = in_krsRequest.substr( in_krsRequest.find( CRLF ) + sizeof( CRLF ) - 1 );
-        sRawHeaders.find( CRLF );
-        sRawHeaders = sRawHeaders.substr( sRawHeaders.find( CRLF ) + sizeof( CRLF ) - 1 ) )
-   {
-      std::string sNextHeader = sRawHeaders.substr( 0, sRawHeaders.find( CRLF ) );
-      const size_t iSeperatorIndex = sNextHeader.find( ':' );
-
-      if( iSeperatorIndex != std::string::npos )
-      {
-         std::string sHeaderKey = sNextHeader.substr( 0, iSeperatorIndex );
-
-         if( sHeaderKey == "Content-Length" || sHeaderKey == "Content-Type" )
-            continue; // Skip always formatted hedaers !
-
-         io_roRequest.SetMessageHeader( sHeaderKey, sNextHeader.substr( iSeperatorIndex + 1 ) );
-      }
-   }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -216,7 +192,7 @@ HttpResponse HttpResponseParserAdvance::GetHttpResponse() const
                            HttpRequestParser::STATIC_ParseForContentType( m_sHttpHeader ),
                            {} );
 
-   HttpResponseParser::STATIC_AppenedParsedHeaders( oResponse, m_sHttpHeader );
+   HttpRequestParser::STATIC_AppenedParsedHeaders( oResponse, m_sHttpHeader );
 
    oResponse.AppendMessageBody( m_sResponseBody );
 

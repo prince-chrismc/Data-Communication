@@ -48,7 +48,7 @@ public:
 class HttpServer
 {
 public:
-   HttpServer( HttpVersion version = HttpVersion11 );
+   HttpServer( Http::Version version = Http::Version::v11 );
 
    bool RegisterServlet( const char* uri, HttpServlet* servlet );
 
@@ -57,7 +57,7 @@ public:
    bool Close();
 
 private:
-   const HttpVersion m_eVersion;
+   const Http::Version m_eVersion;
    CPassiveSocket m_oSocket;
 
    std::unique_ptr<std::promise<void>> m_pExitEvent;

@@ -78,7 +78,7 @@ void AppController::Run()
             }
             else if( input->m_PacketType == PacketType::ACK )
             {
-               HttpResponse response( HttpVersion10, HttpStatusBadRequest, "BAD REQUEST" );
+               HttpResponse response( Http::Version::v10, Http::Status::BadRequest, "BAD REQUEST" );
                HttpRequestParser parser( input->m_Payload );
 
                try
@@ -87,7 +87,7 @@ void AppController::Run()
 
                   if( req.IsValidRequest() )
                   {
-                     response = HttpResponse( HttpVersion10, HttpStatusInternalServerError, "INTERNAL SERVER ERROR" );
+                     response = HttpResponse( Http::Version::v10, Http::Status::InternalServerError, "INTERNAL SERVER ERROR" );
                      response = oFileExplorer.HandleRequest( req );
                   }
                }

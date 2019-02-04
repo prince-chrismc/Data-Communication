@@ -41,7 +41,7 @@ public:
 
 private:
    CommandLineParser m_oCliParser;
-   HttpRequestMethod m_eCommand;
+   Http::RequestMethod m_eCommand;
    bool              m_bVerbose;
    std::vector<std::pair<std::string, std::string>> m_oExtraHeaders;
    Href              m_oHref{};

@@ -42,7 +42,7 @@ IconServlet::IconServlet( const std::string& png_path )
 
 HttpResponse IconServlet::HandleRequest( const HttpRequest& /*request*/ ) const noexcept
 {
-   HttpResponse oResponse( HttpVersion10, HttpStatusOk, "OK", HttpContentPng, {} );
+   HttpResponse oResponse( Http::Version::v10, Http::Status::Ok, "OK", Http::ContentType::Png, {} );
    oResponse.AppendMessageBody( m_IconBytes );
    return oResponse;
 }

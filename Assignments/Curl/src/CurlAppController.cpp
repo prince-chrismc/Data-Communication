@@ -33,7 +33,7 @@ SOFTWARE.
 
 CurlAppController::CurlAppController( int argc, char ** argv )
    : m_oCliParser( argc, argv )
-   , m_eCommand( HttpRequestInvalid )
+   , m_eCommand( Http::RequestMethod::Invalid )
    , m_bVerbose( false )
 {
    readCommandLineArgs();
@@ -45,17 +45,17 @@ void CurlAppController::readCommandLineArgs()
    moreArgsToRead( itor, MISSING_GET_OR_POST );
 
    if( *itor == "help" ) printUsageGivenArgs();
-   else if( *itor == "get" ) m_eCommand = HttpRequestGet;
-   else if( *itor == "post" ) m_eCommand = HttpRequestPost;
+   else if( *itor == "get" ) m_eCommand = Http::RequestMethod::Get;
+   else if( *itor == "post" ) m_eCommand = Http::RequestMethod::Post;
    else { printUsageGivenArgs(); throw std::invalid_argument( MISSING_GET_OR_POST.data() ); }
 
    switch( m_eCommand )
    {
-   case HttpRequestGet:
+   case Http::RequestMethod::Get:
       // Continue parsing GET args
       parseGetOptions( ++itor );
       break;
-   case HttpRequestPost:
+   case Http::RequestMethod::Post:
       // Continue parsing POST args
       parsePostOptions( ++itor );
       break;
@@ -68,8 +68,8 @@ void CurlAppController::Run()
 {
    switch( m_eCommand )
    {
-   case HttpRequestGet:
-   case HttpRequestPost:
+   case Http::RequestMethod::Get:
+   case Http::RequestMethod::Post:
       break;
    default:
       throw std::runtime_error( "If you see this please don't look for the developer to report a bug =)" );
@@ -91,7 +91,7 @@ void CurlAppController::Run()
    if( retval )
    {
       if( m_bVerbose ) std::cout << "Building Request..." << std::endl;
-      HttpRequest oReq( m_eCommand, m_oHref.m_sUri, HttpVersion10, m_oHref.m_sHostName + std::to_string( m_oHref.m_nPortNumber ) );
+      HttpRequest oReq( m_eCommand, m_oHref.m_sUri, Http::Version::v10, m_oHref.m_sHostName + std::to_string( m_oHref.m_nPortNumber ) );
       for( auto& oFeildNameAndValue : m_oExtraHeaders )
       {
          oReq.SetMessageHeader( oFeildNameAndValue.first, oFeildNameAndValue.second );
@@ -166,8 +166,8 @@ void CurlAppController::printUsageGivenArgs() const
 {
    switch( m_eCommand )
    {
-   case HttpRequestGet: printGetUsage(); break;
-   case HttpRequestPost: printPostUsage(); break;
+   case Http::RequestMethod::Get: printGetUsage(); break;
+   case Http::RequestMethod::Post: printPostUsage(); break;
    default: printGeneralUsage(); break;
    }
 }

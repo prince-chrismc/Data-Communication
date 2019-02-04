@@ -32,7 +32,7 @@ SOFTWARE.
 
 using namespace std::chrono_literals;
 
-HttpServer::HttpServer( HttpVersion version /*= HttpVersion11*/ )
+HttpServer::HttpServer( Http::Version version /*= v11*/ )
    : m_eVersion( version )
    , m_pExitEvent( std::make_unique<std::promise<void>>() )
 {
@@ -84,10 +84,10 @@ void HttpServer::Launch( unsigned short nPort )
 
                    switch( m_eVersion )
                    {
-                   case HttpVersion10:
+                   case Http::Version::v10:
                       HandleNewConnection = [ this ]( std::shared_ptr<ClientConnection> pClient ) { NonPersistentConnection( pClient.get() ); };
                       break;
-                   case HttpVersion11:
+                   case Http::Version::v11:
                       HandleNewConnection = [ this ]( std::shared_ptr<ClientConnection> pClient ) { PersistentConnection( pClient.get() ); };
                       break;
                    default:

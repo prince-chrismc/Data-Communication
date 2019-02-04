@@ -117,9 +117,9 @@ HttpHeaders::Headers::Headers( std::initializer_list<value_type> in_kroMessageHe
 {
 }
 
-void HttpHeaders::Headers::SetContentType( HttpContentType in_eContentType )
+void HttpHeaders::Headers::SetContentType( Http::ContentType in_eContentType )
 {
-   if( in_eContentType != HttpContentInvalid )
+   if( in_eContentType != Http::ContentType::Invalid )
    {
       const EmplaceResult retval = emplace( HTTP_CONTENT_TYPE, HttpRequest::STATIC_ContentTypeAsString( in_eContentType ) );
 
@@ -138,12 +138,33 @@ void HttpHeaders::Headers::SetContentType( HttpContentType in_eContentType )
    }
 }
 
-HttpRequest::HttpRequest( const HttpRequestMethod & in_kreMethod, const std::string & in_krsRequestUri,
-                          const HttpVersion & in_kreVersion, const std::string & in_krsHostAndPort ) :
-   HttpRequest( in_kreMethod, in_krsRequestUri, in_kreVersion, in_krsHostAndPort, HttpContentInvalid,
+void HttpHeaders::Headers::SetContentLength(size_t length)
+{
+   if( length > 0 )
+   {
+      const EmplaceResult retval = emplace( HTTP_CONTENT_LENGTH, std::to_string( length ) );
+
+      if( !retval.success ) // already exists
+      {
+         at( HTTP_CONTENT_LENGTH ) = std::to_string( length );
+      }
+   }
+   else // Now invalid
+   {
+      const auto itor = find( HTTP_CONTENT_LENGTH );
+      if( itor != std::end( *this ) )
+      {
+         erase( itor );
+      }
+   }
+}
+
+HttpRequest::HttpRequest( Http::RequestMethod method, const std::string & in_krsRequestUri,
+                          Http::Version version, const std::string & in_krsHostAndPort ) :
+   HttpRequest( method, in_krsRequestUri, version, in_krsHostAndPort, Http::ContentType::Invalid,
                 {
-                   ( in_kreVersion == HttpVersion11 ) ? HttpHeaders::Headers::value_type{ "Connection" , "keep-alive" } :
-                   ( in_kreVersion == HttpVersion10 ) ? HttpHeaders::Headers::value_type{ "Connection" ,"closed" } :
+                   ( version == Http::Version::v11 ) ? HttpHeaders::Headers::value_type{ "Connection" , "keep-alive" } :
+                   ( version == Http::Version::v10 ) ? HttpHeaders::Headers::value_type{ "Connection" ,"closed" } :
                      HttpHeaders::Headers::value_type{ "", "" },
                    { "Cache-Control",  "no-cache" },
                    { "Accept",  "*/*" },
@@ -153,29 +174,28 @@ HttpRequest::HttpRequest( const HttpRequestMethod & in_kreMethod, const std::str
 {
 }
 
-HttpRequest::HttpRequest( const HttpRequestMethod & in_kreMethod, const std::string & in_krsRequestUri,
-                          const HttpVersion & in_kreVersion, const std::string & in_krsHostAndPort,
-                          const HttpContentType & in_kreContentType, std::initializer_list<HttpHeaders::Headers::value_type> in_kroMessageHeaders ) :
-   m_eMethod( in_kreMethod ),
+HttpRequest::HttpRequest( Http::RequestMethod method, const std::string & in_krsRequestUri,
+                          Http::Version version, const std::string & in_krsHostAndPort,
+                          Http::ContentType content_type, std::initializer_list<HttpHeaders::Headers::value_type> in_kroMessageHeaders ) :
+   m_eMethod( method ),
    m_sRequestUri( in_krsRequestUri ),
-   m_eVersion( in_kreVersion ),
+   m_eVersion( version ),
    m_sHostAndPort( in_krsHostAndPort ),
-   m_eContentType( HttpContentInvalid ),
+   m_eContentType( Http::ContentType::Invalid ),
    m_oHeaders( in_kroMessageHeaders )
 {
    SetMessageHeader( "Host", in_krsHostAndPort );
-   SetContentType( in_kreContentType );
+   SetContentType( content_type );
 }
 
 bool HttpRequest::IsValidRequest() const
 {
-   return ( m_eMethod != HttpRequestInvalid ) || ( m_eMethod != HttpRequestLast ) ||
-      ( !m_sRequestUri.empty() ) || ( m_eVersion != HttpVersionInvalid ) || ( m_eVersion != HttpVersionLast );
+   return ( m_eMethod != Http::RequestMethod::Invalid ) || ( !m_sRequestUri.empty() ) || ( m_eVersion != Http::Version:: Invalid ) ;
 }
 
-void HttpRequest::SetContentType( const HttpContentType & in_kreContentType )
+void HttpRequest::SetContentType( Http::ContentType content_type )
 {
-   m_eContentType = in_kreContentType;
+   m_eContentType = content_type;
    m_oHeaders.SetContentType( m_eContentType );
 }
 
@@ -196,7 +216,7 @@ void HttpRequest::SetMessageHeader( const std::string & in_krsFeildName, const s
 void HttpRequest::AppendMessageBody( const std::string & in_krsToAdd )
 {
    m_sBody.append( in_krsToAdd );
-   SetMessageHeader( HTTP_CONTENT_LENGTH, std::to_string( m_sBody.length() ) );
+   m_oHeaders.SetContentLength( m_sBody.length() );
 }
 
 std::string HttpRequest::GetRequestLine() const
@@ -219,55 +239,54 @@ std::string HttpRequest::GetWireFormat() const
    return GetRequestLine() + GetHeaders() + CRLF + m_sBody;
 }
 
-std::string HttpRequest::STATIC_MethodAsString( const HttpRequestMethod & in_kreMethod )
+std::string HttpRequest::STATIC_MethodAsString( const Http::RequestMethod & method )
 {
-   switch( in_kreMethod )
+   switch( method )
    {
-   case HttpRequestOptions: return OPTIONS_STRING;
-   case HttpRequestGet: return GET_STRING;
-   case HttpRequestHead: return HEAD_STRING;
-   case HttpRequestPost: return POST_STRING;
-   case HttpRequestPut: return PUT_STRING;
-   case HttpRequestDelete: return DELETE_STRING;
-   case HttpRequestTrace: return TRACE_STRING;
-   case HttpRequestConnect: return CONNECT_STRING;
-   case HttpRequestPatch: return PATCH_STRING;
+   case Http::RequestMethod::Options: return OPTIONS_STRING;
+   case Http::RequestMethod::Get: return GET_STRING;
+   case Http::RequestMethod::Head: return HEAD_STRING;
+   case Http::RequestMethod::Post: return POST_STRING;
+   case Http::RequestMethod::Put: return PUT_STRING;
+   case Http::RequestMethod::Delete: return DELETE_STRING;
+   case Http::RequestMethod::Trace: return TRACE_STRING;
+   case Http::RequestMethod::Connect: return CONNECT_STRING;
+   case Http::RequestMethod::Patch: return PATCH_STRING;
    default:
       return "";
    }
 }
 
-std::string HttpRequest::STATIC_VersionAsString( const HttpVersion & in_kreVersion )
+std::string HttpRequest::STATIC_VersionAsString( Http::Version version )
 {
-   switch( in_kreVersion )
+   switch( version )
    {
-   case HttpVersion10: return HTTP_VERSION_10_STRING;
-   case HttpVersion11: return HTTP_VERSION_11_STRING;
+   case Http::Version::v10: return HTTP_VERSION_10_STRING;
+   case Http::Version::v11: return HTTP_VERSION_11_STRING;
    default:
       return "";
    }
 }
 
-std::string HttpRequest::STATIC_ContentTypeAsString( const HttpContentType & in_kreContentType )
+std::string HttpRequest::STATIC_ContentTypeAsString( Http::ContentType content_type )
 {
-   switch( in_kreContentType )
+   switch( content_type )
    {
-   case HttpContentText: return "text/plain;";
-   case HttpContentHtml: return "application/html; text/html;";
-   case HttpContentJson: return "application/json; text/json;";
-   case HttpContentYaml: return "application/x-yaml; text/yaml;";
-   case HttpContentXml:  return "text/xml;";
-   case HttpContentGif:  return "image/gif";
-   case HttpContentIco:  return "image/x-icon";
-   case HttpContentPng:  return "image/png";
+   case Http::ContentType::Text: return "text/plain;";
+   case Http::ContentType::Html: return "application/html; text/html;";
+   case Http::ContentType::Json: return "application/json; text/json;";
+   case Http::ContentType::Yaml: return "application/x-yaml; text/yaml;";
+   case Http::ContentType::Xml:  return "text/xml;";
+   case Http::ContentType::Gif:  return "image/gif";
+   case Http::ContentType::Ico:  return "image/x-icon";
+   case Http::ContentType::Png:  return "image/png";
    default: return "";
    }
 }
 
-//---------------------------------------------------------------------------------------------------------------------
-std::string HttpRequest::STATIC_ContentLengthToString( size_t in_ullContentLength )
+std::string HttpRequest::STATIC_ContentLengthToString( size_t length )
 {
-   return HTTP_CONTENT_LENGTH + std::to_string( in_ullContentLength );
+   return HTTP_CONTENT_LENGTH + std::to_string( length );
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -291,19 +310,19 @@ HttpRequest HttpRequestParser::GetHttpRequest() const
    return oRequest;
 }
 
-HttpRequestMethod HttpRequestParser::STATIC_ParseForMethod( const std::string & in_krsRequest )
+Http::RequestMethod HttpRequestParser::STATIC_ParseForMethod( const std::string & in_krsRequest )
 {
-   if( in_krsRequest.find( OPTIONS_STRING ) == 0 ) return HttpRequestOptions;
-   if( in_krsRequest.find( GET_STRING ) == 0 ) return HttpRequestGet;
-   if( in_krsRequest.find( HEAD_STRING ) == 0 ) return HttpRequestHead;
-   if( in_krsRequest.find( POST_STRING ) == 0 ) return HttpRequestPost;
-   if( in_krsRequest.find( PUT_STRING ) == 0 ) return HttpRequestPut;
-   if( in_krsRequest.find( DELETE_STRING ) == 0 ) return HttpRequestDelete;
-   if( in_krsRequest.find( TRACE_STRING ) == 0 ) return HttpRequestTrace;
-   if( in_krsRequest.find( CONNECT_STRING ) == 0 ) return HttpRequestConnect;
-   if( in_krsRequest.find( PATCH_STRING ) == 0 ) return HttpRequestPatch;
+   if( in_krsRequest.find( OPTIONS_STRING ) == 0 ) return Http::RequestMethod::Options;
+   if( in_krsRequest.find( GET_STRING ) == 0 ) return Http::RequestMethod::Get;
+   if( in_krsRequest.find( HEAD_STRING ) == 0 ) return Http::RequestMethod::Head;
+   if( in_krsRequest.find( POST_STRING ) == 0 ) return Http::RequestMethod::Post;
+   if( in_krsRequest.find( PUT_STRING ) == 0 ) return Http::RequestMethod::Put;
+   if( in_krsRequest.find( DELETE_STRING ) == 0 ) return Http::RequestMethod::Delete;
+   if( in_krsRequest.find( TRACE_STRING ) == 0 ) return Http::RequestMethod::Trace;
+   if( in_krsRequest.find( CONNECT_STRING ) == 0 ) return Http::RequestMethod::Connect;
+   if( in_krsRequest.find( PATCH_STRING ) == 0 ) return Http::RequestMethod::Patch;
 
-   return HttpRequestInvalid;
+   return Http::RequestMethod::Invalid;
 }
 
 std::string HttpRequestParser::STATIC_ParseForRequestUri( const std::string & in_krsRequest )
@@ -317,12 +336,12 @@ std::string HttpRequestParser::STATIC_ParseForRequestUri( const std::string & in
    return sRequestLine.substr( ulOffset );
 }
 
-HttpVersion HttpRequestParser::STATIC_ParseForVersion( const std::string & in_krsRequest )
+Http::Version HttpRequestParser::STATIC_ParseForVersion( const std::string & in_krsRequest )
 {
-   if( in_krsRequest.find( HTTP_VERSION_10_STRING ) != std::string::npos ) return HttpVersion10;
-   if( in_krsRequest.find( HTTP_VERSION_11_STRING ) != std::string::npos ) return HttpVersion11;
+   if( in_krsRequest.find( HTTP_VERSION_10_STRING ) != std::string::npos ) return Http::Version::v10;
+   if( in_krsRequest.find( HTTP_VERSION_11_STRING ) != std::string::npos ) return Http::Version::v11;
 
-   return HttpVersionInvalid;
+   return Http::Version::Invalid;
 }
 
 std::string HttpRequestParser::STATIC_ParseForHostAndPort( const std::string & in_krsRequest )
@@ -337,11 +356,11 @@ std::string HttpRequestParser::STATIC_ParseForHostAndPort( const std::string & i
    return "";
 }
 
-HttpContentType HttpRequestParser::STATIC_ParseForContentType( const std::string & in_krsRequest )
+Http::ContentType HttpRequestParser::STATIC_ParseForContentType( const std::string & in_krsRequest )
 {
-   if( in_krsRequest.empty() ) return HttpContentInvalid;
+   if( in_krsRequest.empty() ) return Http::ContentType::Invalid;
 
-   if( in_krsRequest.find( HTTP_CONTENT_TYPE ) == std::string::npos ) return HttpContentInvalid;
+   if( in_krsRequest.find( HTTP_CONTENT_TYPE ) == std::string::npos ) return Http::ContentType::Invalid;
 
    size_t ulOffset = in_krsRequest.find( HTTP_CONTENT_TYPE ) + sizeof( HTTP_CONTENT_TYPE ) - 1;
    size_t ulEnd = in_krsRequest.find( CRLF, ulOffset );
@@ -357,13 +376,13 @@ HttpContentType HttpRequestParser::STATIC_ParseForContentType( const std::string
 
    size_t ulMinPos = std::min( { ulTextPos, ulHtmlPos, ulJsonPos, ulHtmlAppPos, ulJsonAppPos } );
 
-   if( ulMinPos == ulHtmlPos ) return HttpContentHtml;
-   if( ulMinPos == ulJsonPos ) return HttpContentJson;
-   if( ulMinPos == ulHtmlAppPos ) return HttpContentHtml;
-   if( ulMinPos == ulJsonAppPos ) return HttpContentJson;
-   if( ulMinPos == ulTextPos ) return HttpContentText;
+   if( ulMinPos == ulHtmlPos ) return Http::ContentType::Html;
+   if( ulMinPos == ulJsonPos ) return Http::ContentType::Json;
+   if( ulMinPos == ulHtmlAppPos ) return Http::ContentType::Html;
+   if( ulMinPos == ulJsonAppPos ) return Http::ContentType::Json;
+   if( ulMinPos == ulTextPos ) return Http::ContentType::Text;
 
-   return HttpContentInvalid;
+   return Http::ContentType::Invalid;
 }
 
 std::string HttpRequestParser::STATIC_ParseForBody( const std::string & in_krsRequest )
@@ -377,20 +396,6 @@ std::string HttpRequestParser::STATIC_ParseForBody( const std::string & in_krsRe
    return in_krsRequest.substr( ulOffset );
 }
 
-void HttpRequestParser::STATIC_AppenedParsedHeaders( HttpRequest & io_roRequest, const std::string & in_krsRequest )
-{
-   for( std::string sRawHeaders = in_krsRequest.substr( in_krsRequest.find( CRLF ) + sizeof( CRLF ) - 1 );
-        sRawHeaders.find( CRLF );
-        sRawHeaders = sRawHeaders.substr( sRawHeaders.find( CRLF ) + sizeof( CRLF ) - 1 ) )
-   {
-      std::string sNextHeader = sRawHeaders.substr( 0, sRawHeaders.find( CRLF ) );
-      const size_t iSeperatorIndex = sNextHeader.find( ':' );
-
-      if( iSeperatorIndex != std::string::npos )
-         io_roRequest.SetMessageHeader( sNextHeader.substr( 0, iSeperatorIndex ), sNextHeader.substr( iSeperatorIndex + 1 ) );
-   }
-}
-
 //---------------------------------------------------------------------------------------------------------------------
 //
 // HttpRequestParserAdvanced
@@ -401,10 +406,9 @@ bool HttpRequestParserAdvance::AppendRequestData( const std::string & in_krsData
    return STATIC_AppendData( in_krsData, m_sHttpHeader, m_sRequestBody );
 }
 
-//---------------------------------------------------------------------------------------------------------------------
 HttpRequest HttpRequestParserAdvance::GetHttpRequest() const
 {
-   if( m_sHttpHeader.empty() ) return { HttpRequestInvalid, "", HttpVersionInvalid, "" }; // No data has been obtained!
+   if( m_sHttpHeader.empty() ) return { Http::RequestMethod::Invalid, "", Http::Version::Invalid, "" }; // No data has been obtained!
 
    HttpRequest oRequest( HttpRequestParser::STATIC_ParseForMethod( m_sHttpHeader ),
                          HttpRequestParser::STATIC_ParseForRequestUri( m_sHttpHeader ),
@@ -420,7 +424,6 @@ HttpRequest HttpRequestParserAdvance::GetHttpRequest() const
    return oRequest;
 }
 
-//---------------------------------------------------------------------------------------------------------------------
 size_t HttpRequestParserAdvance::STATIC_ParseForContentLength( const std::string & in_krsHttpHeader )
 {
    if( in_krsHttpHeader.empty() ) return 0;
@@ -442,7 +445,6 @@ size_t HttpRequestParserAdvance::STATIC_ParseForContentLength( const std::string
    return 0;
 }
 
-//---------------------------------------------------------------------------------------------------------------------
 bool HttpRequestParserAdvance::STATIC_IsHeaderComplete( const std::string & in_krsHttpHeader )
 {
    if( in_krsHttpHeader.size() > SIZE_OF_HTTP_BODY_SEPERATOR )
@@ -453,7 +455,6 @@ bool HttpRequestParserAdvance::STATIC_IsHeaderComplete( const std::string & in_k
    return false;
 }
 
-//---------------------------------------------------------------------------------------------------------------------
 bool HttpRequestParserAdvance::STATIC_AppendData( const std::string & in_krsData, std::string & io_krsHttpHeader, std::string & io_krsHttpBody )
 {
    if( in_krsData.empty() ) return true;

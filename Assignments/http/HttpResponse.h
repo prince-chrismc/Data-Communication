@@ -31,33 +31,31 @@ SOFTWARE.
 class HttpResponse
 {
 public:
-   HttpResponse( const HttpVersion & in_kreVersion, const HttpStatus & in_kreStatusCode,
-                 const std::string & in_krsReasonPhrase );
-   HttpResponse( const HttpVersion & in_kreVersion, const HttpStatus & in_kreStatusCode,
-                 const std::string & in_krsReasonPhrase, const HttpContentType & in_kreContentType,
-                 const std::initializer_list<HttpHeaders::Headers::value_type>& in_kroMessageHeaders );
+   HttpResponse( Http::Version version, Http::Status status, const std::string & in_krsReasonPhrase );
+   HttpResponse( Http::Version version, Http::Status status, const std::string & in_krsReasonPhrase,
+                 Http::ContentType content_type, std::initializer_list<HttpHeaders::Headers::value_type> in_kroMessageHeaders );
 
-   void SetContentType( const HttpContentType& in_kreContentType );
+   void SetContentType( Http::ContentType content_type );
    void SetMessageHeader( const std::string& in_krsFeildName, const std::string& in_krsFeildValue );
    void AppendMessageBody( const std::string & in_krsToAdd );
 
-   const HttpVersion&     GetVersion() const { return m_eVersion; }
-   const HttpStatus&      GetStatusCode() const { return m_eStatusCode; }
-   const std::string&     GetPhrase() const { return m_sReasonPhrase; }
-   const HttpContentType& GetContentType() const { return m_eContentType; }
-   const std::string&     GetBody() const { return m_sBody; }
+   const Http::Version&     GetVersion() const { return m_eVersion; }
+   const Http::Status&      GetStatusCode() const { return m_eStatusCode; }
+   const std::string&       GetPhrase() const { return m_sReasonPhrase; }
+   const Http::ContentType& GetContentType() const { return m_eContentType; }
+   const std::string&       GetBody() const { return m_sBody; }
 
    std::string GetStatusLine() const;
    std::string GetHeaders() const;
    std::string GetWireFormat() const;
 
 private:
-   HttpVersion m_eVersion;
-   HttpStatus m_eStatusCode;
+   Http::Version m_eVersion;
+   Http::Status m_eStatusCode;
    std::string m_sReasonPhrase;
 
    // Optional
-   HttpContentType m_eContentType;
+   Http::ContentType m_eContentType;
    HttpHeaders::Headers m_oHeaders;
    std::string m_sBody;
 };
@@ -69,10 +67,8 @@ public:
 
    HttpResponse GetHttpResponse() const;
 
-   static HttpStatus STATIC_ParseForStatus( const std::string& in_krsRequest );
+   static Http::Status STATIC_ParseForStatus( const std::string& in_krsRequest );
    static std::string STATIC_ParseForReasonPhrase( const std::string& in_krsRequest );
-
-   static void STATIC_AppenedParsedHeaders( HttpResponse & io_roRequest, const std::string & in_krsRequest );
 
 private:
    std::string m_sResponseToParse;

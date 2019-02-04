@@ -49,7 +49,8 @@ namespace HttpHeaders
    struct Headers : std::map<std::string, std::string, comparison>
    {
       Headers( std::initializer_list<value_type> in_kroMessageHeaders );
-      void SetContentType( HttpContentType in_eContentType );
+      void SetContentType( Http::ContentType in_eContentType );
+      void SetContentLength( size_t length );
    };
 
    using Key = Headers::key_type;
@@ -90,42 +91,42 @@ namespace HttpHeaders
 class HttpRequest
 {
 public:
-   HttpRequest( const HttpRequestMethod & in_kreMethod, const std::string & in_krsRequestUri,
-                const HttpVersion & in_kreVersion, const std::string & in_krsHostAndPort );
-   HttpRequest( const HttpRequestMethod & in_kreMethod, const std::string & in_krsRequestUri,
-                const HttpVersion & in_kreVersion, const std::string & in_krsHostAndPort,
-                const HttpContentType & in_kreContentType, std::initializer_list<HttpHeaders::Headers::value_type> in_kroMessageHeaders );
+   HttpRequest( Http::RequestMethod method, const std::string & in_krsRequestUri,
+                Http::Version version, const std::string & in_krsHostAndPort );
+   HttpRequest( Http::RequestMethod method, const std::string & in_krsRequestUri,
+                Http::Version version, const std::string & in_krsHostAndPort,
+                Http::ContentType content_type, std::initializer_list<HttpHeaders::Headers::value_type> in_kroMessageHeaders );
 
    bool IsValidRequest() const;
 
-   void SetContentType( const HttpContentType& in_kreContentType );
+   void SetContentType( Http::ContentType content_type );
    void SetMessageHeader( const std::string& in_krsFeildName, const std::string& in_krsFeildValue );
    void AppendMessageBody( const std::string & in_krsToAdd );
 
-   const HttpRequestMethod& GetMethod() const { return m_eMethod; }
+   const Http::RequestMethod& GetMethod() const { return m_eMethod; }
    const std::string&       GetUri() const { return m_sRequestUri; }
-   const HttpVersion&       GetVersion() const { return m_eVersion; }
+   const Http::Version&       GetVersion() const { return m_eVersion; }
    const std::string&       GetHostAndPort() const { return m_sHostAndPort; }
-   const HttpContentType&   GetContentType() const { return m_eContentType; }
+   const Http::ContentType&   GetContentType() const { return m_eContentType; }
    const std::string&       GetBody() const { return m_sBody; }
 
    std::string GetRequestLine() const;
    std::string GetHeaders() const;
    std::string GetWireFormat() const;
 
-   static std::string STATIC_MethodAsString( const HttpRequestMethod& in_kreMethod );
-   static std::string STATIC_VersionAsString( const HttpVersion& in_kreVersion );
-   static std::string STATIC_ContentTypeAsString( const HttpContentType& in_kreContentType );
-   static std::string STATIC_ContentLengthToString( size_t in_ullContentLength );
+   static std::string STATIC_MethodAsString( const Http::RequestMethod& method );
+   static std::string STATIC_VersionAsString( Http::Version version );
+   static std::string STATIC_ContentTypeAsString( Http::ContentType content_type );
+   static std::string STATIC_ContentLengthToString( size_t length );
 
 private:
-   HttpRequestMethod m_eMethod;
+   Http::RequestMethod m_eMethod;
    std::string m_sRequestUri;
-   HttpVersion m_eVersion;
+   Http::Version m_eVersion;
    std::string m_sHostAndPort;
 
    // Optional
-   HttpContentType m_eContentType;
+   Http::ContentType m_eContentType;
    HttpHeaders::Headers m_oHeaders;
    std::string m_sBody;
 
@@ -138,14 +139,28 @@ public:
 
    HttpRequest GetHttpRequest() const;
 
-   static HttpRequestMethod STATIC_ParseForMethod( const std::string& in_krsRequest );
+   static Http::RequestMethod STATIC_ParseForMethod( const std::string& in_krsRequest );
    static std::string STATIC_ParseForRequestUri( const std::string& in_krsRequest );
-   static HttpVersion STATIC_ParseForVersion( const std::string& in_krsRequest );
+   static Http::Version STATIC_ParseForVersion( const std::string& in_krsRequest );
    static std::string STATIC_ParseForHostAndPort( const std::string& in_krsRequest );
-   static HttpContentType STATIC_ParseForContentType( const std::string& in_krsRequest );
+   static Http::ContentType STATIC_ParseForContentType( const std::string& in_krsRequest );
    static std::string STATIC_ParseForBody( const std::string& in_krsRequest );
 
-   static void STATIC_AppenedParsedHeaders( HttpRequest& io_roRequest, const std::string& in_krsRequest );
+   template<class HTTP_MESSAGE>
+   static void STATIC_AppenedParsedHeaders( HTTP_MESSAGE & io_roRequest, const std::string & in_krsRequest )
+   {
+      static constexpr auto CRLF = "\r\n";
+      for( std::string sRawHeaders = in_krsRequest.substr( in_krsRequest.find( CRLF ) + sizeof( CRLF ) - 1 );
+           sRawHeaders.find( CRLF );
+           sRawHeaders = sRawHeaders.substr( sRawHeaders.find( CRLF ) + sizeof( CRLF ) - 1 ) )
+      {
+         std::string sNextHeader = sRawHeaders.substr( 0, sRawHeaders.find( CRLF ) );
+         const size_t iSeperatorIndex = sNextHeader.find( ':' );
+
+         if( iSeperatorIndex != std::string::npos )
+            io_roRequest.SetMessageHeader( sNextHeader.substr( 0, iSeperatorIndex ), sNextHeader.substr( iSeperatorIndex + 1 ) );
+      }
+   }
 
 
 private:

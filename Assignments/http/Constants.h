@@ -26,60 +26,63 @@ SOFTWARE.
 
 #pragma once
 
-enum HttpVersion
+namespace Http
 {
-   HttpVersionInvalid = 0,
-   HttpVersion10,
-   HttpVersion11,
-   HttpVersionLast
-};
+   enum class Version
+   {
+      Invalid = 0,
+      v10,
+      v11,
+   };
 
-enum HttpStatus
-{
-   HttpStatusInvalid,
-   HttpStatusOk = 200,
-   HttpStatusCreated = 201,
-   HttpStatusAccepted = 202,
-   HttpStatusNoContent = 204,
-   HttpStatusPartialContent = 206,
-   HttpStatusBadRequest = 400,
-   HttpStatusForbidden = 403,
-   HttpStatusNotFound = 404,
-   HttpStatusMethodNotAllowed = 405,
-   HttpStatusConflict = 409,
-   HttpStatusPreConditionFailed = 412,
-   HttpStatusRequestEntityTooLarge = 413,
-   HttpStatusUnsupportedMediaType = 415,
-   HttpStatusRequestedRangeNotSatisfiable = 416,
-   HttpStatusInternalServerError = 500,
-   HttpStatusNotImplemented = 501,
-   HttpStatusHttpVersionNotSupported = 505
-};
+   enum class Status
+   {
+      Invalid,
+      Ok = 200,
+      Created = 201,
+      Accepted = 202,
+      NoContent = 204,
+      PartialContent = 206,
+      BadRequest = 400,
+      Forbidden = 403,
+      NotFound = 404,
+      MethodNotAllowed = 405,
+      Conflict = 409,
+      PreConditionFailed = 412,
+      RequestEntityTooLarge = 413,
+      UnsupportedMediaType = 415,
+      RequestedRangeNotSatisfiable = 416,
+      InternalServerError = 500,
+      NotImplemented = 501,
+      HttpVersionNotSupported = 505
+   };
 
-enum HttpContentType
-{
-   HttpContentText,
-   HttpContentHtml,
-   HttpContentJson,
-   HttpContentYaml,
-   HttpContentXml,
-   HttpContentGif,
-   HttpContentIco,
-   HttpContentPng,
-   HttpContentInvalid
-};
+   enum class ContentType
+   {
+      Invalid,
+      Text,
+      Html,
+      Json,
+      Yaml,
+      Xml,
+      Gif,
+      Ico,
+      Png
+   };
 
-enum HttpRequestMethod
-{
-   HttpRequestInvalid = 0,
-   HttpRequestOptions,
-   HttpRequestGet,
-   HttpRequestHead,
-   HttpRequestPost,
-   HttpRequestPut,
-   HttpRequestDelete,
-   HttpRequestTrace,
-   HttpRequestConnect,
-   HttpRequestPatch,
-   HttpRequestLast
-};
+   enum class RequestMethod
+   {
+      Invalid = 0,
+      Options,
+      Get,
+      Head,
+      Post,
+      Put,
+      Delete,
+      Trace,
+      Connect,
+      Patch,
+      Last
+   };
+
+}

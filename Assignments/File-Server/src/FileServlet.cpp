@@ -29,6 +29,9 @@ SOFTWARE.
 #include <fstream>
 #include <sstream>
 
+using Http::Version;
+using Http::Status;
+
 FileServlet::FileServlet( const std::string& path ) : m_Path( path )
 {
    if( !std::filesystem::is_directory( m_Path ) ) throw std::logic_error( "File exploration must happen from a directory!" );
@@ -38,26 +41,26 @@ HttpResponse FileServlet::HandleRequest( const HttpRequest& request ) const noex
 {
    switch( request.GetMethod() )
    {
-   case HttpRequestGet:
+   case Http::RequestMethod::Get:
       return HandleGetRequest( request );
-   case HttpRequestPost:
+   case Http::RequestMethod::Post:
       return HandlePostRequest( request );
    default:
       break;
    }
 
-   return{ HttpVersion10, HttpStatusMethodNotAllowed, "SERVER ONLY ACCEPTS GET AND POST METHODS" };
+   return{ Http::Version::v10, Status::MethodNotAllowed, "SERVER ONLY ACCEPTS GET AND POST METHODS" };
 }
 
 HttpResponse FileServlet::HandleGetRequest( const HttpRequest& request ) const noexcept
 {
    if( request.GetUri().find( "/.." ) != std::string::npos )
-      return{ HttpVersion10, HttpStatusForbidden, "NICE TRY ACCESSING FORBIDDEN DIRECTORY OF FILE SYSTEM" };
+      return{ Http::Version::v10, Status::Forbidden, "NICE TRY ACCESSING FORBIDDEN DIRECTORY OF FILE SYSTEM" };
 
    const std::filesystem::path oRequested = m_Path / request.GetUri().substr( 1 );
 
    if( !std::filesystem::exists( oRequested ) )
-      return{ HttpVersion10, HttpStatusNotFound, "NOT FOUND" };
+      return{ Http::Version::v10, Status::NotFound, "NOT FOUND" };
 
    if( std::filesystem::is_directory( oRequested ) )
       return HandleDirectoryRequest( oRequested );
@@ -65,14 +68,14 @@ HttpResponse FileServlet::HandleGetRequest( const HttpRequest& request ) const n
    if( std::filesystem::is_regular_file( oRequested ) )
       return HandleFileRequest( oRequested );
 
-   return{ HttpVersion10, HttpStatusNotImplemented, "ONLY SUPPORTS DIRS AND FILES" };
+   return{ Http::Version::v10, Status::NotImplemented, "ONLY SUPPORTS DIRS AND FILES" };
 }
 
 HttpResponse FileServlet::HandleDirectoryRequest( const std::filesystem::path& requested ) const noexcept
 {
-   HttpResponse oResponse( HttpVersion10, HttpStatusOk, "OK" );
+   HttpResponse oResponse( Http::Version::v10, Status::Ok, "OK" );
 
-   oResponse.SetContentType( HttpContentText );
+   oResponse.SetContentType( Http::ContentType::Text );
 
    oResponse.AppendMessageBody( "Directory: " + std::filesystem::canonical( requested ).string() + "\r\n" );
 
@@ -89,15 +92,15 @@ HttpResponse FileServlet::HandleDirectoryRequest( const std::filesystem::path& r
 
 HttpResponse FileServlet::HandleFileRequest( const std::filesystem::path& requested ) const noexcept
 {
-   HttpResponse oResponse( HttpVersion10, HttpStatusOk, "OK" );
+   HttpResponse oResponse( Http::Version::v10, Status::Ok, "OK" );
    oResponse.SetContentType( FileExtensionToContentType( requested ) );
    oResponse.SetMessageHeader( "Content-Disposition", "inline" );
 
-   if( oResponse.GetContentType() != HttpContentPng )
+   if( oResponse.GetContentType() != Http::ContentType::Png )
       oResponse.AppendMessageBody( "File: " + std::filesystem::canonical( requested ).string() + "\r\n" );
 
    std::ifstream fileReader( requested.string(), std::ios::in | std::ios::binary | std::ios::ate );
-   if( !fileReader ) return{ HttpVersion10, HttpStatusInternalServerError, "COULD NOT LOAD FILE" };
+   if( !fileReader ) return{ Http::Version::v10, Status::InternalServerError, "COULD NOT LOAD FILE" };
 
    const size_t size = fileReader.tellg();
    std::string fileBuffer( size, '\0' ); // construct buffer
@@ -109,37 +112,37 @@ HttpResponse FileServlet::HandleFileRequest( const std::filesystem::path& reques
    return oResponse;
 }
 
-HttpContentType FileServlet::FileExtensionToContentType( const std::filesystem::path& requested ) const noexcept
+Http::ContentType FileServlet::FileExtensionToContentType( const std::filesystem::path& requested ) const noexcept
 {
    if( !std::filesystem::is_regular_file( requested ) )
-      return HttpContentInvalid;
+      return Http::ContentType::Invalid;
 
    if( !requested.has_extension() )
-      return HttpContentText;
+      return Http::ContentType::Text;
 
    if( requested.filename().string().find( ".vcxproj" ) != std::string::npos )
-      return HttpContentXml;
+      return Http::ContentType::Xml;
 
    if( requested.extension() == ".html" )
-      return HttpContentHtml;
+      return Http::ContentType::Html;
 
    if( requested.extension() == ".json" )
-      return HttpContentJson;
+      return Http::ContentType::Json;
 
    if( requested.extension() == ".yml" )
-      return HttpContentYaml;
+      return Http::ContentType::Yaml;
 
    if( requested.extension() == ".png" )
-      return HttpContentPng;
+      return Http::ContentType::Png;
 
-   return HttpContentText;
+   return Http::ContentType::Text;
 }
 
 
 HttpResponse FileServlet::HandlePostRequest( const HttpRequest& request ) const noexcept
 {
    if( request.GetUri().find( "/.." ) != std::string::npos )
-      return{ HttpVersion10, HttpStatusForbidden, "NICE TRY ACCESSING FORBIDDEN DIRECTORY OF FILE SYSTEM" };
+      return{ Http::Version::v10, Status::Forbidden, "NICE TRY ACCESSING FORBIDDEN DIRECTORY OF FILE SYSTEM" };
 
    const std::filesystem::path oRequested = std::filesystem::absolute( m_Path / request.GetUri().substr( 1 ) );
 
@@ -147,12 +150,12 @@ HttpResponse FileServlet::HandlePostRequest( const HttpRequest& request ) const 
       return HandleCreateItemRequest( oRequested, request.GetBody() );
 
    if( std::filesystem::is_directory( oRequested ) )
-      return{ HttpVersion10, HttpStatusBadRequest, "CAN NOT CREATE EXISTING DIRECTORIES" };
+      return{ Http::Version::v10, Status::BadRequest, "CAN NOT CREATE EXISTING DIRECTORIES" };
 
    if( std::filesystem::is_regular_file( oRequested ) )
       return HandleWriteFileRequest( oRequested, request.GetBody() );
 
-   return{ HttpVersion10, HttpStatusNotImplemented, "ONLY SUPPORTS DIRS AND FILES" };
+   return{ Http::Version::v10, Status::NotImplemented, "ONLY SUPPORTS DIRS AND FILES" };
 }
 
 HttpResponse FileServlet::HandleCreateItemRequest( const std::filesystem::path& requested,
@@ -176,7 +179,7 @@ void CreateParentDirectories( const std::filesystem::path& requested )
 HttpResponse FileServlet::HandleCreateFileRequest( const std::filesystem::path& requested,
                                                    const std::string& content ) const noexcept
 {
-   HttpResponse oResponse( HttpVersion10, HttpStatusConflict, "FAILED TO CREATE FILE" );
+   HttpResponse oResponse( Http::Version::v10, Status::Conflict, "FAILED TO CREATE FILE" );
    try
    {
       CreateParentDirectories( requested );
@@ -190,11 +193,11 @@ HttpResponse FileServlet::HandleCreateFileRequest( const std::filesystem::path& 
       fileWriter << content << std::endl;
       fileWriter.close();
 
-      oResponse = HttpResponse( HttpVersion10, HttpStatusCreated, "CREATED FILE" );
+      oResponse = HttpResponse( Http::Version::v10, Status::Created, "CREATED FILE" );
       oResponse.SetContentType( FileExtensionToContentType( requested ) );
       oResponse.SetMessageHeader( "Content-Disposition", "inline" );
 
-      if( oResponse.GetContentType() != HttpContentPng )
+      if( oResponse.GetContentType() != Http::ContentType::Png )
          oResponse.AppendMessageBody( "File: " + std::filesystem::canonical( requested ).string() + "\r\n" );
 
       oResponse.AppendMessageBody( content + "\r\n" );
@@ -209,11 +212,11 @@ HttpResponse FileServlet::HandleCreateFileRequest( const std::filesystem::path& 
 
 HttpResponse FileServlet::HandleCreateDirectoryRequest( const std::filesystem::path& requested ) const noexcept
 {
-   HttpResponse oResponse( HttpVersion10, HttpStatusConflict, "FAILED TO CREATE DIRECTORIES" );
+   HttpResponse oResponse( Http::Version::v10, Status::Conflict, "FAILED TO CREATE DIRECTORIES" );
    try
    {
       if( std::filesystem::create_directories( requested ) )
-         oResponse = HttpResponse{ HttpVersion10, HttpStatusCreated, "CREATED DIRECTORIES" };
+         oResponse = HttpResponse{ Http::Version::v10, Status::Created, "CREATED DIRECTORIES" };
       else
          throw std::runtime_error( "Failed to create directory(ies) for path: " +
                                    std::filesystem::absolute( requested ).string() + "\r\n" );
@@ -249,7 +252,7 @@ HttpResponse FileServlet::HandleWriteFileRequest( const std::filesystem::path& r
    }
    catch( const std::exception& e )
    {
-      HttpResponse oResponse( HttpVersion10, HttpStatusConflict, "FAILED TO BACKUP OLD FILE" );
+      HttpResponse oResponse( Http::Version::v10, Status::Conflict, "FAILED TO BACKUP OLD FILE" );
       oResponse.AppendMessageBody( e.what() );
       return oResponse;
    }

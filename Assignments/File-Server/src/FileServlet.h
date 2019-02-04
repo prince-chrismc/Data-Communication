@@ -40,7 +40,7 @@ private:
    HttpResponse HandleGetRequest( const HttpRequest& request ) const noexcept;
    HttpResponse HandleDirectoryRequest( const std::filesystem::path& requested ) const noexcept;
    HttpResponse HandleFileRequest( const std::filesystem::path& requested ) const noexcept;
-   HttpContentType FileExtensionToContentType( const std::filesystem::path& requested ) const noexcept;
+   Http::ContentType FileExtensionToContentType( const std::filesystem::path& requested ) const noexcept;
 
    HttpResponse HandlePostRequest( const HttpRequest& request ) const noexcept;
    HttpResponse HandleCreateItemRequest( const std::filesystem::path& requested,

@@ -40,7 +40,7 @@ SOFTWARE.
 
 CurlAppController::CurlAppController( int argc, char ** argv )
    : m_oCliParser( argc, argv )
-   , m_eCommand( HttpRequestInvalid )
+   , m_eCommand( Http::RequestMethod::Invalid )
    , m_bVerbose( false )
    , m_Client( CSimpleSocket::SocketTypeUdp )
 {
@@ -65,11 +65,11 @@ void CurlAppController::readCommandLineArgs()
       printUsageGivenArgs();
       break;
    case GET:
-      m_eCommand = HttpRequestGet;
+      m_eCommand = Http::RequestMethod::Get;
       parseGetOptions( ++itor );
       break;
    case POST:
-      m_eCommand = HttpRequestPost;
+      m_eCommand = Http::RequestMethod::Post;
       parsePostOptions( ++itor );
       break;
 
@@ -124,8 +124,8 @@ void CurlAppController::printUsageGivenArgs() const
 {
    switch( m_eCommand )
    {
-   case HttpRequestGet: printGetUsage(); break;
-   case HttpRequestPost: printPostUsage(); break;
+   case Http::RequestMethod::Get: printGetUsage(); break;
+   case Http::RequestMethod::Post: printPostUsage(); break;
    default: printGeneralUsage(); break;
    }
 }
@@ -228,8 +228,8 @@ void CurlAppController::validateCommand() const
 {
    switch( m_eCommand )
    {
-   case HttpRequestGet:
-   case HttpRequestPost:
+   case Http::RequestMethod::Get:
+   case Http::RequestMethod::Post:
       break;
    default:
       throw std::runtime_error( "If you see this please don't look for the developer to report a bug =)" );
@@ -298,7 +298,7 @@ void CurlAppController::sendHttpRequest()
 {
    debugPrint( "Building Request..." );
 
-   HttpRequest oReq( m_eCommand, m_oHref.m_sUri, HttpVersion10, m_oHref.m_sHostName + ":" + std::to_string( m_oHref.m_nPortNumber ) );
+   HttpRequest oReq( m_eCommand, m_oHref.m_sUri, Http::Version::v10, m_oHref.m_sHostName + ":" + std::to_string( m_oHref.m_nPortNumber ) );
    for( auto& oFeildNameAndValue : m_oExtraHeaders )
    {
       oReq.SetMessageHeader( oFeildNameAndValue.first, oFeildNameAndValue.second );
