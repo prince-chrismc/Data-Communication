@@ -169,9 +169,8 @@ void HttpServer::PersistentConnection( ClientConnection* pConnection ) const
       auto oPotentialRequest = ReadNextRequest( pClient );
 
       if( oPotentialRequest.has_value() )
-      {
          ProcessNewRequest( pConnection, oPotentialRequest.value() );
-      }
+
    } while( ConnectionIsAlive( pConnection ) );
 
    pClient->Close();
@@ -203,9 +202,10 @@ void HttpServer::ProcessNewRequest( ClientConnection* pConnection, const HttpReq
    std::cout << "New request from { " << std::hex << pConnection->m_pClient.get() << " }. Remaining :" << std::dec << pConnection->m_nRemainingRequests << std::endl;
 
    HttpResponse oResponse = BestMatchingServlet( oRequest.GetUri() )->HandleRequest( oRequest );
-   std::cout << "{ " << std::hex << pConnection->m_pClient.get() << " } " << oRequest.GetRequestLine() << " --> " << oResponse.GetStatusLine() << std::endl;
+   //std::cout << "{ " << std::hex << pConnection->m_pClient.get() << " } " << oRequest.GetRequestLine() << " --> " << oResponse.GetStatusLine() << std::endl;
 
    // TODO : Handle HTTP Headers
+   oResponse.SetMessageHeader("Keep-Alive", "100, " + std::to_string( pConnection->m_nRemainingRequests ));
 
    std::string sRawRequest = oResponse.GetWireFormat();
    pConnection->m_pClient->Send( reinterpret_cast<const uint8_t*>( sRawRequest.c_str() ), sRawRequest.size() );
