@@ -180,7 +180,6 @@ HttpRequest::HttpRequest( Http::RequestMethod method, const std::string & in_krs
    m_eMethod( method ),
    m_sRequestUri( in_krsRequestUri ),
    m_eVersion( version ),
-   m_sHostAndPort( in_krsHostAndPort ),
    m_eContentType( Http::ContentType::Invalid ),
    m_oHeaders( in_kroMessageHeaders )
 {
@@ -239,7 +238,7 @@ std::string HttpRequest::GetWireFormat() const
    return GetRequestLine() + GetHeaders() + CRLF + m_sBody;
 }
 
-std::string HttpRequest::STATIC_MethodAsString( const Http::RequestMethod & method )
+std::string HttpRequest::STATIC_MethodAsString( Http::RequestMethod method )
 {
    switch( method )
    {

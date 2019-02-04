@@ -104,17 +104,16 @@ public:
    void AppendMessageBody( const std::string & in_krsToAdd );
 
    const Http::RequestMethod& GetMethod() const { return m_eMethod; }
-   const std::string&       GetUri() const { return m_sRequestUri; }
+   const std::string&         GetUri() const { return m_sRequestUri; }
    const Http::Version&       GetVersion() const { return m_eVersion; }
-   const std::string&       GetHostAndPort() const { return m_sHostAndPort; }
    const Http::ContentType&   GetContentType() const { return m_eContentType; }
-   const std::string&       GetBody() const { return m_sBody; }
+   const std::string&         GetBody() const { return m_sBody; }
 
    std::string GetRequestLine() const;
    std::string GetHeaders() const;
    std::string GetWireFormat() const;
 
-   static std::string STATIC_MethodAsString( const Http::RequestMethod& method );
+   static std::string STATIC_MethodAsString( Http::RequestMethod method );
    static std::string STATIC_VersionAsString( Http::Version version );
    static std::string STATIC_ContentTypeAsString( Http::ContentType content_type );
    static std::string STATIC_ContentLengthToString( size_t length );
@@ -123,7 +122,6 @@ private:
    Http::RequestMethod m_eMethod;
    std::string m_sRequestUri;
    Http::Version m_eVersion;
-   std::string m_sHostAndPort;
 
    // Optional
    Http::ContentType m_eContentType;
