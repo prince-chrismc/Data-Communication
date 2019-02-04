@@ -112,6 +112,17 @@ std::string reduce( const std::string& str,
    return result;
 }
 
+bool HttpHeaders::comparison::operator()(const std::string& lhs, const std::string& rhs) const
+{
+   return std::lexicographical_compare(
+      lhs.begin(), lhs.end(),
+      rhs.begin(), rhs.end(),
+      [](char c1, char c2)
+      {
+         return ::tolower(c1) < ::tolower(c2);
+      });
+}
+
 HttpHeaders::Headers::Headers( std::initializer_list<value_type> in_kroMessageHeaders )
    : std::map<std::string, std::string, comparison>( in_kroMessageHeaders )
 {

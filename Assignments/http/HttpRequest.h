@@ -35,15 +35,9 @@ std::string reduce( const std::string& str, const std::string& fill = " ", const
 
 namespace HttpHeaders
 {
-   struct comparison {
-      bool operator() ( const std::string & s1, const std::string & s2 ) const {
-         return std::lexicographical_compare(
-            s1.begin(), s1.end(),
-            s2.begin(), s2.end(),
-            []( char c1, char c2 ) {
-               return ::tolower( c1 ) < ::tolower( c2 );
-            } );
-      }
+   struct comparison
+   {
+      bool operator()(const std::string& lhs, const std::string& rhs) const;
    };
 
    struct Headers : std::map<std::string, std::string, comparison>
