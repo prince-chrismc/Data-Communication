@@ -170,6 +170,29 @@ void Http::Headers::SetContentLength(size_t length)
    }
 }
 
+std::string Http::Headers::FormatHeaderKey(const std::string& in_krsHeaderKey)
+{
+   if (in_krsHeaderKey.empty())
+      return in_krsHeaderKey;
+
+   auto key = reduce(in_krsHeaderKey, "-");
+   key[0] = std::toupper(key[0]);
+
+   auto beginSpace = key.find_first_of("-");
+   while (beginSpace != std::string::npos)
+   {
+      beginSpace += 1;
+      if( beginSpace <= key.length() )
+      {
+         key[beginSpace] = std::toupper(key[beginSpace]);
+      }
+
+      beginSpace = key.find_first_of("-", beginSpace);
+   }
+
+   return key;
+}
+
 HttpRequest::HttpRequest( Http::RequestMethod method, const std::string & in_krsRequestUri,
                           Http::Version version, const std::string & in_krsHostAndPort ) :
    HttpRequest( method, in_krsRequestUri, version, in_krsHostAndPort, Http::ContentType::Invalid,
@@ -213,13 +236,12 @@ void HttpRequest::SetMessageHeader( const std::string & in_krsFeildName, const s
 {
    if( in_krsFeildName.empty() || in_krsFeildValue.empty() ) return;
 
-   const Http::EmplaceResult retval = m_oHeaders.emplace( reduce( in_krsFeildName, "-" ), reduce( in_krsFeildValue ) );
+   const Http::EmplaceResult retval = m_oHeaders.emplace( Http::Headers::FormatHeaderKey( in_krsFeildName ), reduce( in_krsFeildValue ) );
 
    if( !retval.success ) // already exists
    {
       Http::Header existingHeader( *retval.itor );
       existingHeader.value = in_krsFeildValue;
-      //retval.itor->second = in_krsFeildValue;
    }
 }
 
