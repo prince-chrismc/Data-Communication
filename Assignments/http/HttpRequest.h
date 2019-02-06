@@ -142,9 +142,9 @@ public:
    static void STATIC_AppenedParsedHeaders( HTTP_MESSAGE & io_roRequest, const std::string & in_krsRequest )
    {
       static constexpr auto CRLF = "\r\n";
-      for( std::string sRawHeaders = in_krsRequest.substr( in_krsRequest.find( CRLF ) + sizeof( CRLF ) - 1 );
+      for( std::string sRawHeaders = in_krsRequest.substr( in_krsRequest.find( CRLF ) + 2 );
            sRawHeaders.find( CRLF );
-           sRawHeaders = sRawHeaders.substr( sRawHeaders.find( CRLF ) + sizeof( CRLF ) - 1 ) )
+           sRawHeaders = sRawHeaders.substr( sRawHeaders.find( CRLF ) + 2 ) )
       {
          std::string sNextHeader = sRawHeaders.substr( 0, sRawHeaders.find( CRLF ) );
          const size_t iSeperatorIndex = sNextHeader.find( ':' );
