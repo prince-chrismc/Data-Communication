@@ -37,6 +37,7 @@ public:
 
    void SetContentType( Http::ContentType content_type );
    void SetMessageHeader( const std::string& in_krsFeildName, const std::string& in_krsFeildValue );
+   bool HasMessageHeader(const std::string& in_krsFeildName, const std::string& in_krsFeildValue = "");
    void AppendMessageBody( const std::string & in_krsToAdd );
 
    const Http::Version&     GetVersion() const { return m_eVersion; }
