@@ -99,6 +99,23 @@ void HttpResponse::SetMessageHeader( const std::string & in_krsFeildName, const 
 }
 
 //---------------------------------------------------------------------------------------------------------------------
+bool HttpResponse::HasMessageHeader(const std::string& in_krsFeildName, const std::string& in_krsFeildValue)
+{
+   auto itor = m_oHeaders.find(in_krsFeildName);
+   if (itor != std::end(m_oHeaders))
+   {
+      if (!in_krsFeildValue.empty())
+      {
+         return itor->second.find(in_krsFeildValue) != std::string::npos;
+      }
+
+      return true;
+   }
+
+   return false;
+}
+
+//---------------------------------------------------------------------------------------------------------------------
 void HttpResponse::AppendMessageBody( const std::string & in_krsToAdd )
 {
    m_sBody.append( in_krsToAdd );
