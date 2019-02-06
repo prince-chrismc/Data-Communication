@@ -135,18 +135,9 @@ std::string HttpResponse::GetWireFormat() const
 // HttpResponseParser
 //
 //---------------------------------------------------------------------------------------------------------------------
-HttpResponse HttpResponseParser::GetHttpResponse() const
+bool HttpResponseParser::AppendResponseData( const std::string & in_krsData )
 {
-   HttpResponse oResponse( HttpRequestParser::STATIC_ParseForVersion( m_sResponseToParse ),
-                           STATIC_ParseForStatus( m_sResponseToParse ),
-                           STATIC_ParseForReasonPhrase( m_sResponseToParse ),
-                           HttpRequestParser::STATIC_ParseForContentType( m_sResponseToParse ),
-                           {} );
-   HttpRequestParser::STATIC_AppenedParsedHeaders( oResponse, m_sResponseToParse );
-
-   oResponse.AppendMessageBody( HttpRequestParser::STATIC_ParseForBody( m_sResponseToParse ) );
-
-   return oResponse;
+   return HttpRequestParser::STATIC_AppendData( in_krsData, m_sHttpHeader, m_sResponseBody );
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -174,21 +165,11 @@ std::string HttpResponseParser::STATIC_ParseForReasonPhrase( const std::string &
 }
 
 //---------------------------------------------------------------------------------------------------------------------
-//
-// HttpResponseParserAdvance
-//
-//---------------------------------------------------------------------------------------------------------------------
-bool HttpResponseParserAdvance::AppendResponseData( const std::string & in_krsData )
-{
-   return HttpRequestParser::STATIC_AppendData( in_krsData, m_sHttpHeader, m_sResponseBody );
-}
-
-//---------------------------------------------------------------------------------------------------------------------
-HttpResponse HttpResponseParserAdvance::GetHttpResponse() const
+HttpResponse HttpResponseParser::GetHttpResponse() const
 {
    HttpResponse oResponse( HttpRequestParser::STATIC_ParseForVersion( m_sHttpHeader ),
-                           HttpResponseParser::STATIC_ParseForStatus( m_sHttpHeader ),
-                           HttpResponseParser::STATIC_ParseForReasonPhrase( m_sHttpHeader ),
+                           STATIC_ParseForStatus( m_sHttpHeader ),
+                           STATIC_ParseForReasonPhrase( m_sHttpHeader ),
                            HttpRequestParser::STATIC_ParseForContentType( m_sHttpHeader ),
                            {} );
 

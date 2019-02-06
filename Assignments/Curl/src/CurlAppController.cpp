@@ -103,7 +103,7 @@ void CurlAppController::Run()
       retval = oClient.Send( (uint8_t*)sRawRequest.c_str(), sRawRequest.size() );
    }
 
-   HttpResponseParserAdvance oResponseParserParser;
+   HttpResponseParser oResponseParserParser;
    if( retval )
    {
       if( m_bVerbose ) std::cout << "Receiving..." << std::endl;

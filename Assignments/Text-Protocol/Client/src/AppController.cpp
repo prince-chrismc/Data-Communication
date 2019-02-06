@@ -325,7 +325,8 @@ void CurlAppController::receiveHttpResponse()
    auto response = TextProtocol::Socket::Receive( m_Client );
    if( response.has_value() )
    {
-      HttpResponseParser oParser( response->m_Payload );
+      HttpResponseParser oParser;
+      oParser.AppendResponseData( response->m_Payload );
       auto httpResponse = oParser.GetHttpResponse();
 
       debugPrint( *response, httpResponse.GetStatusLine(), "\r\n\r\nHere's the response!" );

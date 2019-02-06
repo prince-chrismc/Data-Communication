@@ -63,24 +63,13 @@ private:
 class HttpResponseParser
 {
 public:
-   HttpResponseParser( const std::string& in_krsRequest ) : m_sResponseToParse( in_krsRequest ) { }
+   HttpResponseParser() = default;
 
+   bool AppendResponseData( const std::string& in_krsData );
    HttpResponse GetHttpResponse() const;
 
    static Http::Status STATIC_ParseForStatus( const std::string& in_krsRequest );
    static std::string STATIC_ParseForReasonPhrase( const std::string& in_krsRequest );
-
-private:
-   std::string m_sResponseToParse;
-};
-
-class HttpResponseParserAdvance
-{
-public:
-   HttpResponseParserAdvance() = default;
-
-   bool AppendResponseData( const std::string& in_krsData );
-   HttpResponse GetHttpResponse() const;
 
 private:
    std::string m_sHttpHeader;
