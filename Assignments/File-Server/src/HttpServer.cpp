@@ -206,7 +206,7 @@ void HttpServer::ProcessNewRequest( ClientConnection* pConnection, const HttpReq
 
    // TODO : Handle HTTP Headers
    oResponse.SetMessageHeader( "Server", "HTTP Server by Christopher McArthur" );
-   oResponse.SetMessageHeader( "Keep-Alive", "100, " + std::to_string( pConnection->m_nRemainingRequests ) );
+   oResponse.SetMessageHeader( "Keep-Alive", "timeout=100, max=" + std::to_string( pConnection->m_nRemainingRequests ) );
 
    std::string sRawRequest = oResponse.GetWireFormat();
    pConnection->m_pClient->Send( reinterpret_cast<const uint8_t*>( sRawRequest.c_str() ), sRawRequest.size() );
