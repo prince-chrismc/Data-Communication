@@ -202,7 +202,6 @@ HttpRequest::HttpRequest( Http::RequestMethod method, const std::string & in_krs
                      Http::Headers::value_type{ "", "" },
                    { "Cache-Control",  "no-cache" },
                    { "Accept",  "*/*" },
-                   { "Accept-Encoding", "deflate" }
                 }
    )
 {
