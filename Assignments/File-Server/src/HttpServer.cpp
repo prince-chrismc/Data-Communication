@@ -178,7 +178,7 @@ void HttpServer::PersistentConnection( ClientConnection* pConnection ) const
 
 std::optional<HttpRequest> HttpServer::ReadNextRequest( CActiveSocket* pClient )
 {
-   HttpRequestParserAdvance oParser;
+   HttpRequestParser oParser;
    int32_t bytes_rcvd = -1;
    do
    {

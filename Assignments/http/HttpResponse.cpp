@@ -180,7 +180,7 @@ std::string HttpResponseParser::STATIC_ParseForReasonPhrase( const std::string &
 //---------------------------------------------------------------------------------------------------------------------
 bool HttpResponseParserAdvance::AppendResponseData( const std::string & in_krsData )
 {
-   return HttpRequestParserAdvance::STATIC_AppendData( in_krsData, m_sHttpHeader, m_sResponseBody );
+   return HttpRequestParser::STATIC_AppendData( in_krsData, m_sHttpHeader, m_sResponseBody );
 }
 
 //---------------------------------------------------------------------------------------------------------------------

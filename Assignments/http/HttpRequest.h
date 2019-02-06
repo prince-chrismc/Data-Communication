@@ -127,7 +127,9 @@ private:
 class HttpRequestParser
 {
 public:
-   HttpRequestParser( const std::string& in_krsRequest ) : m_sRequestToParse( in_krsRequest ) { }
+   HttpRequestParser() = default;
+
+   bool AppendRequestData( const std::string& in_krsData );
 
    HttpRequest GetHttpRequest() const;
 
@@ -153,19 +155,6 @@ public:
             io_roRequest.SetMessageHeader( sNextHeader.substr( 0, iSeperatorIndex ), sNextHeader.substr( iSeperatorIndex + 1 ) );
       }
    }
-
-
-private:
-   std::string m_sRequestToParse;
-};
-
-class HttpRequestParserAdvance
-{
-public:
-   HttpRequestParserAdvance() = default;
-
-   bool AppendRequestData( const std::string& in_krsData );
-   HttpRequest GetHttpRequest() const;
 
    static size_t STATIC_ParseForContentLength( const std::string& in_krsHttpHeader );
    static bool STATIC_IsHeaderComplete( const std::string& in_krsHttpHeader );

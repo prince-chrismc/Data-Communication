@@ -79,7 +79,8 @@ void AppController::Run()
             else if( input->m_PacketType == PacketType::ACK )
             {
                HttpResponse response( Http::Version::v10, Http::Status::BadRequest, "BAD REQUEST" );
-               HttpRequestParser parser( input->m_Payload );
+               HttpRequestParser parser;
+               parser.AppendRequestData( input->m_Payload );
 
                try
                {

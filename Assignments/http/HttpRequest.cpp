@@ -286,7 +286,7 @@ std::string HttpRequest::STATIC_ContentTypeAsString( Http::ContentType content_t
    case Http::ContentType::Html: return "application/html; text/html;";
    case Http::ContentType::Json: return "application/json; text/json;";
    case Http::ContentType::Yaml: return "application/x-yaml; text/yaml;";
-   case Http::ContentType::Xml:  return "text/xml;";
+   case Http::ContentType::Xml:  return "text/xml";
    case Http::ContentType::Gif:  return "image/gif";
    case Http::ContentType::Ico:  return "image/x-icon";
    case Http::ContentType::Png:  return "image/png";
@@ -306,18 +306,25 @@ std::string HttpRequest::STATIC_ContentLengthToString( size_t length )
 //---------------------------------------------------------------------------------------------------------------------
 HttpRequest HttpRequestParser::GetHttpRequest() const
 {
-   HttpRequest oRequest( STATIC_ParseForMethod( m_sRequestToParse ),
-                         STATIC_ParseForRequestUri( m_sRequestToParse ),
-                         STATIC_ParseForVersion( m_sRequestToParse ),
-                         STATIC_ParseForHostAndPort( m_sRequestToParse ),
-                         STATIC_ParseForContentType( m_sRequestToParse ),
+   if( m_sHttpHeader.empty() ) return { Http::RequestMethod::Invalid, "", Http::Version::Invalid, "" }; // No data has been obtained!
+
+   HttpRequest oRequest( STATIC_ParseForMethod( m_sHttpHeader ),
+                         STATIC_ParseForRequestUri( m_sHttpHeader ),
+                         STATIC_ParseForVersion( m_sHttpHeader ),
+                         STATIC_ParseForHostAndPort( m_sHttpHeader ),
+                         STATIC_ParseForContentType( m_sHttpHeader ),
                          {} );
 
-   STATIC_AppenedParsedHeaders( oRequest, m_sRequestToParse );
+   STATIC_AppenedParsedHeaders( oRequest, m_sHttpHeader );
 
-   oRequest.AppendMessageBody( STATIC_ParseForBody( m_sRequestToParse ) );
+   oRequest.AppendMessageBody( m_sRequestBody );
 
    return oRequest;
+}
+
+bool HttpRequestParser::AppendRequestData( const std::string & in_krsData )
+{
+   return STATIC_AppendData( in_krsData, m_sHttpHeader, m_sRequestBody );
 }
 
 Http::RequestMethod HttpRequestParser::STATIC_ParseForMethod( const std::string & in_krsRequest )
@@ -381,15 +388,25 @@ Http::ContentType HttpRequestParser::STATIC_ParseForContentType( const std::stri
    const size_t ulJsonPos = sContentTypeLine.find( "text/json" );
    const size_t ulHtmlAppPos = sContentTypeLine.find( "application/html" );
    const size_t ulJsonAppPos = sContentTypeLine.find( "application/json" );
+   const size_t ulYamlPos = sContentTypeLine.find( "text/yaml" );
+   const size_t ulYamlAppPos = sContentTypeLine.find( "application/x-yaml" );
+   const size_t ulXmlPos = sContentTypeLine.find( "text/xml" );
+   const size_t ulGifPos = sContentTypeLine.find( "image/gif" );
+   const size_t ulIcoPos = sContentTypeLine.find( "image/x-icon" );
+   const size_t ulPngPos = sContentTypeLine.find( "image/png" );
 
-   // TODO : Support new format types { PNG, GIF, ICO }
-
-   size_t ulMinPos = std::min( { ulTextPos, ulHtmlPos, ulJsonPos, ulHtmlAppPos, ulJsonAppPos } );
+   const size_t ulMinPos = std::min( { ulTextPos, ulHtmlPos, ulJsonPos, ulHtmlAppPos, ulJsonAppPos, ulYamlPos, ulYamlAppPos, ulXmlPos, ulGifPos, ulIcoPos, ulPngPos } );
 
    if( ulMinPos == ulHtmlPos ) return Http::ContentType::Html;
    if( ulMinPos == ulJsonPos ) return Http::ContentType::Json;
    if( ulMinPos == ulHtmlAppPos ) return Http::ContentType::Html;
    if( ulMinPos == ulJsonAppPos ) return Http::ContentType::Json;
+   if( ulMinPos == ulYamlPos ) return Http::ContentType::Yaml;
+   if( ulMinPos == ulYamlAppPos ) return Http::ContentType::Yaml;
+   if( ulMinPos == ulXmlPos ) return Http::ContentType::Xml;
+   if( ulMinPos == ulGifPos ) return Http::ContentType::Gif;
+   if( ulMinPos == ulIcoPos ) return Http::ContentType::Ico;
+   if( ulMinPos == ulPngPos ) return Http::ContentType::Png;
    if( ulMinPos == ulTextPos ) return Http::ContentType::Text;
 
    return Http::ContentType::Invalid;
@@ -397,65 +414,38 @@ Http::ContentType HttpRequestParser::STATIC_ParseForContentType( const std::stri
 
 std::string HttpRequestParser::STATIC_ParseForBody( const std::string & in_krsRequest )
 {
-   if( in_krsRequest.empty() ) return "";
+   if( in_krsRequest.empty() )
+      return "";
 
-   size_t ulOffset = in_krsRequest.find( std::string( CRLF ) + CRLF ) + ( sizeof( CRLF ) - 1 ) * 2;
-
-   if( ulOffset == in_krsRequest.size() ) return "";
+   const size_t ulOffset = in_krsRequest.find( std::string( CRLF ) + CRLF ) + ( sizeof( CRLF ) - 1 ) * 2;
+   if( ulOffset == in_krsRequest.size() )
+      return "";
 
    return in_krsRequest.substr( ulOffset );
 }
 
-//---------------------------------------------------------------------------------------------------------------------
-//
-// HttpRequestParserAdvanced
-//
-//---------------------------------------------------------------------------------------------------------------------
-bool HttpRequestParserAdvance::AppendRequestData( const std::string & in_krsData )
+size_t HttpRequestParser::STATIC_ParseForContentLength( const std::string & in_krsHttpHeader )
 {
-   return STATIC_AppendData( in_krsData, m_sHttpHeader, m_sRequestBody );
-}
-
-HttpRequest HttpRequestParserAdvance::GetHttpRequest() const
-{
-   if( m_sHttpHeader.empty() ) return { Http::RequestMethod::Invalid, "", Http::Version::Invalid, "" }; // No data has been obtained!
-
-   HttpRequest oRequest( HttpRequestParser::STATIC_ParseForMethod( m_sHttpHeader ),
-                         HttpRequestParser::STATIC_ParseForRequestUri( m_sHttpHeader ),
-                         HttpRequestParser::STATIC_ParseForVersion( m_sHttpHeader ),
-                         HttpRequestParser::STATIC_ParseForHostAndPort( m_sHttpHeader ),
-                         HttpRequestParser::STATIC_ParseForContentType( m_sHttpHeader ),
-                         {} );
-
-   HttpRequestParser::STATIC_AppenedParsedHeaders( oRequest, m_sHttpHeader );
-
-   oRequest.AppendMessageBody( m_sRequestBody );
-
-   return oRequest;
-}
-
-size_t HttpRequestParserAdvance::STATIC_ParseForContentLength( const std::string & in_krsHttpHeader )
-{
-   if( in_krsHttpHeader.empty() ) return 0;
+   if( in_krsHttpHeader.empty() )
+      return 0;
 
    size_t sizeStart = in_krsHttpHeader.find( HTTP_CONTENT_LENGTH_RAW );
 
-   if( sizeStart == std::string::npos ) return 0;
+   if( sizeStart == std::string::npos )
+      return 0;
 
    sizeStart += sizeof( HTTP_CONTENT_LENGTH_RAW ) - 1;
-   size_t sizeEnd = in_krsHttpHeader.find( CRLF, sizeStart );
+   const size_t sizeEnd = in_krsHttpHeader.find( CRLF, sizeStart );
 
    std::string sContentLength = in_krsHttpHeader.substr( sizeStart, sizeEnd - sizeStart );
 
    if( sContentLength.length() && sContentLength.find_first_not_of( "0123456789" ) == std::string::npos )
-   {
       return std::stoull( sContentLength );
-   }
 
    return 0;
 }
 
-bool HttpRequestParserAdvance::STATIC_IsHeaderComplete( const std::string & in_krsHttpHeader )
+bool HttpRequestParser::STATIC_IsHeaderComplete( const std::string & in_krsHttpHeader )
 {
    if( in_krsHttpHeader.size() > SIZE_OF_HTTP_BODY_SEPERATOR )
    {
@@ -465,7 +455,7 @@ bool HttpRequestParserAdvance::STATIC_IsHeaderComplete( const std::string & in_k
    return false;
 }
 
-bool HttpRequestParserAdvance::STATIC_AppendData( const std::string & in_krsData, std::string & io_krsHttpHeader, std::string & io_krsHttpBody )
+bool HttpRequestParser::STATIC_AppendData( const std::string & in_krsData, std::string & io_krsHttpHeader, std::string & io_krsHttpBody )
 {
    if( in_krsData.empty() ) return true;
 
@@ -475,7 +465,7 @@ bool HttpRequestParserAdvance::STATIC_AppendData( const std::string & in_krsData
       return( io_krsHttpBody.size() == STATIC_ParseForContentLength( io_krsHttpHeader ) );
    }
 
-   size_t ullSeperatorIndex = in_krsData.find( HTTP_BODY_SEPERATOR );
+   const size_t ullSeperatorIndex = in_krsData.find( HTTP_BODY_SEPERATOR );
    if( ullSeperatorIndex == std::string::npos )
    {
       io_krsHttpHeader.append( in_krsData );
