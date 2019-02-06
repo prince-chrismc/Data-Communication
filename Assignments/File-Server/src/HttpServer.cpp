@@ -45,9 +45,9 @@ bool HttpServer::RegisterServlet( const char * uri, HttpServlet * servlet )
    return m_RestfulServlets.try_emplace( uri, servlet ).second;
 }
 
-void HttpServer::Launch( unsigned short nPort )
+void HttpServer::Launch( unsigned short port )
 {
-   if( !m_oSocket.Listen( nullptr, nPort ) )
+   if( !m_oSocket.Listen( nullptr, port ) )
       throw std::runtime_error( "Unable to bind HTTP Server" );
 
    auto oExitEvent = std::make_shared<std::shared_future<void>>( m_pExitEvent->get_future() );
@@ -228,13 +228,8 @@ bool HttpServer::UriComparator::operator()( const std::string & lhs, const std::
    }
    else if( std::count( lhs.begin(), lhs.end(), '/' ) == std::count( rhs.begin(), rhs.end(), '/' ) )
    {
-      std::string stripped_lhs = reduce( lhs, " ", "/" );
-      std::istringstream iss_lhs( stripped_lhs );
-      std::vector<std::string> tokens_lhs{ std::istream_iterator<std::string>{iss_lhs}, std::istream_iterator<std::string>{} };
-
-      std::string stripped_rhs = reduce( rhs, " ", "/" );
-      std::istringstream iss_rhs( stripped_rhs );
-      std::vector<std::string> tokens_rhs{ std::istream_iterator<std::string>{iss_rhs}, std::istream_iterator<std::string>{} };
+      std::vector<std::string> tokens_lhs = tokenizeUri( lhs );
+      std::vector<std::string> tokens_rhs = tokenizeUri(rhs);
 
       for( size_t i = 0; i < tokens_rhs.size(); i++ )
       {
@@ -246,4 +241,10 @@ bool HttpServer::UriComparator::operator()( const std::string & lhs, const std::
    }
 
    return false;
+}
+
+std::vector<std::string> HttpServer::UriComparator::tokenizeUri(const std::string& uri)
+{
+   std::istringstream iss_rhs( reduce( uri, " ", "/" ) );
+   return{ std::istream_iterator<std::string>{iss_rhs}, std::istream_iterator<std::string>{} };
 }

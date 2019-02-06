@@ -45,6 +45,7 @@ public:
 
 //
 // A RESTful API style HTTP server designed for simplicity with moderate performance.
+//
 class HttpServer
 {
 public:
@@ -52,7 +53,7 @@ public:
 
    bool RegisterServlet( const char* uri, HttpServlet* servlet );
 
-   void Launch( unsigned short nPort );
+   void Launch( unsigned short port );
 
    bool Close();
 
@@ -81,10 +82,11 @@ private:
       // - Number of slashes
       // - Left of relative path
       bool operator()( const std::string& lhs, const std::string& rhs ) const;
+
+      static std::vector<std::string> tokenizeUri( const std::string& uri );
    };
 
    std::map<std::string, HttpServlet*, UriComparator> m_RestfulServlets;
-
 
    HttpServlet* BestMatchingServlet( const std::string& uri ) const;
    void NonPersistentConnection( ClientConnection* pConnection ) const;
