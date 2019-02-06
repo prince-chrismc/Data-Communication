@@ -207,7 +207,7 @@ void HttpServer::ProcessNewRequest( ClientConnection* pConnection, const HttpReq
    // TODO : Handle HTTP Headers
    oResponse.SetMessageHeader( "Server", "HTTP Server by Christopher McArthur" );
    
-   if (oRequest.GetVersion() == keHttpVersion11 && ConnectionIsAlive(pConnection))
+   if (oRequest.GetVersion() == Http::Version::v11 && ConnectionIsAlive(pConnection))
       oResponse.SetMessageHeader("Keep-Alive", "timeout=100, max=" + std::to_string(pConnection->m_nRemainingRequests));
    else
       oResponse.SetMessageHeader("Connection", "closed");
@@ -215,7 +215,7 @@ void HttpServer::ProcessNewRequest( ClientConnection* pConnection, const HttpReq
    std::string sRawRequest = oResponse.GetWireFormat();
    pConnection->m_pClient->Send( reinterpret_cast<const uint8_t*>( sRawRequest.c_str() ), sRawRequest.size() );
    
-   if (oRequest.GetVersion() != keHttpVersion11 || !ConnectionIsAlive(pConnection))
+   if (oRequest.GetVersion() != Http::Version::v11 || !ConnectionIsAlive(pConnection))
    {
       pConnection->m_pClient->Close();
    }
