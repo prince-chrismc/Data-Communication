@@ -54,9 +54,9 @@ Content-Length: 286
 HttpResponse::HttpResponse( Http::Version version, Http::Status status, const std::string & in_krsReasonPhrase ) :
    HttpResponse( version, status, in_krsReasonPhrase, Http::ContentType::Invalid,
                  {
-                   ( version == Http::Version::v11 ) ? HttpHeaders::Headers::value_type{ "Connection" , "keep-alive" } :
-                   ( version == Http::Version::v10 ) ? HttpHeaders::Headers::value_type{ "Connection" ,"closed" } :
-                     HttpHeaders::Headers::value_type{ "", "" },
+                   ( version == Http::Version::v11 ) ? Http::Headers::value_type{ "Connection" , "keep-alive" } :
+                   ( version == Http::Version::v10 ) ? Http::Headers::value_type{ "Connection" ,"closed" } :
+                     Http::Headers::value_type{ "", "" },
                    { "Cache-Control",  "no-cache" },
                    { "Accept",  "*/*" },
                    { "Accept-Encoding", "deflate" }
@@ -67,7 +67,7 @@ HttpResponse::HttpResponse( Http::Version version, Http::Status status, const st
 
 //---------------------------------------------------------------------------------------------------------------------
 HttpResponse::HttpResponse( Http::Version version, Http::Status status, const std::string & in_krsReasonPhrase,
-                            Http::ContentType content_type, std::initializer_list<HttpHeaders::Headers::value_type> in_kroMessageHeaders ) :
+                            Http::ContentType content_type, std::initializer_list<Http::Headers::value_type> in_kroMessageHeaders ) :
    m_eVersion( version ),
    m_eStatusCode( status ),
    m_sReasonPhrase( reduce( in_krsReasonPhrase, "", CRLF ) ),
@@ -89,13 +89,13 @@ void HttpResponse::SetMessageHeader( const std::string & in_krsFeildName, const 
 {
    if( in_krsFeildName.empty() || in_krsFeildValue.empty() ) return;
 
-   const HttpHeaders::EmplaceResult retval = m_oHeaders.emplace( reduce( in_krsFeildName, "-" ), reduce( in_krsFeildValue ) );
+   const Http::EmplaceResult retval = m_oHeaders.emplace( reduce( in_krsFeildName, "-" ), reduce( in_krsFeildValue ) );
 
    if( !retval.success ) // already exists
    {
-      //HttpHeaders::Header existingHeader( *retval.itor );
-      //existingHeader.value = in_krsFeildValue;
-      retval.itor->second = in_krsFeildValue;
+      Http::Header existingHeader( *retval.itor );
+      existingHeader.value = in_krsFeildValue;
+      //retval.itor->second = in_krsFeildValue;
    }
 }
 

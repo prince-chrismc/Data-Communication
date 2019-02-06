@@ -112,7 +112,7 @@ std::string reduce( const std::string& str,
    return result;
 }
 
-bool HttpHeaders::comparison::operator()(const std::string& lhs, const std::string& rhs) const
+bool Http::comparison::operator()(const std::string& lhs, const std::string& rhs) const
 {
    return std::lexicographical_compare(
       lhs.begin(), lhs.end(),
@@ -123,12 +123,12 @@ bool HttpHeaders::comparison::operator()(const std::string& lhs, const std::stri
       });
 }
 
-HttpHeaders::Headers::Headers( std::initializer_list<value_type> in_kroMessageHeaders )
+Http::Headers::Headers( std::initializer_list<value_type> in_kroMessageHeaders )
    : std::map<std::string, std::string, comparison>( in_kroMessageHeaders )
 {
 }
 
-void HttpHeaders::Headers::SetContentType( Http::ContentType in_eContentType )
+void Http::Headers::SetContentType( Http::ContentType in_eContentType )
 {
    if( in_eContentType != Http::ContentType::Invalid )
    {
@@ -149,7 +149,7 @@ void HttpHeaders::Headers::SetContentType( Http::ContentType in_eContentType )
    }
 }
 
-void HttpHeaders::Headers::SetContentLength(size_t length)
+void Http::Headers::SetContentLength(size_t length)
 {
    if( length > 0 )
    {
@@ -174,9 +174,9 @@ HttpRequest::HttpRequest( Http::RequestMethod method, const std::string & in_krs
                           Http::Version version, const std::string & in_krsHostAndPort ) :
    HttpRequest( method, in_krsRequestUri, version, in_krsHostAndPort, Http::ContentType::Invalid,
                 {
-                   ( version == Http::Version::v11 ) ? HttpHeaders::Headers::value_type{ "Connection" , "keep-alive" } :
-                   ( version == Http::Version::v10 ) ? HttpHeaders::Headers::value_type{ "Connection" ,"closed" } :
-                     HttpHeaders::Headers::value_type{ "", "" },
+                   ( version == Http::Version::v11 ) ? Http::Headers::value_type{ "Connection" , "keep-alive" } :
+                   ( version == Http::Version::v10 ) ? Http::Headers::value_type{ "Connection" ,"closed" } :
+                     Http::Headers::value_type{ "", "" },
                    { "Cache-Control",  "no-cache" },
                    { "Accept",  "*/*" },
                    { "Accept-Encoding", "deflate" }
@@ -187,7 +187,7 @@ HttpRequest::HttpRequest( Http::RequestMethod method, const std::string & in_krs
 
 HttpRequest::HttpRequest( Http::RequestMethod method, const std::string & in_krsRequestUri,
                           Http::Version version, const std::string & in_krsHostAndPort,
-                          Http::ContentType content_type, std::initializer_list<HttpHeaders::Headers::value_type> in_kroMessageHeaders ) :
+                          Http::ContentType content_type, std::initializer_list<Http::Headers::value_type> in_kroMessageHeaders ) :
    m_eMethod( method ),
    m_sRequestUri( in_krsRequestUri ),
    m_eVersion( version ),
@@ -213,13 +213,13 @@ void HttpRequest::SetMessageHeader( const std::string & in_krsFeildName, const s
 {
    if( in_krsFeildName.empty() || in_krsFeildValue.empty() ) return;
 
-   const HttpHeaders::EmplaceResult retval = m_oHeaders.emplace( reduce( in_krsFeildName, "-" ), reduce( in_krsFeildValue ) );
+   const Http::EmplaceResult retval = m_oHeaders.emplace( reduce( in_krsFeildName, "-" ), reduce( in_krsFeildValue ) );
 
    if( !retval.success ) // already exists
    {
-      //HttpHeaders::Header existingHeader( *retval.itor );
-      //existingHeader.value = in_krsFeildValue;
-      retval.itor->second = in_krsFeildValue;
+      Http::Header existingHeader( *retval.itor );
+      existingHeader.value = in_krsFeildValue;
+      //retval.itor->second = in_krsFeildValue;
    }
 }
 

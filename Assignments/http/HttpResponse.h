@@ -33,7 +33,7 @@ class HttpResponse
 public:
    HttpResponse( Http::Version version, Http::Status status, const std::string & in_krsReasonPhrase );
    HttpResponse( Http::Version version, Http::Status status, const std::string & in_krsReasonPhrase,
-                 Http::ContentType content_type, std::initializer_list<HttpHeaders::Headers::value_type> in_kroMessageHeaders );
+                 Http::ContentType content_type, std::initializer_list<Http::Headers::value_type> in_kroMessageHeaders );
 
    void SetContentType( Http::ContentType content_type );
    void SetMessageHeader( const std::string& in_krsFeildName, const std::string& in_krsFeildValue );
@@ -56,7 +56,7 @@ private:
 
    // Optional
    Http::ContentType m_eContentType;
-   HttpHeaders::Headers m_oHeaders;
+   Http::Headers m_oHeaders;
    std::string m_sBody;
 };
 

@@ -33,7 +33,7 @@ SOFTWARE.
 std::string trim( const std::string& str, const std::string& whitespace = " \t" );
 std::string reduce( const std::string& str, const std::string& fill = " ", const std::string& whitespace = " \t" );
 
-namespace HttpHeaders
+namespace Http
 {
    struct comparison
    {
@@ -52,7 +52,7 @@ namespace HttpHeaders
 
    struct Header
    {
-      Header( Headers::value_type::first_type& first, Headers::value_type::second_type second )
+      Header( Headers::value_type::first_type& first, Headers::value_type::second_type& second )
          : key( first ),
          value( second )
       {}
@@ -63,7 +63,7 @@ namespace HttpHeaders
       {}
 
       const Key& key;
-      Value value;
+      Value& value;
    };
 
    struct EmplaceResult : private std::pair<Headers::iterator, bool>
@@ -89,7 +89,7 @@ public:
                 Http::Version version, const std::string & in_krsHostAndPort );
    HttpRequest( Http::RequestMethod method, const std::string & in_krsRequestUri,
                 Http::Version version, const std::string & in_krsHostAndPort,
-                Http::ContentType content_type, std::initializer_list<HttpHeaders::Headers::value_type> in_kroMessageHeaders );
+                Http::ContentType content_type, std::initializer_list<Http::Headers::value_type> in_kroMessageHeaders );
 
    bool IsValidRequest() const;
 
@@ -119,7 +119,7 @@ private:
 
    // Optional
    Http::ContentType m_eContentType;
-   HttpHeaders::Headers m_oHeaders;
+   Http::Headers m_oHeaders;
    std::string m_sBody;
 
 };
@@ -139,7 +139,7 @@ public:
    static std::string STATIC_ParseForBody( const std::string& in_krsRequest );
 
    template<class HTTP_MESSAGE>
-   static void STATIC_AppenedParsedHeaders( HTTP_MESSAGE & io_roRequest, const std::string & in_krsRequest )
+   static void STATIC_AppenedParsedHeaders( HTTP_MESSAGE& io_roRequest, const std::string & in_krsRequest )
    {
       static constexpr auto CRLF = "\r\n";
       for( std::string sRawHeaders = in_krsRequest.substr( in_krsRequest.find( CRLF ) + 2 );
