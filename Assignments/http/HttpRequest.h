@@ -45,6 +45,8 @@ namespace Http
       Headers( std::initializer_list<value_type> in_kroMessageHeaders );
       void SetContentType( Http::ContentType in_eContentType );
       void SetContentLength( size_t length );
+
+      static std::string FormatHeaderKey(const std::string& in_krsHeaderKey);
    };
 
    using Key = Headers::key_type;
@@ -74,7 +76,7 @@ namespace Http
          success( this->second )
       {}
 
-      Headers::iterator::value_type getHeader() const { return *itor; }
+      Headers::iterator::value_type GetHeader() const { return *itor; }
 
       Headers::iterator& itor;
       bool& success;
