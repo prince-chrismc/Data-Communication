@@ -57,8 +57,7 @@ HttpResponse::HttpResponse( Http::Version version, Http::Status status, const st
                    ( version == Http::Version::v11 ) ? Http::Headers::value_type{ "Connection" , "keep-alive" } :
                    ( version == Http::Version::v10 ) ? Http::Headers::value_type{ "Connection" ,"closed" } :
                      Http::Headers::value_type{ "", "" },
-                   { "Cache-Control",  "no-cache" },
-                   { "Content-Encoding", "deflate" }
+                   { "Cache-Control",  "no-cache" }
                  }
    )
 {
