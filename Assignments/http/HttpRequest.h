@@ -42,7 +42,7 @@ namespace Http
 
    struct Headers : std::map<std::string, std::string, Comparison>
    {
-      Headers( std::initializer_list<value_type> in_kroMessageHeaders );
+      Headers( std::initializer_list<value_type> headers );
       void SetContentType( ContentType in_eContentType );
       void SetContentLength( size_t length );
 
@@ -93,18 +93,16 @@ namespace Http
 class HttpRequest
 {
 public:
-   HttpRequest( Http::RequestMethod method, const std::string & in_krsRequestUri,
-                Http::Version version, const std::string & in_krsHostAndPort );
-   HttpRequest( Http::RequestMethod method, const std::string & in_krsRequestUri,
-                Http::Version version, const std::string & in_krsHostAndPort,
-                Http::ContentType content_type, std::initializer_list<Http::Header::Entry> in_kroMessageHeaders );
+   HttpRequest( Http::RequestMethod method, const std::string& uri, Http::Version version, const std::string& host_port );
+   HttpRequest( Http::RequestMethod method, const std::string& uri, Http::Version version, const std::string& host_port,
+                Http::ContentType content_type, std::initializer_list<Http::Header::Entry> headers );
 
    bool IsValidRequest() const;
 
    void SetContentType( Http::ContentType content_type );
-   void SetMessageHeader( const std::string& in_krsFeildName, const std::string& in_krsFeildValue );
-   bool HasMessageHeader( const std::string& in_krsFeildName, const std::string& in_krsFeildValue = "" );
-   void AppendMessageBody( const std::string & in_krsToAdd );
+   void SetMessageHeader( const std::string& key, const std::string& value );
+   bool HasMessageHeader( const std::string& key, const std::string& value = "" );
+   void AppendMessageBody( const std::string& data );
 
    const Http::RequestMethod& GetMethod() const { return m_eMethod; }
    const std::string&         GetUri() const { return m_sRequestUri; }
@@ -138,22 +136,23 @@ class HttpRequestParser
 public:
    HttpRequestParser() = default;
 
-   bool AppendRequestData( const std::string& in_krsData );
+   bool AppendRequestData( const std::string& data );
 
    HttpRequest GetHttpRequest() const;
 
-   static Http::RequestMethod STATIC_ParseForMethod( const std::string& in_krsRequest );
-   static std::string STATIC_ParseForRequestUri( const std::string& in_krsRequest );
-   static Http::Version STATIC_ParseForVersion( const std::string& in_krsRequest );
-   static std::string STATIC_ParseForHostAndPort( const std::string& in_krsRequest );
-   static Http::ContentType STATIC_ParseForContentType( const std::string& in_krsRequest );
-   static std::string STATIC_ParseForBody( const std::string& in_krsRequest );
+protected:
+   static Http::RequestMethod STATIC_ParseForMethod( const std::string& request );
+   static std::string STATIC_ParseForRequestUri( const std::string& request );
+   static Http::Version STATIC_ParseForVersion( const std::string& request );
+   static std::string STATIC_ParseForHostAndPort( const std::string& request );
+   static Http::ContentType STATIC_ParseForContentType( const std::string& request );
+   static std::string STATIC_ParseForBody( const std::string& request );
 
    template<class HTTP_MESSAGE>
-   static void STATIC_AppenedParsedHeaders( HTTP_MESSAGE& io_roRequest, const std::string & in_krsRequest )
+   static void STATIC_AppenedParsedHeaders( HTTP_MESSAGE& io_roRequest, const std::string & request )
    {
       static constexpr auto CRLF = "\r\n";
-      for( std::string sRawHeaders = in_krsRequest;
+      for( std::string sRawHeaders = request;
            sRawHeaders.find( CRLF ) != std::string::npos;
            sRawHeaders = sRawHeaders.substr( sRawHeaders.find( CRLF ) + 2 ) )
       {
@@ -165,11 +164,9 @@ public:
       }
    }
 
-   static size_t STATIC_ParseForContentLength( const std::string& in_krsHttpHeader );
-   static bool STATIC_IsHeaderComplete( const std::string& in_krsHttpHeader );
-   static bool STATIC_AppendData( const std::string& in_krsData, std::string& io_krsHttpHeader, std::string& io_krsHttpBody );
+   static size_t STATIC_ParseForContentLength( const std::string& headers_buffer );
+   static bool STATIC_IsHeaderComplete( const std::string& headers_buffer );
 
-private:
    std::string m_sHttpHeader;
-   std::string m_sRequestBody;
+   std::string m_sMessageBody;
 };

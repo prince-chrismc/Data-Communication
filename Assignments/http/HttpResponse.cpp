@@ -51,8 +51,8 @@ Content-Length: 286
 #define CRLF "\r\n"
 
 //---------------------------------------------------------------------------------------------------------------------
-HttpResponse::HttpResponse( Http::Version version, Http::Status status, const std::string & in_krsReasonPhrase ) :
-   HttpResponse( version, status, in_krsReasonPhrase, Http::ContentType::Invalid,
+HttpResponse::HttpResponse( Http::Version version, Http::Status status, const std::string & reason_phrase ) :
+   HttpResponse( version, status, reason_phrase, Http::ContentType::Invalid,
                  {
                    ( version == Http::Version::v11 ) ? Http::Headers::value_type{ "Connection" , "keep-alive" } :
                    ( version == Http::Version::v10 ) ? Http::Headers::value_type{ "Connection" ,"closed" } :
@@ -64,13 +64,13 @@ HttpResponse::HttpResponse( Http::Version version, Http::Status status, const st
 }
 
 //---------------------------------------------------------------------------------------------------------------------
-HttpResponse::HttpResponse( Http::Version version, Http::Status status, const std::string & in_krsReasonPhrase,
-                            Http::ContentType content_type, std::initializer_list<Http::Header::Entry> in_kroMessageHeaders ) :
+HttpResponse::HttpResponse( Http::Version version, Http::Status status, const std::string & reason_phrase,
+                            Http::ContentType content_type, std::initializer_list<Http::Header::Entry> headers ) :
    m_eVersion( version ),
    m_eStatusCode( status ),
-   m_sReasonPhrase( reduce( in_krsReasonPhrase, "", CRLF ) ),
+   m_sReasonPhrase( reduce( reason_phrase, "", CRLF ) ),
    m_eContentType( Http::ContentType::Invalid ),
-   m_oHeaders( in_kroMessageHeaders )
+   m_oHeaders( headers )
 {
    SetContentType( content_type );
 }
@@ -83,27 +83,27 @@ void HttpResponse::SetContentType( Http::ContentType content_type )
 }
 
 //---------------------------------------------------------------------------------------------------------------------
-void HttpResponse::SetMessageHeader( const std::string & in_krsFeildName, const std::string & in_krsFeildValue )
+void HttpResponse::SetMessageHeader( const std::string & key, const std::string & value )
 {
-   if( in_krsFeildName.empty() || in_krsFeildValue.empty() ) return;
+   if( key.empty() || value.empty() ) return;
 
-   const Http::EmplaceResult retval = m_oHeaders.emplace( Http::Headers::FormatHeaderKey( in_krsFeildName ), reduce( in_krsFeildValue ) );
+   const Http::EmplaceResult retval = m_oHeaders.emplace( Http::Headers::FormatHeaderKey( key ), reduce( value ) );
 
    if( !retval.success ) // already exists
    {
-      retval.GetHeader().value = in_krsFeildValue;
+      retval.GetHeader().value = value;
    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
-bool HttpResponse::HasMessageHeader( const std::string& in_krsFeildName, const std::string& in_krsFeildValue )
+bool HttpResponse::HasMessageHeader( const std::string& key, const std::string& value )
 {
-   const auto itor = m_oHeaders.find( in_krsFeildName );
+   const auto itor = m_oHeaders.find( key );
    if( itor != std::end( m_oHeaders ) )
    {
-      if( !in_krsFeildValue.empty() )
+      if( !value.empty() )
       {
-         return itor->second.find( in_krsFeildValue ) != std::string::npos;
+         return itor->second.find( value ) != std::string::npos;
       }
 
       return true;
@@ -113,9 +113,9 @@ bool HttpResponse::HasMessageHeader( const std::string& in_krsFeildName, const s
 }
 
 //---------------------------------------------------------------------------------------------------------------------
-void HttpResponse::AppendMessageBody( const std::string & in_krsToAdd )
+void HttpResponse::AppendMessageBody( const std::string & data )
 {
-   m_sBody.append( in_krsToAdd );
+   m_sBody.append( data );
    m_oHeaders.SetContentLength( m_sBody.length() );
 }
 
@@ -148,47 +148,47 @@ std::string HttpResponse::GetWireFormat() const
 // HttpResponseParser
 //
 //---------------------------------------------------------------------------------------------------------------------
-bool HttpResponseParser::AppendResponseData( const std::string & in_krsData )
+bool HttpResponseParser::AppendResponseData( const std::string & data )
 {
-   return HttpRequestParser::STATIC_AppendData( in_krsData, m_sHttpHeader, m_sResponseBody );
+   return AppendRequestData( data );
 }
 
 //---------------------------------------------------------------------------------------------------------------------
-Http::Status HttpResponseParser::STATIC_ParseForStatus( const std::string & in_krsRequest )
+Http::Status HttpResponseParser::STATIC_ParseForStatus( const std::string & request )
 {
-   if( in_krsRequest.empty() ) return Http::Status::Invalid;
+   if( request.empty() ) return Http::Status::Invalid;
 
-   const size_t ulStart = in_krsRequest.find( ' ' ) + sizeof( " " ) - 1;
-   const size_t ulEnd = in_krsRequest.find( ' ', ulStart );
+   const size_t ulStart = request.find( ' ' ) + sizeof( " " ) - 1;
+   const size_t ulEnd = request.find( ' ', ulStart );
 
-   const long long llCode = std::stoull( in_krsRequest.substr( ulStart, ulEnd - ulStart ) );
+   const long long llCode = std::stoull( request.substr( ulStart, ulEnd - ulStart ) );
 
    return Http::Status( llCode );
 }
 
 //---------------------------------------------------------------------------------------------------------------------
-std::string HttpResponseParser::STATIC_ParseForReasonPhrase( const std::string & in_krsRequest )
+std::string HttpResponseParser::STATIC_ParseForReasonPhrase( const std::string & request )
 {
-   if( in_krsRequest.empty() ) return "";
+   if( request.empty() ) return "";
 
-   size_t ulOffset = in_krsRequest.find( ' ' ) + 1;
-   ulOffset = in_krsRequest.find( ' ', ulOffset ) + 1;
-   const size_t ulEnd = in_krsRequest.find( CRLF, ulOffset );
-   return in_krsRequest.substr( ulOffset, ulEnd - ulOffset );
+   size_t ulOffset = request.find( ' ' ) + 1;
+   ulOffset = request.find( ' ', ulOffset ) + 1;
+   const size_t ulEnd = request.find( CRLF, ulOffset );
+   return request.substr( ulOffset, ulEnd - ulOffset );
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 HttpResponse HttpResponseParser::GetHttpResponse() const
 {
-   HttpResponse oResponse( HttpRequestParser::STATIC_ParseForVersion( m_sHttpHeader ),
+   HttpResponse oResponse( STATIC_ParseForVersion( m_sHttpHeader ),
                            STATIC_ParseForStatus( m_sHttpHeader ),
                            STATIC_ParseForReasonPhrase( m_sHttpHeader ),
-                           HttpRequestParser::STATIC_ParseForContentType( m_sHttpHeader ),
+                           STATIC_ParseForContentType( m_sHttpHeader ),
                            {} );
 
-   HttpRequestParser::STATIC_AppenedParsedHeaders( oResponse, m_sHttpHeader );
+   STATIC_AppenedParsedHeaders( oResponse, m_sHttpHeader );
 
-   oResponse.AppendMessageBody( m_sResponseBody );
+   oResponse.AppendMessageBody( m_sMessageBody );
 
    return oResponse;
 }

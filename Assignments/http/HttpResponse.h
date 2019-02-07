@@ -31,14 +31,14 @@ SOFTWARE.
 class HttpResponse
 {
 public:
-   HttpResponse( Http::Version version, Http::Status status, const std::string & in_krsReasonPhrase );
-   HttpResponse( Http::Version version, Http::Status status, const std::string & in_krsReasonPhrase,
-                 Http::ContentType content_type, std::initializer_list<Http::Header::Entry> in_kroMessageHeaders );
+   HttpResponse( Http::Version version, Http::Status status, const std::string& reason_phrase );
+   HttpResponse( Http::Version version, Http::Status status, const std::string& reason_phrase,
+                 Http::ContentType content_type, std::initializer_list<Http::Header::Entry> headers );
 
    void SetContentType( Http::ContentType content_type );
-   void SetMessageHeader( const std::string& in_krsFeildName, const std::string& in_krsFeildValue );
-   bool HasMessageHeader( const std::string& in_krsFeildName, const std::string& in_krsFeildValue = "" );
-   void AppendMessageBody( const std::string & in_krsToAdd );
+   void SetMessageHeader( const std::string& key, const std::string& value );
+   bool HasMessageHeader( const std::string& key, const std::string& value = "" );
+   void AppendMessageBody( const std::string& data );
 
    const Http::Version&     GetVersion() const { return m_eVersion; }
    const Http::Status&      GetStatusCode() const { return m_eStatusCode; }
@@ -61,18 +61,15 @@ private:
    std::string m_sBody;
 };
 
-class HttpResponseParser
+class HttpResponseParser : HttpRequestParser
 {
 public:
    HttpResponseParser() = default;
 
-   bool AppendResponseData( const std::string& in_krsData );
+   bool AppendResponseData( const std::string& data );
    HttpResponse GetHttpResponse() const;
 
-   static Http::Status STATIC_ParseForStatus( const std::string& in_krsRequest );
-   static std::string STATIC_ParseForReasonPhrase( const std::string& in_krsRequest );
-
 private:
-   std::string m_sHttpHeader;
-   std::string m_sResponseBody;
+   static Http::Status STATIC_ParseForStatus( const std::string& request );
+   static std::string STATIC_ParseForReasonPhrase( const std::string& request );
 };
