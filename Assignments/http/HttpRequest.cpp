@@ -117,6 +117,11 @@ std::string reduce( const std::string& str,
    return result;
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+//
+// Http::Headers
+//
+//---------------------------------------------------------------------------------------------------------------------
 bool Http::Comparison::operator()( const std::string& lhs, const std::string& rhs ) const
 {
    return std::lexicographical_compare(
@@ -175,6 +180,16 @@ void Http::Headers::SetContentLength( size_t length )
    }
 }
 
+std::string Http::Headers::AsString() const
+{
+   std::string buffer;
+
+   for( ConstHeader header : *this )
+      buffer += ( header.key + ": " + header.value + CRLF );
+
+   return buffer;
+}
+
 std::string Http::Headers::FormatHeaderKey( const std::string& in_krsHeaderKey )
 {
    if( in_krsHeaderKey.empty() )
@@ -200,6 +215,11 @@ std::string Http::Headers::FormatHeaderKey( const std::string& in_krsHeaderKey )
    return key;
 }
 
+//---------------------------------------------------------------------------------------------------------------------
+//
+// HttpRequest
+//
+//---------------------------------------------------------------------------------------------------------------------
 HttpRequest::HttpRequest( Http::RequestMethod method, const std::string & uri,
                           Http::Version version, const std::string & host_port ) :
    HttpRequest( method, uri, version, host_port, Http::ContentType::Invalid,
@@ -279,12 +299,7 @@ std::string HttpRequest::GetRequestLine() const
 
 std::string HttpRequest::GetHeaders() const
 {
-   std::string sCostumHeaders;
-
-   for( auto& sMessageHeader : m_oHeaders )
-      sCostumHeaders += ( sMessageHeader.first + ": " + sMessageHeader.second + CRLF );
-
-   return sCostumHeaders;
+   return m_oHeaders.AsString();
 }
 
 std::string HttpRequest::GetWireFormat() const

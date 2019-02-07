@@ -51,6 +51,10 @@ Content-Length: 286
 #define CRLF "\r\n"
 
 //---------------------------------------------------------------------------------------------------------------------
+//
+// HttpResponse
+//
+//---------------------------------------------------------------------------------------------------------------------
 HttpResponse::HttpResponse( Http::Version version, Http::Status status, const std::string & reason_phrase ) :
    HttpResponse( version, status, reason_phrase, Http::ContentType::Invalid,
                  {
@@ -63,7 +67,6 @@ HttpResponse::HttpResponse( Http::Version version, Http::Status status, const st
 {
 }
 
-//---------------------------------------------------------------------------------------------------------------------
 HttpResponse::HttpResponse( Http::Version version, Http::Status status, const std::string & reason_phrase,
                             Http::ContentType content_type, std::initializer_list<Http::Header::Entry> headers ) :
    m_eVersion( version ),
@@ -75,14 +78,12 @@ HttpResponse::HttpResponse( Http::Version version, Http::Status status, const st
    SetContentType( content_type );
 }
 
-//---------------------------------------------------------------------------------------------------------------------
 void HttpResponse::SetContentType( Http::ContentType content_type )
 {
    m_eContentType = content_type;
    m_oHeaders.SetContentType( m_eContentType );
 }
 
-//---------------------------------------------------------------------------------------------------------------------
 void HttpResponse::SetMessageHeader( const std::string & key, const std::string & value )
 {
    if( key.empty() || value.empty() ) return;
@@ -95,7 +96,6 @@ void HttpResponse::SetMessageHeader( const std::string & key, const std::string 
    }
 }
 
-//---------------------------------------------------------------------------------------------------------------------
 bool HttpResponse::HasMessageHeader( const std::string& key, const std::string& value )
 {
    const auto itor = m_oHeaders.find( key );
@@ -112,32 +112,24 @@ bool HttpResponse::HasMessageHeader( const std::string& key, const std::string& 
    return false;
 }
 
-//---------------------------------------------------------------------------------------------------------------------
 void HttpResponse::AppendMessageBody( const std::string & data )
 {
    m_sBody.append( data );
    m_oHeaders.SetContentLength( m_sBody.length() );
 }
 
-//---------------------------------------------------------------------------------------------------------------------
 std::string HttpResponse::GetStatusLine() const
 {
-   return HttpRequest::STATIC_VersionAsString( m_eVersion ) + " " + std::to_string( static_cast<unsigned long long>( m_eStatusCode ) ) + " " +
+   return HttpRequest::STATIC_VersionAsString( m_eVersion ) + " " +
+      std::to_string( static_cast<unsigned long long>( m_eStatusCode ) ) + " " +
       m_sReasonPhrase + CRLF;
 }
 
-//---------------------------------------------------------------------------------------------------------------------
 std::string HttpResponse::GetHeaders() const
 {
-   std::string sCostumHeaders;
-
-   for( auto& sMessageHeader : m_oHeaders )
-      sCostumHeaders += ( sMessageHeader.first + ": " + sMessageHeader.second + CRLF );
-
-   return sCostumHeaders;
+   return m_oHeaders.AsString();
 }
 
-//---------------------------------------------------------------------------------------------------------------------
 std::string HttpResponse::GetWireFormat() const
 {
    return GetStatusLine() + GetHeaders() + CRLF + m_sBody;
@@ -153,7 +145,6 @@ bool HttpResponseParser::AppendResponseData( const std::string & data )
    return AppendRequestData( data );
 }
 
-//---------------------------------------------------------------------------------------------------------------------
 Http::Status HttpResponseParser::STATIC_ParseForStatus( const std::string & request )
 {
    if( request.empty() ) return Http::Status::Invalid;
@@ -166,7 +157,6 @@ Http::Status HttpResponseParser::STATIC_ParseForStatus( const std::string & requ
    return Http::Status( llCode );
 }
 
-//---------------------------------------------------------------------------------------------------------------------
 std::string HttpResponseParser::STATIC_ParseForReasonPhrase( const std::string & request )
 {
    if( request.empty() ) return "";
@@ -177,7 +167,6 @@ std::string HttpResponseParser::STATIC_ParseForReasonPhrase( const std::string &
    return request.substr( ulOffset, ulEnd - ulOffset );
 }
 
-//---------------------------------------------------------------------------------------------------------------------
 HttpResponse HttpResponseParser::GetHttpResponse() const
 {
    HttpResponse oResponse( STATIC_ParseForVersion( m_sHttpHeader ),

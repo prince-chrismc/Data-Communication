@@ -46,6 +46,8 @@ namespace Http
       void SetContentType( ContentType in_eContentType );
       void SetContentLength( size_t length );
 
+      std::string AsString() const;
+
       static std::string FormatHeaderKey( const std::string& in_krsHeaderKey );
    };
 
@@ -71,6 +73,31 @@ namespace Http
       {}
 
       const Key& key;
+      Value& value;
+   };
+
+   struct ConstHeader
+   {
+      using Entry = const Headers::value_type;
+      using Key = const Headers::key_type;
+      using Value = const Headers::mapped_type;
+
+      ConstHeader( Entry::first_type& first, Entry::second_type& second )
+         : key( first ),
+         value( second )
+      {}
+
+      ConstHeader( Entry& val )
+         : key( val.first ),
+         value( val.second )
+      {}
+
+      ConstHeader( Headers::iterator& itor )
+         : key( itor->first ),
+         value( itor->second )
+      {}
+
+      Key& key;
       Value& value;
    };
 
