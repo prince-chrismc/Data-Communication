@@ -33,11 +33,11 @@ class HttpResponse
 public:
    HttpResponse( Http::Version version, Http::Status status, const std::string & in_krsReasonPhrase );
    HttpResponse( Http::Version version, Http::Status status, const std::string & in_krsReasonPhrase,
-                 Http::ContentType content_type, std::initializer_list<Http::Headers::value_type> in_kroMessageHeaders );
+                 Http::ContentType content_type, std::initializer_list<Http::Header::Entry> in_kroMessageHeaders );
 
    void SetContentType( Http::ContentType content_type );
    void SetMessageHeader( const std::string& in_krsFeildName, const std::string& in_krsFeildValue );
-   bool HasMessageHeader(const std::string& in_krsFeildName, const std::string& in_krsFeildValue = "");
+   bool HasMessageHeader( const std::string& in_krsFeildName, const std::string& in_krsFeildValue = "" );
    void AppendMessageBody( const std::string & in_krsToAdd );
 
    const Http::Version&     GetVersion() const { return m_eVersion; }

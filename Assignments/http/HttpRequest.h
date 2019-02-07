@@ -35,33 +35,39 @@ std::string reduce( const std::string& str, const std::string& fill = " ", const
 
 namespace Http
 {
-   struct comparison
+   struct Comparison
    {
-      bool operator()(const std::string& lhs, const std::string& rhs) const;
+      bool operator()( const std::string& lhs, const std::string& rhs ) const;
    };
 
-   struct Headers : std::map<std::string, std::string, comparison>
+   struct Headers : std::map<std::string, std::string, Comparison>
    {
       Headers( std::initializer_list<value_type> in_kroMessageHeaders );
-      void SetContentType( Http::ContentType in_eContentType );
+      void SetContentType( ContentType in_eContentType );
       void SetContentLength( size_t length );
 
-      static std::string FormatHeaderKey(const std::string& in_krsHeaderKey);
+      static std::string FormatHeaderKey( const std::string& in_krsHeaderKey );
    };
-
-   using Key = Headers::key_type;
-   using Value = Headers::mapped_type;
 
    struct Header
    {
-      Header( Headers::value_type::first_type& first, Headers::value_type::second_type& second )
+      using Entry = Headers::value_type;
+      using Key = Headers::key_type;
+      using Value = Headers::mapped_type;
+
+      Header( Entry::first_type& first, Entry::second_type& second )
          : key( first ),
          value( second )
       {}
 
-      Header( Headers::value_type& val )
+      Header( Entry& val )
          : key( val.first ),
          value( val.second )
+      {}
+
+      Header( Headers::iterator& itor )
+         : key( itor->first ),
+         value( itor->second )
       {}
 
       const Key& key;
@@ -76,7 +82,7 @@ namespace Http
          success( this->second )
       {}
 
-      Headers::iterator::value_type GetHeader() const { return *itor; }
+      Header GetHeader() const { return itor; }
 
       Headers::iterator& itor;
       bool& success;
@@ -91,13 +97,13 @@ public:
                 Http::Version version, const std::string & in_krsHostAndPort );
    HttpRequest( Http::RequestMethod method, const std::string & in_krsRequestUri,
                 Http::Version version, const std::string & in_krsHostAndPort,
-                Http::ContentType content_type, std::initializer_list<Http::Headers::value_type> in_kroMessageHeaders );
+                Http::ContentType content_type, std::initializer_list<Http::Header::Entry> in_kroMessageHeaders );
 
    bool IsValidRequest() const;
 
    void SetContentType( Http::ContentType content_type );
    void SetMessageHeader( const std::string& in_krsFeildName, const std::string& in_krsFeildValue );
-   bool HasMessageHeader(const std::string& in_krsFeildName, const std::string& in_krsFeildValue = "" );
+   bool HasMessageHeader( const std::string& in_krsFeildName, const std::string& in_krsFeildValue = "" );
    void AppendMessageBody( const std::string & in_krsToAdd );
 
    const Http::RequestMethod& GetMethod() const { return m_eMethod; }
@@ -147,9 +153,9 @@ public:
    static void STATIC_AppenedParsedHeaders( HTTP_MESSAGE& io_roRequest, const std::string & in_krsRequest )
    {
       static constexpr auto CRLF = "\r\n";
-      for (std::string sRawHeaders = in_krsRequest;
-           sRawHeaders.find(CRLF) != std::string::npos;
-           sRawHeaders = sRawHeaders.substr(sRawHeaders.find(CRLF) + 2))
+      for( std::string sRawHeaders = in_krsRequest;
+           sRawHeaders.find( CRLF ) != std::string::npos;
+           sRawHeaders = sRawHeaders.substr( sRawHeaders.find( CRLF ) + 2 ) )
       {
          std::string sNextHeader = sRawHeaders.substr( 0, sRawHeaders.find( CRLF ) );
          const size_t iSeperatorIndex = sNextHeader.find( ':' );

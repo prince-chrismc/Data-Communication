@@ -26,6 +26,7 @@ SOFTWARE.
 
 #include "HttpRequest.h"
 #include  <algorithm>
+#include <cctype>
 
 /*  EXAMPLE REQUEST
 
@@ -112,25 +113,25 @@ std::string reduce( const std::string& str,
    return result;
 }
 
-bool Http::comparison::operator()(const std::string& lhs, const std::string& rhs) const
+bool Http::Comparison::operator()( const std::string& lhs, const std::string& rhs ) const
 {
    return std::lexicographical_compare(
       lhs.begin(), lhs.end(),
       rhs.begin(), rhs.end(),
-      [](char c1, char c2)
+      []( char c1, char c2 )
       {
-         return ::tolower(c1) < ::tolower(c2);
-      });
+         return ::tolower( c1 ) < ::tolower( c2 );
+      } );
 }
 
 Http::Headers::Headers( std::initializer_list<value_type> in_kroMessageHeaders )
-   : std::map<std::string, std::string, comparison>( in_kroMessageHeaders )
+   : std::map<std::string, std::string, Comparison>( in_kroMessageHeaders )
 {
 }
 
-void Http::Headers::SetContentType( Http::ContentType in_eContentType )
+void Http::Headers::SetContentType( ContentType in_eContentType )
 {
-   if( in_eContentType != Http::ContentType::Invalid )
+   if( in_eContentType != ContentType::Invalid )
    {
       const EmplaceResult retval = emplace( HTTP_CONTENT_TYPE, HttpRequest::STATIC_ContentTypeAsString( in_eContentType ) );
 
@@ -149,7 +150,7 @@ void Http::Headers::SetContentType( Http::ContentType in_eContentType )
    }
 }
 
-void Http::Headers::SetContentLength(size_t length)
+void Http::Headers::SetContentLength( size_t length )
 {
    if( length > 0 )
    {
@@ -170,24 +171,24 @@ void Http::Headers::SetContentLength(size_t length)
    }
 }
 
-std::string Http::Headers::FormatHeaderKey(const std::string& in_krsHeaderKey)
+std::string Http::Headers::FormatHeaderKey( const std::string& in_krsHeaderKey )
 {
-   if (in_krsHeaderKey.empty())
+   if( in_krsHeaderKey.empty() )
       return in_krsHeaderKey;
 
-   auto key = reduce(in_krsHeaderKey, "-");
-   key[0] = std::toupper(key[0]);
+   auto key = reduce( in_krsHeaderKey, "-" );
+   key[ 0 ] = static_cast<char>(std::toupper( key[ 0 ] ));
 
-   auto beginSpace = key.find_first_of("-");
-   while (beginSpace != std::string::npos)
+   auto beginSpace = key.find_first_of( '-' );
+   while( beginSpace != std::string::npos )
    {
       beginSpace += 1;
       if( beginSpace <= key.length() )
       {
-         key[beginSpace] = std::toupper(key[beginSpace]);
+         key[ beginSpace ] = static_cast<char>( std::toupper( key[ beginSpace ] ) );
       }
 
-      beginSpace = key.find_first_of("-", beginSpace);
+      beginSpace = key.find_first_of( '-', beginSpace );
    }
 
    return key;
@@ -209,7 +210,7 @@ HttpRequest::HttpRequest( Http::RequestMethod method, const std::string & in_krs
 
 HttpRequest::HttpRequest( Http::RequestMethod method, const std::string & in_krsRequestUri,
                           Http::Version version, const std::string & in_krsHostAndPort,
-                          Http::ContentType content_type, std::initializer_list<Http::Headers::value_type> in_kroMessageHeaders ) :
+                          Http::ContentType content_type, std::initializer_list<Http::Header::Entry> in_kroMessageHeaders ) :
    m_eMethod( method ),
    m_sRequestUri( in_krsRequestUri ),
    m_eVersion( version ),
@@ -222,7 +223,7 @@ HttpRequest::HttpRequest( Http::RequestMethod method, const std::string & in_krs
 
 bool HttpRequest::IsValidRequest() const
 {
-   return ( m_eMethod != Http::RequestMethod::Invalid ) || ( !m_sRequestUri.empty() ) || ( m_eVersion != Http::Version:: Invalid ) ;
+   return ( m_eMethod != Http::RequestMethod::Invalid ) || ( !m_sRequestUri.empty() ) || ( m_eVersion != Http::Version::Invalid );
 }
 
 void HttpRequest::SetContentType( Http::ContentType content_type )
@@ -239,19 +240,18 @@ void HttpRequest::SetMessageHeader( const std::string & in_krsFeildName, const s
 
    if( !retval.success ) // already exists
    {
-      Http::Header existingHeader( *retval.itor );
-      existingHeader.value = in_krsFeildValue;
+      retval.GetHeader().value = in_krsFeildValue;
    }
 }
 
-bool HttpRequest::HasMessageHeader(const std::string& in_krsFeildName, const std::string& in_krsFeildValue)
+bool HttpRequest::HasMessageHeader( const std::string& in_krsFeildName, const std::string& in_krsFeildValue )
 {
-   auto itor = m_oHeaders.find(in_krsFeildName);
-   if (itor != std::end(m_oHeaders))
+   const auto itor = m_oHeaders.find( in_krsFeildName );
+   if( itor != std::end( m_oHeaders ) )
    {
-      if (!in_krsFeildValue.empty())
+      if( !in_krsFeildValue.empty() )
       {
-         return itor->second.find(in_krsFeildValue) != std::string::npos;
+         return itor->second.find( in_krsFeildValue ) != std::string::npos;
       }
 
       return true;

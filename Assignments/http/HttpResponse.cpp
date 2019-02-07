@@ -65,7 +65,7 @@ HttpResponse::HttpResponse( Http::Version version, Http::Status status, const st
 
 //---------------------------------------------------------------------------------------------------------------------
 HttpResponse::HttpResponse( Http::Version version, Http::Status status, const std::string & in_krsReasonPhrase,
-                            Http::ContentType content_type, std::initializer_list<Http::Headers::value_type> in_kroMessageHeaders ) :
+                            Http::ContentType content_type, std::initializer_list<Http::Header::Entry> in_kroMessageHeaders ) :
    m_eVersion( version ),
    m_eStatusCode( status ),
    m_sReasonPhrase( reduce( in_krsReasonPhrase, "", CRLF ) ),
@@ -91,20 +91,19 @@ void HttpResponse::SetMessageHeader( const std::string & in_krsFeildName, const 
 
    if( !retval.success ) // already exists
    {
-      Http::Header existingHeader( *retval.itor );
-      existingHeader.value = in_krsFeildValue;
+      retval.GetHeader().value = in_krsFeildValue;
    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
-bool HttpResponse::HasMessageHeader(const std::string& in_krsFeildName, const std::string& in_krsFeildValue)
+bool HttpResponse::HasMessageHeader( const std::string& in_krsFeildName, const std::string& in_krsFeildValue )
 {
-   auto itor = m_oHeaders.find(in_krsFeildName);
-   if (itor != std::end(m_oHeaders))
+   const auto itor = m_oHeaders.find( in_krsFeildName );
+   if( itor != std::end( m_oHeaders ) )
    {
-      if (!in_krsFeildValue.empty())
+      if( !in_krsFeildValue.empty() )
       {
-         return itor->second.find(in_krsFeildValue) != std::string::npos;
+         return itor->second.find( in_krsFeildValue ) != std::string::npos;
       }
 
       return true;

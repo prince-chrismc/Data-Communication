@@ -206,16 +206,16 @@ void HttpServer::ProcessNewRequest( ClientConnection* pConnection, const HttpReq
 
    // TODO : Handle HTTP Headers
    oResponse.SetMessageHeader( "Server", "HTTP Server by Christopher McArthur" );
-   
-   if (oRequest.GetVersion() == Http::Version::v11 && ConnectionIsAlive(pConnection))
-      oResponse.SetMessageHeader("Keep-Alive", "timeout=100, max=" + std::to_string(pConnection->m_nRemainingRequests));
+
+   if( oRequest.GetVersion() == Http::Version::v11 && ConnectionIsAlive( pConnection ) )
+      oResponse.SetMessageHeader( "Keep-Alive", "timeout=100, max=" + std::to_string( pConnection->m_nRemainingRequests ) );
    else
-      oResponse.SetMessageHeader("Connection", "closed");
+      oResponse.SetMessageHeader( "Connection", "closed" );
 
    std::string sRawRequest = oResponse.GetWireFormat();
    pConnection->m_pClient->Send( reinterpret_cast<const uint8_t*>( sRawRequest.c_str() ), sRawRequest.size() );
-   
-   if (oRequest.GetVersion() != Http::Version::v11 || !ConnectionIsAlive(pConnection))
+
+   if( oRequest.GetVersion() != Http::Version::v11 || !ConnectionIsAlive( pConnection ) )
    {
       pConnection->m_pClient->Close();
    }
@@ -238,7 +238,7 @@ bool HttpServer::UriComparator::operator()( const std::string & lhs, const std::
    else if( std::count( lhs.begin(), lhs.end(), '/' ) == std::count( rhs.begin(), rhs.end(), '/' ) )
    {
       std::vector<std::string> tokens_lhs = tokenizeUri( lhs );
-      std::vector<std::string> tokens_rhs = tokenizeUri(rhs);
+      std::vector<std::string> tokens_rhs = tokenizeUri( rhs );
 
       for( size_t i = 0; i < tokens_rhs.size(); i++ )
       {
@@ -252,7 +252,7 @@ bool HttpServer::UriComparator::operator()( const std::string & lhs, const std::
    return false;
 }
 
-std::vector<std::string> HttpServer::UriComparator::tokenizeUri(const std::string& uri)
+std::vector<std::string> HttpServer::UriComparator::tokenizeUri( const std::string& uri )
 {
    std::istringstream iss_rhs( reduce( uri, " ", "/" ) );
    return{ std::istream_iterator<std::string>{iss_rhs}, std::istream_iterator<std::string>{} };
