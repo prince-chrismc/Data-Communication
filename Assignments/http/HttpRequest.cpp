@@ -161,23 +161,12 @@ void Http::Headers::SetContentType( ContentType in_eContentType )
 
 void Http::Headers::SetContentLength( size_t length )
 {
-   if( length > 0 )
-   {
-      const EmplaceResult retval = emplace( HTTP_CONTENT_LENGTH, std::to_string( length ) );
+    const EmplaceResult retval = emplace( HTTP_CONTENT_LENGTH, std::to_string( length ) );
 
-      if( !retval.success ) // already exists
-      {
-         at( HTTP_CONTENT_LENGTH ) = std::to_string( length );
-      }
-   }
-   else // Now invalid
-   {
-      const auto itor = find( HTTP_CONTENT_LENGTH );
-      if( itor != std::end( *this ) )
-      {
-         erase( itor );
-      }
-   }
+    if( !retval.success ) // already exists
+    {
+       at( HTTP_CONTENT_LENGTH ) = std::to_string( length );
+    }
 }
 
 std::string Http::Headers::AsString() const
@@ -243,6 +232,10 @@ HttpRequest::HttpRequest( Http::RequestMethod method, const std::string & uri,
    m_eContentType( Http::ContentType::Invalid ),
    m_oHeaders( headers )
 {
+   if( m_eVersion == Http::Version:v11 )
+   {
+      m_oHeaders.SetContentLength( m_sBody.length() );
+   }
    SetMessageHeader( HTTP_HOST, host_port );
    SetContentType( content_type );
 }
