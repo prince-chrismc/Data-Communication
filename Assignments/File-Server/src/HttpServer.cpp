@@ -198,7 +198,6 @@ std::optional<HttpRequest> HttpServer::ReadNextRequest( CActiveSocket* pClient )
 void HttpServer::ProcessNewRequest( ClientConnection* pConnection, const HttpRequest& oRequest ) const
 {
    pConnection->m_tLastSighting = std::chrono::steady_clock::now();
-   pConnection->m_nRemainingRequests -= 1;
    std::cout << "New request from { " << std::hex << pConnection->m_pClient.get() << " }. Remaining :" << std::dec << pConnection->m_nRemainingRequests << std::endl;
 
    HttpResponse oResponse = BestMatchingServlet( oRequest.GetUri() )->HandleRequest( oRequest );
@@ -207,15 +206,20 @@ void HttpServer::ProcessNewRequest( ClientConnection* pConnection, const HttpReq
    // TODO : Handle HTTP Headers
    oResponse.SetMessageHeader( "Server", "HTTP Server by Christopher McArthur" );
 
-   if( oRequest.GetVersion() == Http::Version::v11 && ConnectionIsAlive( pConnection ) )
+   if( oRequest.GetVersion() == Http::Version::v11 &&
+       oResponse.GetVersion() == Http::Version::v11 && 
+       pConnection->m_nRemainingRequests > 1 )
       oResponse.SetMessageHeader( "Keep-Alive", "timeout=100, max=" + std::to_string( pConnection->m_nRemainingRequests ) );
    else
       oResponse.SetMessageHeader( "Connection", "closed" );
 
    std::string sRawRequest = oResponse.GetWireFormat();
    pConnection->m_pClient->Send( reinterpret_cast<const uint8_t*>( sRawRequest.c_str() ), sRawRequest.size() );
+   pConnection->m_nRemainingRequests -= 1;
 
-   if( oRequest.GetVersion() != Http::Version::v11 || !ConnectionIsAlive( pConnection ) )
+   if( oRequest.GetVersion() != Http::Version::v11 ||
+       oResponse.GetVersion() != Http::Version::v11 ||
+       !ConnectionIsAlive( pConnection ) )
    {
       pConnection->m_pClient->Close();
    }
