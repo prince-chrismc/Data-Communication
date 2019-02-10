@@ -106,13 +106,13 @@ namespace Http
       EmplaceResult( std::pair<Headers::iterator, bool> val )
          : std::pair<Headers::iterator, bool>( val ),
          itor( this->first ),
-         success( this->second )
+         success( this->second ),
+         header( itor )
       {}
-
-      Header GetHeader() const { return itor; }
 
       Headers::iterator& itor;
       bool& success;
+      Header header;
    };
 
 };

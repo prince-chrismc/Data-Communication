@@ -259,11 +259,11 @@ void HttpRequest::SetMessageHeader( const std::string & key, const std::string &
 
    if( !retval.success ) // already exists
    {
-      retval.GetHeader().value = value;
+      retval.header.value = value;
    }
 }
 
-bool HttpRequest::HasMessageHeader( const std::string& key, const std::string& value )
+bool HttpRequest::HasMessageHeader( const std::string& key, const std::string& value /* = "" */)
 {
    const auto itor = m_oHeaders.find( key );
    if( itor != std::end( m_oHeaders ) )
