@@ -86,7 +86,7 @@ void AppController::Run()
                {
                   auto req = parser.GetHttpRequest();
 
-                  if( req.IsValidRequest() )
+                  if( req.IsValid() )
                   {
                      response = HttpResponse( Http::Version::v10, Http::Status::InternalServerError, "INTERNAL SERVER ERROR" );
                      response = oFileExplorer.HandleRequest( req );

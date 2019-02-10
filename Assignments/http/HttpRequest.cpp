@@ -240,9 +240,9 @@ HttpRequest::HttpRequest( Http::RequestMethod method, const std::string & uri,
    SetContentType( content_type );
 }
 
-bool HttpRequest::IsValidRequest() const
+bool HttpRequest::IsValid() const
 {
-   return ( m_eMethod != Http::RequestMethod::Invalid ) || ( !m_sRequestUri.empty() ) || ( m_eVersion != Http::Version::Invalid );
+   return ( m_eMethod != Http::RequestMethod::Invalid ) && ( !m_sRequestUri.empty() ) && ( m_eVersion != Http::Version::Invalid );
 }
 
 void HttpRequest::SetContentType( Http::ContentType content_type )

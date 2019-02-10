@@ -124,7 +124,7 @@ public:
    HttpRequest( Http::RequestMethod method, const std::string& uri, Http::Version version, const std::string& host_port,
                 Http::ContentType content_type, std::initializer_list<Http::Header::Entry> headers );
 
-   bool IsValidRequest() const;
+   bool IsValid() const;
 
    void SetContentType( Http::ContentType content_type );
    void SetMessageHeader( const std::string& key, const std::string& value );

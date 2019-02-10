@@ -35,6 +35,8 @@ public:
    HttpResponse( Http::Version version, Http::Status status, const std::string& reason_phrase,
                  Http::ContentType content_type, std::initializer_list<Http::Header::Entry> headers );
 
+   bool IsValid() const;
+
    void SetContentType( Http::ContentType content_type );
    void SetMessageHeader( const std::string& key, const std::string& value );
    bool HasMessageHeader( const std::string& key, const std::string& value = "" );

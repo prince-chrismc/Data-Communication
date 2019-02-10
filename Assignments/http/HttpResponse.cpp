@@ -82,6 +82,11 @@ HttpResponse::HttpResponse( Http::Version version, Http::Status status, const st
    SetContentType( content_type );
 }
 
+bool HttpResponse::IsValid() const
+{
+   return ( m_eVersion != Http::Version::Invalid ) && ( m_eStatusCode > Http::Status::Invalid ) && ( m_eStatusCode < Http::Status::Last );
+}
+
 void HttpResponse::SetContentType( Http::ContentType content_type )
 {
    m_eContentType = content_type;
