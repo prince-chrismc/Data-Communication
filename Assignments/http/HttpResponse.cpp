@@ -75,8 +75,7 @@ HttpResponse::HttpResponse( Http::Version version, Http::Status status, const st
    m_eContentType( Http::ContentType::Invalid ),
    m_oHeaders( headers )
 {
-      
-   if( m_eVersion == Http::Version:v11 )
+   if( m_eVersion == Http::Version::v11 )
    {
       m_oHeaders.SetContentLength( m_sBody.length() );
    }
