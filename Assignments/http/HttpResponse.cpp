@@ -55,8 +55,10 @@ Content-Length: 286
 // HttpResponse
 //
 //---------------------------------------------------------------------------------------------------------------------
-HttpResponse::HttpResponse( Http::Version version, Http::Status status, const std::string & reason_phrase ) :
-   HttpResponse( version, status, reason_phrase, Http::ContentType::Invalid,
+HttpResponse::HttpResponse( Http::Version version, Http::Status status, const std::string & reason_phrase /* = "" */ ) :
+   HttpResponse( version, status,
+                 reason_phrase.empty() ? STATIC_StatusToReasonPhrase( status ) : reason_phrase,
+                 Http::ContentType::Invalid,
                  {
                    ( version == Http::Version::v11 ) ? Http::Headers::value_type{ "Connection" , "keep-alive" } :
                    ( version == Http::Version::v10 ) ? Http::Headers::value_type{ "Connection" ,"closed" } :
@@ -142,6 +144,57 @@ std::string HttpResponse::GetHeaders() const
 std::string HttpResponse::GetWireFormat() const
 {
    return GetStatusLine() + GetHeaders() + CRLF + m_sBody;
+}
+
+std::string HttpResponse::STATIC_StatusToReasonPhrase( Http::Status status )
+{
+   if( status < Http::Status::Invalid || status > Http::Status::Last )
+      throw std::logic_error( "Invalid status code" );
+
+   switch( status )
+   {
+   case Http::Status::Continue: return "Continue";
+   case Http::Status::SwitchingProtocols: return "Switching Protocols";
+   case Http::Status::Ok: return "OK";
+   case Http::Status::Created: return "Created";
+   case Http::Status::Accepted: return "Accepted";
+   case Http::Status::NonAuthoritativeInformation: return "Non-Authoritative Information";
+   case Http::Status::NoContent: return "No Content";
+   case Http::Status::ResetContent: return "Reset Content";
+   case Http::Status::PartialContent: return "Partial Content";
+   case Http::Status::MultipleChoices: return "Multiple Choices";
+   case Http::Status::MovedPermanently: return "Moved Permanently";
+   case Http::Status::Found: return "Found";
+   case Http::Status::SeeOther: return "See Other";
+   case Http::Status::NotModified: return "Not Modified";
+   case Http::Status::UseProxy: return "Use Proxy";
+   case Http::Status::TemporaryRedirect: return "Temporary Redirect";
+   case Http::Status::BadRequest: return "Bad Request";
+   case Http::Status::Unauthorized: return "Unauthorized";
+   case Http::Status::PaymentRequired: return "Payment Required";
+   case Http::Status::Forbidden: return "Forbidden";
+   case Http::Status::NotFound: return "Not Found";
+   case Http::Status::MethodNotAllowed: return "Method Not Allowed";
+   case Http::Status::NotAcceptable: return "Not Acceptable";
+   case Http::Status::ProxyAuthenticationRequired: return "Proxy Authentication Required";
+   case Http::Status::RequestTimeOut: return "Request Time-out";
+   case Http::Status::Conflict: return "Conflict";
+   case Http::Status::Gone: return "Gone";
+   case Http::Status::LengthRequired: return "Length Required";
+   case Http::Status::PreconditionFailed: return "Precondition Failed";
+   case Http::Status::RequestEntityTooLarge: return "Request Entity Too Large";
+   case Http::Status::RequestUriTooLarge: return "Request-URI Too Large";
+   case Http::Status::UnsupportedMediaType: return "Unsupported Media Type";
+   case Http::Status::RequestedRangeNotSatisfiable: return "Requested range not satisfiable";
+   case Http::Status::ExpectationFailed: return "Expectation Failed";
+   case Http::Status::InternalServerError: return "Internal Server Error";
+   case Http::Status::NotImplemented: return "Not Implemented";
+   case Http::Status::BadGateway: return "Bad Gateway";
+   case Http::Status::ServiceUnavailable: return "Service Unavailable";
+   case Http::Status::GatewayTimeOut: return "Gateway Time-out";
+   case Http::Status::HttpVersionNotSupported: return "HTTP Version not supported";
+   default: return "Unknown";
+   }
 }
 
 //---------------------------------------------------------------------------------------------------------------------

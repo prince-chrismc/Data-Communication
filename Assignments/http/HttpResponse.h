@@ -31,7 +31,7 @@ SOFTWARE.
 class HttpResponse
 {
 public:
-   HttpResponse( Http::Version version, Http::Status status, const std::string& reason_phrase );
+   HttpResponse( Http::Version version, Http::Status status, const std::string& reason_phrase = "" );
    HttpResponse( Http::Version version, Http::Status status, const std::string& reason_phrase,
                  Http::ContentType content_type, std::initializer_list<Http::Header::Entry> headers );
 
@@ -51,6 +51,8 @@ public:
    std::string GetStatusLine() const;
    std::string GetHeaders() const;
    std::string GetWireFormat() const;
+
+   static std::string STATIC_StatusToReasonPhrase( Http::Status status );
 
 private:
    Http::Version m_eVersion;

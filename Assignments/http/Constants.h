@@ -41,7 +41,7 @@ namespace Http
 
       Continue = 100,
       SwitchingProtocols = 101,
-      OK = 200,
+      Ok = 200,
       Created = 201,
       Accepted = 202,
       NonAuthoritativeInformation = 203,
