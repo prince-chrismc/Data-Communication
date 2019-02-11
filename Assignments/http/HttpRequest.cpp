@@ -415,9 +415,8 @@ std::string HttpRequestParser::STATIC_ParseForRequestUri( const std::string & re
 {
    if( request.empty() ) return "";
 
-   std::string sRequestLine = request.substr( 0, request.find( HTTP_VERSION_PREFIX ) );
-
-   size_t ulOffset = HttpRequest::STATIC_MethodAsString( STATIC_ParseForMethod( sRequestLine ) ).size() + 1;
+   const std::string sRequestLine = request.substr( 0, request.find( HTTP_VERSION_PREFIX ) );
+   const size_t ulOffset = HttpRequest::STATIC_MethodAsString( STATIC_ParseForMethod( sRequestLine ) ).size() + 1;
 
    return sRequestLine.substr( ulOffset );
 }
@@ -434,8 +433,8 @@ std::string HttpRequestParser::STATIC_ParseForHostAndPort( const std::string & r
 {
    if( !request.empty() )
    {
-      size_t ulOffset = request.find( HTTP_HOST_RAW ) + sizeof( HTTP_HOST_RAW ) - 1;
-      size_t ulEnd = request.find( CRLF, ulOffset );
+      const size_t ulOffset = request.find( HTTP_HOST_RAW ) + sizeof( HTTP_HOST_RAW ) - 1;
+      const size_t ulEnd = request.find( CRLF, ulOffset );
       return request.substr( ulOffset, ulEnd - ulOffset );
    }
 
@@ -448,9 +447,9 @@ Http::ContentType HttpRequestParser::STATIC_ParseForContentType( const std::stri
 
    if( request.find( HTTP_CONTENT_TYPE ) == std::string::npos ) return Http::ContentType::Invalid;
 
-   size_t ulOffset = request.find( HTTP_CONTENT_TYPE_RAW ) + sizeof( HTTP_CONTENT_TYPE_RAW ) - 1;
-   size_t ulEnd = request.find( CRLF, ulOffset );
-   std::string sContentTypeLine = request.substr( ulOffset, ulEnd - ulOffset );
+   const size_t ulOffset = request.find( HTTP_CONTENT_TYPE_RAW ) + sizeof( HTTP_CONTENT_TYPE_RAW ) - 1;
+   const size_t ulEnd = request.find( CRLF, ulOffset );
+   const std::string sContentTypeLine = request.substr( ulOffset, ulEnd - ulOffset );
 
    const size_t ulTextPos = sContentTypeLine.find( "text" );
    const size_t ulHtmlPos = sContentTypeLine.find( "text/html" );
@@ -483,12 +482,11 @@ Http::ContentType HttpRequestParser::STATIC_ParseForContentType( const std::stri
 
 std::string HttpRequestParser::STATIC_ParseForBody( const std::string & request )
 {
-   if( request.empty() )
-      return "";
+   size_t ulOffset = request.find( HTTP_BODY_SEPERATOR );
+   if( ulOffset == std::string::npos ) return "";
 
-   const size_t ulOffset = request.find( std::string( CRLF ) + CRLF ) + ( sizeof( CRLF ) - 1 ) * 2;
-   if( ulOffset == request.size() )
-      return "";
+   ulOffset += SIZE_OF_HTTP_BODY_SEPERATOR;
+   if( ulOffset == request.length() ) return "";
 
    return request.substr( ulOffset );
 }
