@@ -224,6 +224,8 @@ std::string HttpResponseParser::STATIC_ParseForReasonPhrase( const std::string &
    if( request.empty() ) return "";
 
    size_t ulOffset = request.find( ' ' ) + 1;
+   if( ulOffset == std::string::npos ) return "";
+
    ulOffset = request.find( ' ', ulOffset ) + 1;
    const size_t ulEnd = request.find( CRLF, ulOffset );
    return request.substr( ulOffset, ulEnd - ulOffset );

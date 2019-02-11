@@ -173,7 +173,6 @@ protected:
    static Http::Version STATIC_ParseForVersion( const std::string& request );
    static std::string STATIC_ParseForHostAndPort( const std::string& request );
    static Http::ContentType STATIC_ParseForContentType( const std::string& request );
-   static std::string STATIC_ParseForBody( const std::string& request );
 
    template<class HTTP_MESSAGE>
    static void STATIC_AppenedParsedHeaders( HTTP_MESSAGE& io_roRequest, const std::string & request )

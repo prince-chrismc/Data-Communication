@@ -480,17 +480,6 @@ Http::ContentType HttpRequestParser::STATIC_ParseForContentType( const std::stri
    return Http::ContentType::Invalid;
 }
 
-std::string HttpRequestParser::STATIC_ParseForBody( const std::string & request )
-{
-   size_t ulOffset = request.find( HTTP_BODY_SEPERATOR );
-   if( ulOffset == std::string::npos ) return "";
-
-   ulOffset += SIZE_OF_HTTP_BODY_SEPERATOR;
-   if( ulOffset == request.length() ) return "";
-
-   return request.substr( ulOffset );
-}
-
 size_t HttpRequestParser::STATIC_ParseForContentLength( const std::string & headers_buffer )
 {
    if( headers_buffer.empty() )
