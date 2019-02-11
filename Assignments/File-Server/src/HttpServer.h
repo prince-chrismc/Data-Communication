@@ -26,20 +26,19 @@ SOFTWARE.
 
 #pragma once
 
+
+#include "HttpResponse.h"
+#include "PassiveSocket.h"
 #include <vector>
 #include <future>
 #include <memory>
-#include <map>
 #include <mutex>
-#include "HttpResponse.h"
-#include "HttpRequest.h"
-#include "Constants.h"
-#include "PassiveSocket.h"
 #include <optional>
 
 class HttpServlet
 {
 public:
+   virtual ~HttpServlet() = default;
    virtual HttpResponse HandleRequest( const HttpRequest& request ) const noexcept = 0;
 };
 

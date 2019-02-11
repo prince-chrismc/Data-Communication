@@ -61,9 +61,12 @@ void HttpServer::Launch( unsigned short port )
                       {
                          for( auto itor = m_vecClients.begin(); itor != m_vecClients.end(); /* no itor */ )
                          {
-                            if( !ConnectionIsAlive( itor->get() ) )
+                            auto connection = itor->get();
+                            if( !ConnectionIsAlive( connection ) )
                             {
-                               if( ( *itor )->m_pClient != nullptr ) ( *itor )->m_pClient->Shutdown( CSimpleSocket::Both );
+                               if( connection->m_pClient != nullptr )
+                                  connection->m_pClient->Shutdown( CSimpleSocket::Both );
+
                                itor = m_vecClients.erase( itor );
                             }
                             else
@@ -179,12 +182,9 @@ void HttpServer::PersistentConnection( ClientConnection* pConnection ) const
 std::optional<HttpRequest> HttpServer::ReadNextRequest( CActiveSocket* pClient )
 {
    HttpRequestParser oParser;
-   int32_t bytes_rcvd = -1;
    do
    {
-      bytes_rcvd += pClient->Receive( 2048 );
-
-      if( bytes_rcvd <= 0 )
+      if( pClient->Receive( 2048 ) <= 0 )
       {
          pClient->Close();
          return{};
@@ -201,25 +201,20 @@ void HttpServer::ProcessNewRequest( ClientConnection* pConnection, const HttpReq
    std::cout << "New request from { " << std::hex << pConnection->m_pClient.get() << " }. Remaining :" << std::dec << pConnection->m_nRemainingRequests << std::endl;
 
    HttpResponse oResponse = BestMatchingServlet( oRequest.GetUri() )->HandleRequest( oRequest );
-   //std::cout << "{ " << std::hex << pConnection->m_pClient.get() << " } " << oRequest.GetRequestLine() << " --> " << oResponse.GetStatusLine() << std::endl;
+   const bool bShouldKeepAlive = oRequest.GetVersion() == Http::Version::v11 && oResponse.GetVersion() == Http::Version::v11 && pConnection->m_nRemainingRequests > 1;
 
    // TODO : Handle HTTP Headers
    oResponse.SetMessageHeader( "Server", "HTTP Server by Christopher McArthur" );
 
-   if( oRequest.GetVersion() == Http::Version::v11 &&
-       oResponse.GetVersion() == Http::Version::v11 && 
-       pConnection->m_nRemainingRequests > 1 )
+   if( bShouldKeepAlive )
       oResponse.SetMessageHeader( "Keep-Alive", "timeout=100, max=" + std::to_string( pConnection->m_nRemainingRequests ) );
    else
       oResponse.SetMessageHeader( "Connection", "closed" );
 
-   std::string sRawRequest = oResponse.GetWireFormat();
-   pConnection->m_pClient->Send( reinterpret_cast<const uint8_t*>( sRawRequest.c_str() ), sRawRequest.size() );
+   pConnection->m_pClient->Send( oResponse.GetWireFormat() );
    pConnection->m_nRemainingRequests -= 1;
 
-   if( oRequest.GetVersion() != Http::Version::v11 ||
-       oResponse.GetVersion() != Http::Version::v11 ||
-       !ConnectionIsAlive( pConnection ) )
+   if( !bShouldKeepAlive )
    {
       pConnection->m_pClient->Close();
    }
@@ -228,18 +223,17 @@ void HttpServer::ProcessNewRequest( ClientConnection* pConnection, const HttpReq
 bool HttpServer::UriComparator::operator()( const std::string & lhs, const std::string & rhs ) const
 {
    if( lhs == "/" )
-   {
       return true;
-   }
+
    if( rhs == "/" )
-   {
       return false;
-   }
-   if( std::count( lhs.begin(), lhs.end(), '/' ) < std::count( rhs.begin(), rhs.end(), '/' ) )
-   {
+
+   const auto lhsDepth = std::count( lhs.begin(), lhs.end(), '/' );
+   const auto rhsDepth = std::count( rhs.begin(), rhs.end(), '/' );
+   if( lhsDepth < rhsDepth )
       return true;
-   }
-   else if( std::count( lhs.begin(), lhs.end(), '/' ) == std::count( rhs.begin(), rhs.end(), '/' ) )
+
+   if( lhsDepth == rhsDepth )
    {
       std::vector<std::string> tokens_lhs = tokenizeUri( lhs );
       std::vector<std::string> tokens_rhs = tokenizeUri( rhs );
